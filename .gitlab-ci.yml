@@ -1,0 +1,63 @@
+image: "rust:latest"
+
+default:
+  before_script:
+    - rustc --version
+    - cargo --version
+
+stages:
+  - test
+  - build
+  - release
+
+test-code:
+  stage: test
+  cache:
+    paths:
+      - target/
+  script:
+    - cargo test
+    - cargo install cargo-tarpaulin
+    - cargo tarpaulin --ignore-tests
+
+lint-code:
+  stage: test
+  cache:
+    paths:
+      - target/
+  script:
+    - rustup component add clippy
+    - cargo clippy -- -D warnings
+
+format-code:
+  stage: test
+  cache:
+    paths:
+      - target/
+  script:
+    - rustup component add rustfmt
+    - cargo fmt -- --check
+
+audit-code:
+  stage: test
+  cache:
+    paths:
+      - target/
+  script:
+    - cargo install cargo-audit
+    - cargo audit
+
+build:
+  stage: build
+  script:
+    - cargo build --release
+    - echo GE_JOB_ID=$CI_JOB_ID >> generate_executables.env
+  parallel:
+    matrix:
+      - PLATFORM: [windows, mac, linux]
+  cache:
+    paths:
+      - target/
+  artifacts:
+    paths:
+      - target/release/mod_installer*

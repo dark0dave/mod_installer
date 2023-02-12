@@ -1,0 +1,5 @@
+// Log of Currently Installed WeiDU Mods
+// The top of the file is the 'oldest' mod
+// ~TP2_File~ #language_number #component_number // [Subcomponent Name -> ] Component Name [ : Version]
+~TEST_MOD_NAME_1/TEST.TP2~ #0 #0 // test mod one
+~TEST_MOD_NAME_2/TEST.TP2~ #0 #0 // test mod two

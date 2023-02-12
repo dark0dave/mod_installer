@@ -1,7 +1,10 @@
-  /\/\   ___   __| | (_)_ __  ___| |_ __ _| | | ___ _ __ 
- /    \ / _ \ / _` | | | '_ \/ __| __/ _` | | |/ _ \ '__|
-/ /\/\ \ (_) | (_| | | | | | \__ \ || (_| | | |  __/ |   
-\/    \/\___/ \__,_| |_|_| |_|___/\__\__,_|_|_|\___|_|   
+# Infinity Engine Mod Installer
+      /\/\   ___   __| | (_)_ __  ___| |_ __ _| | | ___ _ __ 
+     /    \ / _ \ / _` | | | '_ \/ __| __/ _` | | |/ _ \ '__|
+    / /\/\ \ (_) | (_| | | | | | \__ \ || (_| | | |  __/ |   
+    \/    \/\___/ \__,_| |_|_| |_|___/\__\__,_|_|_|\___|_|   
+
+```sh
 Usage: mod_installer [OPTIONS] --log-file <LOG_FILE> --game-directory <GAME_DIRECTORY> --weidu-binary <WEIDU_BINARY> --mod-directories <MOD_DIRECTORIES>
 
 Options:
@@ -12,4 +15,4 @@ Options:
   -l, --language <LANGUAGE>                Game Language [default: en_US]
   -h, --help                               Print help
   -V, --version                            Print version
-
+```

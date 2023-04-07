@@ -61,7 +61,7 @@ pub fn parse_weidu_log(weidu_log_path: PathBuf) -> Vec<ModComponent> {
             // Ignore comments and empty lines
             Ok(component)
                 if !component.is_empty()
-                    && !component.starts_with("\n")
+                    && !component.starts_with('\n')
                     && !component.starts_with("//") =>
             {
                 Some(ModComponent::from(component))

@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.0.1
+  rev: v4.4.0
   hooks:
     - id: check-added-large-files
     - id: check-case-conflict
@@ -10,20 +10,20 @@ repos:
     - id: check-builtin-literals
 
 - repo: https://github.com/jumanjihouse/pre-commit-hooks
-  rev: 2.1.5
+  rev: 3.0.0
   hooks:
     - id: forbid-binary
     - id: git-dirty
 
 - repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.1.10
+  rev: v1.5.1
   hooks:
     - id: forbid-crlf
     - id: remove-crlf
   files: '*rs'
 
 - repo: https://github.com/commitizen-tools/commitizen
-  rev: v2.24.0
+  rev: v2.42.1
   hooks:
     - id: commitizen
       stages: [commit-msg]
@@ -34,3 +34,13 @@ repos:
     - id: fmt
     - id: cargo-check
     - id: clippy
+
+- repo: local
+  hooks:
+    - id: cargo-test
+      name: cargo test
+      description: Run the test suite
+      entry: cargo test
+      language: system
+      types: [rust]
+      pass_filenames: false

@@ -40,12 +40,12 @@ fn main() {
             log::error!("Could not find {:#?} mod folder ", weidu_mod);
             panic!();
         };
-        log::debug!("Found mod folder {:?}, for mod {:?}", mod_folder, weidu_mod);
+        log::info!("Found mod folder {:?}, for mod {:?}", mod_folder, weidu_mod);
 
         if !mod_folder_present_in_game_directory(&args.game_directory, &weidu_mod.name) {
             log::info!(
                 "Copying mod directory, from {:?} to, {:?}",
-                mod_folder,
+                mod_folder.join(weidu_mod.name.clone()),
                 args.game_directory.clone().join(weidu_mod.name.clone())
             );
             copy_mod_folder(

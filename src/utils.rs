@@ -51,7 +51,7 @@ mod tests {
     #[test]
     fn finds_mod_folder() {
         let mod_name = "test_mod_name_1";
-        let mod_folder = find_mod_folder(mod_name, &Path::new("fixtures/mods").to_path_buf());
+        let mod_folder = find_mod_folder(mod_name, Path::new("fixtures/mods"));
 
         let expected = Path::new(&format!("fixtures/mods/mod_a/{}", mod_name)).to_path_buf();
         assert_eq!(mod_folder, Some(expected))

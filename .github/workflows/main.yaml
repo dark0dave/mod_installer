@@ -1,0 +1,109 @@
+name: main
+on:
+  push:
+    branches:
+    - main
+    tags:
+    - "*"
+  pull_request:
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3.0.2
+      with:
+        set-safe-directory: true
+    - uses: actions/setup-python@v2
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+    - uses: pre-commit/action@v2.0.0
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            suffix: ''
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            suffix: ''
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: .exe
+    steps:
+      - uses: actions/checkout@v3.0.2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - name: Archive release artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: mod_installer-${{ matrix.target }}${{ matrix.suffix }}
+          path: ./target/release/mod_installer${{ matrix.suffix }}
+  release:
+    needs: [build, pre-commit]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      tag_name: ${{ steps.get_tag.outputs.git_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@v2
+        id: git-cliff
+        with:
+          config: cliff.toml
+          args: --verbose
+        env:
+          OUTPUT: CHANGELOG.md
+      - name: Print the changelog
+        run: cat "${{ steps.git-cliff.outputs.changelog }}"
+      - name: Get the tag
+        id: get_tag
+        run: echo ::set-output name=git_tag::${GITHUB_REF/refs\/tags\//}
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1.13.0
+        with:
+          bodyFile: ./CHANGELOG.md
+          prerelease: ${{ startsWith(steps.get_tag.outputs.git_tag, 'nightly') }}
+  upload:
+    needs: [release]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            suffix: ''
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            suffix: ''
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            suffix: .exe
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: mod_installer-${{ matrix.target }}${{ matrix.suffix }}
+      - name: Upload Release Asset - ${{ matrix.os }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: ./mod_installer${{ matrix.suffix }}
+          asset_name: mod_installer-${{ matrix.target }}${{ matrix.suffix }}
+          asset_content_type: application/octet-stream
+

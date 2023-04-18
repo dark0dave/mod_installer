@@ -6,7 +6,7 @@ use std::{
 
 #[derive(Debug, PartialEq)]
 pub struct ModComponent {
-    pub install_path: String,
+    pub tp_file: String,
     pub name: String,
     pub lang: String,
     pub component: String,
@@ -19,6 +19,12 @@ impl From<String> for ModComponent {
         let install_path = parts
             .nth(1)
             .expect("Could not get full name of mod")
+            .to_string();
+
+        let tp_file = install_path
+            .split('/')
+            .nth(1)
+            .expect("Could find tp2 file")
             .to_string();
 
         let name = install_path
@@ -43,7 +49,7 @@ impl From<String> for ModComponent {
             .replace('#', "");
 
         ModComponent {
-            install_path,
+            tp_file,
             name,
             lang,
             component,
@@ -84,7 +90,7 @@ mod tests {
         assert_eq!(
             logs.first(),
             Some(&ModComponent {
-                install_path: "TEST_MOD_NAME_1/TEST.TP2".to_string(),
+                tp_file: "TEST.TP2".to_string(),
                 name: "test_mod_name_1".to_string(),
                 lang: "0".to_string(),
                 component: "0".to_string()
@@ -93,7 +99,7 @@ mod tests {
         assert_eq!(
             logs.last(),
             Some(&ModComponent {
-                install_path: "TEST_MOD_NAME_2/TEST.TP2".to_string(),
+                tp_file: "TEST.TP2".to_string(),
                 name: "test_mod_name_2".to_string(),
                 lang: "0".to_string(),
                 component: "0".to_string()

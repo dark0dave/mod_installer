@@ -1,0 +1,83 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-linux:
+    name: build-${{matrix.target}}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: true
+      matrix:
+        target:
+          - aarch64-unknown-linux-gnu
+          - x86_64-unknown-linux-gnu
+    steps:
+      - uses: actions/checkout@v3
+      - uses: taiki-e/install-action@cross
+      - run: |
+          export CROSS=1
+          scripts/build.sh mod_installer --release --target ${{matrix.target}}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: mod_installer-${{matrix.target}}
+          path: |
+            dist/bin/*
+            LICENSE
+            README.md
+          if-no-files-found: error
+  build-macos:
+    name: build-${{matrix.target}}
+    runs-on:  macos-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: true
+      matrix:
+        target:
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install minimal stable
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - run: rustup target add ${{matrix.target}}
+      - run: scripts/build.sh mod_installer --release --target ${{matrix.target}}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: mod_installer-${{ matrix.target }}
+          path: |
+            dist/bin/*
+          if-no-files-found: error
+  build-windows:
+    name: build-windows
+    runs-on:  windows-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: true
+      matrix:
+        target:
+          - x86_64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install minimal stable
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - run: cargo build --release --target ${{matrix.target}}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: mod_installer-${{ matrix.target }}
+          path: |
+            target/${{matrix.target}}/release/mod_installer*
+          if-no-files-found: error

@@ -2,3 +2,4 @@
 .vscode/
 .swp
 target/
+dist/

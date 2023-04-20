@@ -31,7 +31,7 @@ fn main() {
         let mod_folder_locations = args
             .mod_directories
             .iter()
-            .flat_map(|mod_folder| find_mod_folder(&weidu_mod.name, mod_folder))
+            .flat_map(|mod_folder| find_mod_folder(&weidu_mod, mod_folder))
             .collect::<Vec<PathBuf>>();
 
         let mod_folder = if let Some(mod_folder) = mod_folder_locations.first() {
@@ -45,13 +45,10 @@ fn main() {
         if !mod_folder_present_in_game_directory(&args.game_directory, &weidu_mod.name) {
             log::info!(
                 "Copying mod directory, from {:?} to, {:?}",
-                mod_folder.join(weidu_mod.name.clone()),
+                mod_folder,
                 args.game_directory.clone().join(weidu_mod.name.clone())
             );
-            copy_mod_folder(
-                &args.game_directory,
-                &mod_folder.join(weidu_mod.name.clone()),
-            )
+            copy_mod_folder(&args.game_directory, mod_folder)
         }
         let weidu_args = generate_args(&weidu_mod, &args.language);
         install(&args.weidu_binary, &args.game_directory, weidu_args);

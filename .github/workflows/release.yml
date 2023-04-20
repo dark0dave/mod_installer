@@ -12,13 +12,31 @@ on:
       - v[0-9]+.*
 
 jobs:
+  build:
+    uses: ./.github/workflows/build.yml
   create-release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: taiki-e/create-gh-release-action@v1
+      - name: Get the tag
+        id: get_tag
+        run: echo ::set-output name=git_tag::${GITHUB_REF/refs\/tags\//}
+      - name: "✏️ Generate release changelog"
+        id: changelog
+        uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_tag.outputs.git_tag }}
+          release_name: ${{ steps.get_tag.outputs.git_tag }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: ${{ startsWith(steps.get_tag.outputs.git_tag, 'nightly') != true }}
+          prerelease: ${{ startsWith(steps.get_tag.outputs.git_tag, 'nightly') }}
   release-artifacts:
     name: Release Artifacts
     runs-on: ubuntu-latest

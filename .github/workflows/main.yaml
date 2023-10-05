@@ -10,7 +10,7 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3.0.2
+    - uses: actions/checkout@v4
       with:
         set-safe-directory: true
     - uses: actions/setup-python@v4
@@ -33,7 +33,7 @@ jobs:
             target: x86_64-pc-windows-msvc
             suffix: .exe
     steps:
-      - uses: actions/checkout@v3.0.2
+      - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -55,7 +55,7 @@ jobs:
       tag_name: ${{ steps.get_tag.outputs.git_tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Generate a changelog

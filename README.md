@@ -4,6 +4,12 @@
     / /\/\ \ (_) | (_| | | | | | \__ \ || (_| | | |  __/ |
     \/    \/\___/ \__,_| |_|_| |_|___/\__\__,_|_|_|\___|_|
 
+Automatically install mods from a prepopulated weidu.log file.
+
+## Demo
+![](docs/mod_installer.mp4)
+
+## Usage
 ```sh
 Usage: mod_installer [OPTIONS] --log-file <LOG_FILE> \
   --game-directory <GAME_DIRECTORY> \
@@ -11,7 +17,7 @@ Usage: mod_installer [OPTIONS] --log-file <LOG_FILE> \
   --mod-directories <MOD_DIRECTORIES>
 
 Options:
-  --log-file <LOG_FILE>                Full path to target log [env: LOG_FILE=]
+  --log-file <LOG_FILE>                    Full path to target log [env: LOG_FILE=]
   -g, --game-directory <GAME_DIRECTORY>    Full path to game directory [env: GAME_DIRECTORY=]
   -w, --weidu-binary <WEIDU_BINARY>        Full Path to weidu binary [env: WEIDU_BINARY=]
   -m, --mod-directories <MOD_DIRECTORIES>  Full Path to mod directories [env: MOD_DIRECTORIES=]

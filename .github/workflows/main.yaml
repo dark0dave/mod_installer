@@ -42,7 +42,7 @@ jobs:
           command: build
           args: --release
       - name: Archive release artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: mod_installer-${{ matrix.target }}${{ matrix.suffix }}
           path: ./target/release/mod_installer${{ matrix.suffix }}

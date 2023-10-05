@@ -33,7 +33,7 @@ pub fn find_mod_folder(mod_component: &ModComponent, mod_dir: &Path) -> Option<P
         .follow_links(true)
         .max_depth(4)
         .into_iter()
-        .flat_map(|entry| match entry {
+        .find_map(|entry| match entry {
             Ok(entry)
                 if entry
                     .path()
@@ -50,9 +50,6 @@ pub fn find_mod_folder(mod_component: &ModComponent, mod_dir: &Path) -> Option<P
             }
             _ => None,
         })
-        .collect::<Vec<PathBuf>>()
-        .first()
-        .cloned()
 }
 
 #[cfg(test)]

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use args::Args;
 use clap::Parser;
 use env_logger::Env;
@@ -5,8 +7,8 @@ use env_logger::Env;
 use crate::{
     mod_component::parse_weidu_log,
     utils::{
-        copy_mod_folder, create_weidu_log_if_not_exists, find_mod_folder,
-        mod_folder_present_in_game_directory,
+        copy_mod_folder, create_weidu_log_if_not_exists, mod_folder_present_in_game_directory,
+        search_mod_folders,
     },
     weidu::{generate_args, install},
 };
@@ -30,29 +32,24 @@ fn main() {
 
     create_weidu_log_if_not_exists(&args.game_directory);
 
+    let mut mod_folder_cache = HashMap::new();
     for weidu_mod in parse_weidu_log(args.log_file) {
-        let mod_folder_locations = args
-            .mod_directories
-            .iter()
-            .find_map(|mod_folder| find_mod_folder(&weidu_mod, mod_folder));
+        let mod_folder = mod_folder_cache
+            .entry(weidu_mod.tp_file.clone())
+            .or_insert_with(|| search_mod_folders(&args.mod_directories, &weidu_mod.clone()));
 
-        let mod_folder = if let Some(mod_folder) = mod_folder_locations {
-            mod_folder
-        } else {
-            log::error!("Could not find {:#?} mod folder ", weidu_mod);
-            panic!();
-        };
-        log::info!("Found mod folder {:?}, for mod {:?}", mod_folder, weidu_mod);
+        log::debug!("Found mod folder {:?}, for mod {:?}", mod_folder, weidu_mod);
 
         if !mod_folder_present_in_game_directory(&args.game_directory, &weidu_mod.name) {
-            log::info!(
+            log::debug!(
                 "Copying mod directory, from {:?} to, {:?}",
                 mod_folder,
-                args.game_directory.clone().join(weidu_mod.name.clone())
+                args.game_directory.join(&weidu_mod.name)
             );
-            copy_mod_folder(&args.game_directory, &mod_folder)
+            copy_mod_folder(&args.game_directory, mod_folder)
         }
         let weidu_args = generate_args(&weidu_mod, &args.language);
         install(&args.weidu_binary, &args.game_directory, weidu_args);
+        log::info!("Installed mod {:?}", &weidu_mod);
     }
 }

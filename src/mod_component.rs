@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ModComponent {
     pub tp_file: String,
     pub name: String,

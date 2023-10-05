@@ -1,7 +1,6 @@
-use std::path::PathBuf;
-
 use args::Args;
 use clap::Parser;
+use env_logger::Env;
 
 use crate::{
     mod_component::parse_weidu_log,
@@ -18,7 +17,7 @@ mod utils;
 mod weidu;
 
 fn main() {
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     println!(
         r"
                  /\/\   ___   __| | (_)_ __  ___| |_ __ _| | | ___ _ __
@@ -35,10 +34,9 @@ fn main() {
         let mod_folder_locations = args
             .mod_directories
             .iter()
-            .flat_map(|mod_folder| find_mod_folder(&weidu_mod, mod_folder))
-            .collect::<Vec<PathBuf>>();
+            .find_map(|mod_folder| find_mod_folder(&weidu_mod, mod_folder));
 
-        let mod_folder = if let Some(mod_folder) = mod_folder_locations.first() {
+        let mod_folder = if let Some(mod_folder) = mod_folder_locations {
             mod_folder
         } else {
             log::error!("Could not find {:#?} mod folder ", weidu_mod);
@@ -52,7 +50,7 @@ fn main() {
                 mod_folder,
                 args.game_directory.clone().join(weidu_mod.name.clone())
             );
-            copy_mod_folder(&args.game_directory, mod_folder)
+            copy_mod_folder(&args.game_directory, &mod_folder)
         }
         let weidu_args = generate_args(&weidu_mod, &args.language);
         install(&args.weidu_binary, &args.game_directory, weidu_args);

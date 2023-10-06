@@ -22,7 +22,7 @@ pub fn generate_args(weidu_mod: &ModComponent, language: &str) -> Vec<String> {
 pub fn install(weidu_binary: &PathBuf, game_directory: &PathBuf, weidu_args: Vec<String>) {
     log::trace!("{:#?}", weidu_args);
     let mut command = Command::new(weidu_binary);
-    let weidu_process = command.current_dir(game_directory).args(weidu_args);
+    let weidu_process = command.current_dir(game_directory).args(weidu_args.clone());
 
     let mut child = weidu_process
         .stdin(Stdio::piped())
@@ -33,17 +33,29 @@ pub fn install(weidu_binary: &PathBuf, game_directory: &PathBuf, weidu_args: Vec
     let mut reader = BufReader::new(child.stdout.as_mut().unwrap());
     let stdin = &mut child.stdin.take().expect("Failed to open stdin");
 
-    let mut choice_flag = 0;
+    let mut choice_flag = false;
+    let mut failure_flag = false;
     while child.stderr.is_none() {
         let mut text = String::new();
         if reader.read_line(&mut text).is_ok() {
-            if !text.is_empty() {
+            if !text.is_empty() && !failure_flag {
                 log::trace!("{}", text);
+            } else {
+                log::error!("{}", text);
+            }
+
+            if text.to_ascii_lowercase().contains("failure") {
+                failure_flag = true;
+            }
+
+            if text.contains("Stopping installation because of error.") {
+                log::error!("Weidu process failed with args: {:?}", weidu_args);
+                panic!();
             }
 
             match text {
                 // Choice
-                _ if choice_flag == 1 => {
+                _ if choice_flag => {
                     if !text.chars().nth(1).unwrap_or_default().is_numeric() {
                         stdin
                             .write_all(get_user_input().as_bytes())
@@ -63,7 +75,7 @@ pub fn install(weidu_binary: &PathBuf, game_directory: &PathBuf, weidu_args: Vec
                     && !x.to_ascii_lowercase().starts_with("[r]e-install") =>
                 {
                     log::trace!("Choice found");
-                    choice_flag = 1;
+                    choice_flag = true;
                 }
 
                 // Success

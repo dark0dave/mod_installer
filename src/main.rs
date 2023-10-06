@@ -10,7 +10,7 @@ use crate::{
         copy_mod_folder, create_weidu_log_if_not_exists, mod_folder_present_in_game_directory,
         search_mod_folders,
     },
-    weidu::{generate_args, install},
+    weidu::install,
 };
 
 mod args;
@@ -48,8 +48,12 @@ fn main() {
             );
             copy_mod_folder(&args.game_directory, mod_folder)
         }
-        let weidu_args = generate_args(&weidu_mod, &args.language);
-        install(&args.weidu_binary, &args.game_directory, weidu_args);
+        install(
+            &args.weidu_binary,
+            &args.game_directory,
+            &weidu_mod,
+            &args.language,
+        );
         log::info!("Installed mod {:?}", &weidu_mod);
     }
 }

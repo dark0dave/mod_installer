@@ -15,12 +15,17 @@ pub fn get_user_input() -> String {
     input.to_string()
 }
 
-pub fn generate_args(weidu_mod: &ModComponent, language: &str) -> Vec<String> {
+fn generate_args(weidu_mod: &ModComponent, language: &str) -> Vec<String> {
     format!("{mod_name}/{mod_tp_file} --quick-log --yes --ask-only {component} --use-lang {game_lang} --language {mod_lang}", mod_name = weidu_mod.name, mod_tp_file = weidu_mod.tp_file, component = weidu_mod.component, mod_lang = weidu_mod.lang, game_lang = language).split(' ').map(|x|x.to_string()).collect()
 }
 
-pub fn install(weidu_binary: &PathBuf, game_directory: &PathBuf, weidu_args: Vec<String>) {
-    log::trace!("{:#?}", weidu_args);
+pub fn install(
+    weidu_binary: &PathBuf,
+    game_directory: &PathBuf,
+    weidu_mod: &ModComponent,
+    language: &str,
+) {
+    let weidu_args = generate_args(weidu_mod, language);
     let mut command = Command::new(weidu_binary);
     let weidu_process = command.current_dir(game_directory).args(weidu_args.clone());
 
@@ -38,8 +43,10 @@ pub fn install(weidu_binary: &PathBuf, game_directory: &PathBuf, weidu_args: Vec
     while child.stderr.is_none() {
         let mut text = String::new();
         if reader.read_line(&mut text).is_ok() {
-            if !text.is_empty() && !failure_flag {
+            if !text.is_empty() && !failure_flag && !choice_flag {
                 log::trace!("{}", text);
+            } else if choice_flag {
+                log::info!("{}", text);
             } else {
                 log::error!("{}", text);
             }
@@ -53,7 +60,7 @@ pub fn install(weidu_binary: &PathBuf, game_directory: &PathBuf, weidu_args: Vec
                 panic!();
             }
 
-            match text {
+            match text.clone() {
                 // Choice
                 _ if choice_flag => {
                     if !text.chars().nth(1).unwrap_or_default().is_numeric() {
@@ -74,6 +81,7 @@ pub fn install(weidu_binary: &PathBuf, game_directory: &PathBuf, weidu_args: Vec
                     || x.trim_end().starts_with("Enter "))
                     && !x.to_ascii_lowercase().starts_with("[r]e-install") =>
                 {
+                    log::info!("{}", text);
                     log::trace!("Choice found");
                     choice_flag = true;
                 }
@@ -87,6 +95,7 @@ pub fn install(weidu_binary: &PathBuf, game_directory: &PathBuf, weidu_args: Vec
 
                 // Install
                 x if x.starts_with("Install") => {
+                    log::info!("{}", text);
                     stdin
                         .write_all("\n".as_bytes())
                         .expect("Failed to write to stdin");

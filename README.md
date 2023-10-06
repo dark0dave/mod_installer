@@ -7,7 +7,7 @@
 Automatically install mods from a prepopulated weidu.log file.
 
 ## Demo
-![](docs/mod_installer.mp4)
+![](docs/mod_installer.webm)
 
 ## Usage
 ```sh

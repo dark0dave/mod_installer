@@ -28,7 +28,20 @@ pub fn copy_mod_folder(game_directory: &Path, mod_folder: &Path) {
     }
 }
 
-pub fn find_mod_folder(mod_component: &ModComponent, mod_dir: &Path) -> Option<PathBuf> {
+pub fn search_mod_folders(folder_directories: &[PathBuf], weidu_mod: &ModComponent) -> PathBuf {
+    let mod_folder_locations = folder_directories
+        .iter()
+        .find_map(|mod_folder| find_mod_folder(weidu_mod, mod_folder));
+
+    if let Some(mod_folder) = mod_folder_locations {
+        mod_folder
+    } else {
+        log::error!("Could not find {:#?} mod folder ", weidu_mod);
+        panic!()
+    }
+}
+
+fn find_mod_folder(mod_component: &ModComponent, mod_dir: &Path) -> Option<PathBuf> {
     WalkDir::new(mod_dir)
         .follow_links(true)
         .max_depth(4)

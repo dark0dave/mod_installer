@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use clap::Parser;
+use clap::{ArgAction, Parser};
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -32,6 +32,14 @@ pub struct Args {
     /// Game Language
     #[clap(short, long, default_value = "en_US")]
     pub language: String,
+
+    /// Depth to walk folder structure
+    #[clap(long, short, default_value = "3")]
+    pub depth: usize,
+
+    /// Compare against installed weidu log, note this is best effort
+    #[clap(long, short, action=ArgAction::SetFalse)]
+    pub skip_installed: bool,
 }
 
 fn parse_absolute_path(arg: &str) -> Result<PathBuf, String> {

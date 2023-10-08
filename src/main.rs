@@ -30,13 +30,38 @@ fn main() {
     );
     let args = Args::parse();
 
-    create_weidu_log_if_not_exists(&args.game_directory);
+    let installed_log_path = create_weidu_log_if_not_exists(&args.game_directory);
+
+    let mods = parse_weidu_log(args.log_file);
+    let number_of_mods_found = mods.len();
+    let mods_to_be_installed = if args.skip_installed {
+        let installed_mods = parse_weidu_log(installed_log_path);
+        mods.iter()
+            .filter_map(|weidu_mod| {
+                if !installed_mods.contains(weidu_mod) {
+                    Some(weidu_mod.clone())
+                } else {
+                    None
+                }
+            })
+            .collect()
+    } else {
+        mods
+    };
+
+    log::debug!(
+        "Number of mods found: {}, Number of mods to be installed: {}",
+        number_of_mods_found,
+        mods_to_be_installed.len()
+    );
 
     let mut mod_folder_cache = HashMap::new();
-    for weidu_mod in parse_weidu_log(args.log_file) {
+    for weidu_mod in mods_to_be_installed {
         let mod_folder = mod_folder_cache
             .entry(weidu_mod.tp_file.clone())
-            .or_insert_with(|| search_mod_folders(&args.mod_directories, &weidu_mod.clone()));
+            .or_insert_with(|| {
+                search_mod_folders(&args.mod_directories, &weidu_mod.clone(), args.depth)
+            });
 
         log::debug!("Found mod folder {:?}, for mod {:?}", mod_folder, weidu_mod);
 

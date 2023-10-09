@@ -16,7 +16,7 @@ pub fn get_user_input() -> String {
 }
 
 fn generate_args(weidu_mod: &ModComponent, language: &str) -> Vec<String> {
-    format!("{mod_name}/{mod_tp_file} --quick-log --yes --ask-only {component} --use-lang {game_lang} --language {mod_lang}", mod_name = weidu_mod.name, mod_tp_file = weidu_mod.tp_file, component = weidu_mod.component, mod_lang = weidu_mod.lang, game_lang = language).split(' ').map(|x|x.to_string()).collect()
+    format!("{mod_name}/{mod_tp_file} --yes --ask-only {component} --use-lang {game_lang} --language {mod_lang}", mod_name = weidu_mod.name, mod_tp_file = weidu_mod.tp_file, component = weidu_mod.component, mod_lang = weidu_mod.lang, game_lang = language).split(' ').map(|x|x.to_string()).collect()
 }
 
 pub fn install(

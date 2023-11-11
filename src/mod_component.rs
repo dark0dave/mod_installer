@@ -10,6 +10,7 @@ pub struct ModComponent {
     pub name: String,
     pub lang: String,
     pub component: String,
+    pub subcomponent: Option<String>,
 }
 
 impl From<String> for ModComponent {
@@ -48,11 +49,18 @@ impl From<String> for ModComponent {
             .expect("Could not find component")
             .replace('#', "");
 
+        lang_and_component.next();
+        let subcomponent = lang_and_component
+            .fuse()
+            .map(|char| char.to_string())
+            .reduce(|acc, e| format!("{} {}", acc, e));
+
         ModComponent {
             tp_file,
             name,
             lang,
             component,
+            subcomponent,
         }
     }
 }
@@ -93,16 +101,28 @@ mod tests {
                 tp_file: "TEST.TP2".to_string(),
                 name: "test_mod_name_1".to_string(),
                 lang: "0".to_string(),
-                component: "0".to_string()
+                component: "0".to_string(),
+                subcomponent: Some("test mod one".to_string())
+            })
+        );
+        assert_eq!(
+            logs.get(1),
+            Some(&ModComponent {
+                tp_file: "TEST.TP2".to_string(),
+                name: "test_mod_name_2".to_string(),
+                lang: "0".to_string(),
+                component: "0".to_string(),
+                subcomponent: Some("test mod two".to_string())
             })
         );
         assert_eq!(
             logs.last(),
             Some(&ModComponent {
                 tp_file: "TEST.TP2".to_string(),
-                name: "test_mod_name_2".to_string(),
+                name: "test_mod_name_3".to_string(),
                 lang: "0".to_string(),
-                component: "0".to_string()
+                component: "0".to_string(),
+                subcomponent: None
             })
         );
     }

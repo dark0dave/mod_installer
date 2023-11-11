@@ -3,3 +3,4 @@
 // ~TP2_File~ #language_number #component_number // [Subcomponent Name -> ] Component Name [ : Version]
 ~TEST_MOD_NAME_1/TEST.TP2~ #0 #0 // test mod one
 ~TEST_MOD_NAME_2/TEST.TP2~ #0 #0 // test mod two
+~TEST_MOD_NAME_3/TEST.TP2~ #0 #0

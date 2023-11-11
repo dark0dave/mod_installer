@@ -81,6 +81,7 @@ mod tests {
             name: "test_mod_name_1".to_string(),
             lang: "0".to_string(),
             component: "0".to_string(),
+            subcomponent: None,
         };
         let mod_folder = find_mod_folder(&mod_component, Path::new("fixtures/mods"), 3);
 

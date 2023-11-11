@@ -36,10 +36,10 @@ fn main() {
     let number_of_mods_found = mods.len();
     let mods_to_be_installed = if args.skip_installed {
         let installed_mods = parse_weidu_log(installed_log_path);
-        mods.iter()
+        mods.into_iter()
             .filter_map(|weidu_mod| {
-                if !installed_mods.contains(weidu_mod) {
-                    Some(weidu_mod.clone())
+                if !installed_mods.contains(&weidu_mod) {
+                    Some(weidu_mod)
                 } else {
                     None
                 }

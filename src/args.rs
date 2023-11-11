@@ -38,7 +38,7 @@ pub struct Args {
     pub depth: usize,
 
     /// Compare against installed weidu log, note this is best effort
-    #[clap(long, short, action=ArgAction::SetFalse)]
+    #[clap(long, short, action=ArgAction::SetTrue)]
     pub skip_installed: bool,
 }
 

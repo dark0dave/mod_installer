@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::{BufRead, BufReader},
-    path::PathBuf,
+    path::{PathBuf, MAIN_SEPARATOR},
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -22,13 +22,13 @@ impl From<String> for ModComponent {
             .to_string();
 
         let tp_file = install_path
-            .split('/')
+            .split(MAIN_SEPARATOR)
             .nth(1)
             .expect("Could find tp2 file")
             .to_string();
 
         let name = install_path
-            .split('/')
+            .split(MAIN_SEPARATOR)
             .next()
             .expect("Could not split mod into name and component")
             .to_ascii_lowercase();

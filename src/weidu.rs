@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
     process::{Child, ChildStdout, Command, Stdio},
     sync::mpsc::{self, Receiver, Sender, TryRecvError},
-    thread,
+    thread, panic,
 };
 
 use crate::mod_component::ModComponent;
@@ -13,13 +13,20 @@ pub fn get_user_input() -> String {
     let stdin = io::stdin();
     let mut input = String::new();
     stdin.read_line(&mut input).unwrap_or_default();
-    log::debug!("User input: {}", input);
-
     input.to_string()
 }
 
 fn generate_args(weidu_mod: &ModComponent, language: &str) -> Vec<String> {
-    format!("{mod_name}/{mod_tp_file} --autolog --force-install {component} --use-lang {game_lang} --language {mod_lang}", mod_name = weidu_mod.name, mod_tp_file = weidu_mod.tp_file, component = weidu_mod.component, mod_lang = weidu_mod.lang, game_lang = language).split(' ').map(|x|x.to_string()).collect()
+    format!("{mod_name}/{mod_tp_file} --autolog --force-install {component} --use-lang {game_lang} --language {mod_lang}",
+        mod_name = weidu_mod.name,
+        mod_tp_file = weidu_mod.tp_file,
+        component = weidu_mod.component,
+        mod_lang = weidu_mod.lang,
+        game_lang = language
+    )
+    .split(' ')
+    .map(|x|x.to_string())
+    .collect()
 }
 
 pub fn install(
@@ -51,16 +58,15 @@ enum ProcessStateChange {
 }
 
 pub fn handle_io(mut child: Child) -> Result<(), String> {
-    let mut writer = child.stdin.take().unwrap();
+    let mut weidu_stdin = child.stdin.take().unwrap();
+    let output_lines_receiver = create_output_reader(child.stdout.take().unwrap());
+    let parsed_output_receiver = create_parsed_output_receiver(output_lines_receiver);
 
-    let child_state_channel = create_output_reader(child.stdout.take().unwrap());
-    let (parsed_output_sender, parsed_output_receiver) = mpsc::channel::<ProcessStateChange>();
-    parse_output(parsed_output_sender, child_state_channel);
     let mut wait_counter = 0;
     loop {
         match parsed_output_receiver.try_recv() {
-            Ok(   state) => {
-              log::debug!("Current installer state is {:?}", state);
+            Ok(state) => {
+                log::debug!("Current installer state is {:?}", state);
                 match state {
                     ProcessStateChange::Completed => {
                         log::debug!("Weidu process completed");
@@ -68,7 +74,7 @@ pub fn handle_io(mut child: Child) -> Result<(), String> {
                     }
                     ProcessStateChange::CompletedWithErrors { error_details } => {
                         log::debug!("Weidu process seem to have completed with errors");
-                        writer
+                        weidu_stdin
                             .write("\n".as_bytes())
                             .expect("Failed to send final ENTER to weidu process");
                         return Err(error_details);
@@ -83,7 +89,7 @@ pub fn handle_io(mut child: Child) -> Result<(), String> {
                         let user_input = get_user_input();
                         println!("");
                         log::debug!("Read user input {}, sending it to process ", user_input);
-                        writer.write_all(user_input.as_bytes()).unwrap();
+                        weidu_stdin.write_all(user_input.as_bytes()).unwrap();
                         log::debug!("Input sent");
                     }
                 }
@@ -91,36 +97,35 @@ pub fn handle_io(mut child: Child) -> Result<(), String> {
             Err(TryRecvError::Empty) => {
                 print!("No relevant output from child process, waiting");
                 print!("{}", ".".repeat(wait_counter));
+                std::io::stdout().flush().expect("Failed to flush stdout");
+
                 wait_counter += 1;
                 wait_counter %= 10;
-                sleep(1000);
-                print!("\r                                              X\r");
+                sleep(500);
+
+                print!("\r                                                                   \r");
+                std::io::stdout().flush().expect("Failed to flush stdout");
             }
             Err(TryRecvError::Disconnected) => break,
         }
     }
-
-    match child.wait_with_output() {
-        Ok(output) if !output.status.success() => {
-            panic!("Something went wrong: {:#?}", output);
-        }
-        Err(err) => {
-            panic!("Did not close properly: {}", err);
-        }
-        Ok(_) => {
-            return Ok(());
-        }
-    }
+    Ok(())
 }
 
 #[derive(Debug)]
 enum ParserState {
     CollectingQuestion,
-    SleepingForQuestionToComplete,
+    WaitingForMoreQuestionContent,
     LookingForInterestingOutput,
 }
 
-fn parse_output(sender: Sender<ProcessStateChange>, receiver: Receiver<String>) {
+fn create_parsed_output_receiver(raw_output_receiver: Receiver<String>) -> Receiver<ProcessStateChange> {
+    let (sender, receiver) = mpsc::channel::<ProcessStateChange>();
+    parse_raw_output(sender, raw_output_receiver);
+    receiver
+}
+
+fn parse_raw_output(sender: Sender<ProcessStateChange>, receiver: Receiver<String>) {
     let mut current_state = ParserState::LookingForInterestingOutput;
     let mut question = String::new();
     sender
@@ -129,10 +134,9 @@ fn parse_output(sender: Sender<ProcessStateChange>, receiver: Receiver<String>) 
     thread::spawn(move || loop {
         match receiver.try_recv() {
             Ok(string) => match current_state {
-                ParserState::CollectingQuestion | ParserState::SleepingForQuestionToComplete => {
-                    if string_looks_like_processing(&string)
-                    {
-                        log::debug!("Weidu seems to know an answer for this question");
+                ParserState::CollectingQuestion | ParserState::WaitingForMoreQuestionContent => {
+                    if string_looks_like_weidu_is_doing_something_useful(&string) {
+                        log::debug!("Weidu seems to know an answer for the last question, ignoring it");
                         current_state = ParserState::LookingForInterestingOutput;
                         question.clear();
                     } else {
@@ -142,15 +146,14 @@ fn parse_output(sender: Sender<ProcessStateChange>, receiver: Receiver<String>) 
                     }
                 }
                 ParserState::LookingForInterestingOutput => {
-                    let lowercase_string = string.to_lowercase();
-                    if lowercase_string.contains("not installed due to errors")
-                    || lowercase_string.contains("installed with warnings") {
-                        log::debug!("Weidu seems to have encountered errors during isntallation");
+                    if string_looks_like_weidu_completed_with_errors(&string)
+                        || string_looks_like_weidu_completed_with_warnings(&string) {
+                        log::debug!("Weidu seems to have encountered errors during installation");
                         sender
                             .send(ProcessStateChange::CompletedWithErrors { error_details: string.trim().to_string() })
                             .expect("Failed to send process error event");
                         break;
-                    } else if string_looks_like_question(&lowercase_string) {
+                    } else if string_looks_like_question(&string) {
                         log::debug!(
                             "Changing parser state to '{:?}' due to line {}",
                             ParserState::CollectingQuestion,
@@ -168,21 +171,23 @@ fn parse_output(sender: Sender<ProcessStateChange>, receiver: Receiver<String>) 
                     ParserState::CollectingQuestion => {
                         log::debug!(
                             "Changing parser state to '{:?}'",
-                            ParserState::SleepingForQuestionToComplete
+                            ParserState::WaitingForMoreQuestionContent
                         );
-                        current_state = ParserState::SleepingForQuestionToComplete;
+                        current_state = ParserState::WaitingForMoreQuestionContent;
                     }
-                    ParserState::SleepingForQuestionToComplete => {
+                    ParserState::WaitingForMoreQuestionContent => {
                         log::debug!("No new weidu otput, sending question to user");
                         sender
                             .send(ProcessStateChange::RequiresInput {
-                                question: question.clone(),
+                                question: question,
                             })
                             .expect("Failed to send question");
                         current_state = ParserState::LookingForInterestingOutput;
-                        question.clear();
+                        question = String::new();
                     }
-                    _ => {}
+                    _ => {
+                        // there is no new weidu output and we are not waiting for any, so there is nothing to do
+                    }
                 }
                 sleep(100);
             }
@@ -197,17 +202,20 @@ fn parse_output(sender: Sender<ProcessStateChange>, receiver: Receiver<String>) 
 }
 
 fn string_looks_like_question(string: &str) -> bool {
-    let lowercase_string = string.to_lowercase();
-    lowercase_string.contains("choice")
-        || lowercase_string.starts_with("choose")
-        || lowercase_string.starts_with("select")
-        || lowercase_string.starts_with("do you want")
-        || lowercase_string.starts_with("would you like")
-        || lowercase_string.starts_with("enter")
+    let lowercase_string = string.trim().to_lowercase();
+    !lowercase_string.contains("installing")
+        && (lowercase_string.contains("choice")
+            || lowercase_string.starts_with("choose")
+            || lowercase_string.starts_with("select")
+            || lowercase_string.starts_with("do you want")
+            || lowercase_string.starts_with("would you like")
+            || lowercase_string.starts_with("enter"))
+            || lowercase_string.ends_with("?")
+            || lowercase_string.ends_with(":")
 }
 
-fn string_looks_like_processing(string: &str) -> bool {
-    let lowercase_string = string.to_lowercase();
+fn string_looks_like_weidu_is_doing_something_useful(string: &str) -> bool {
+    let lowercase_string = string.trim().to_lowercase();
     lowercase_string.contains("copying")
         || lowercase_string.contains("copied")
         || lowercase_string.contains("installing")
@@ -216,8 +224,18 @@ fn string_looks_like_processing(string: &str) -> bool {
         || lowercase_string.contains("patched")
         || lowercase_string.contains("processing")
         || lowercase_string.contains("processed")
-        || lowercase_string.ends_with(":\n")
 
+
+}
+
+fn string_looks_like_weidu_completed_with_errors(string: &str) -> bool {
+    let lowercase_string = string.trim().to_lowercase();
+    lowercase_string.contains("not installed due to errors")
+}
+
+fn string_looks_like_weidu_completed_with_warnings(string: &str) -> bool {
+    let lowercase_string = string.trim().to_lowercase();
+    lowercase_string.contains("installed with warnings")
 }
 
 fn create_output_reader(out: ChildStdout) -> Receiver<String> {
@@ -234,8 +252,8 @@ fn create_output_reader(out: ChildStdout) -> Receiver<String> {
                 log::debug!("Got line from weidu: '{}'", line);
                 tx.send(line).expect("Failed to sent process output line");
             }
-            Err(_) => {
-                tx.send("Error".to_string()).expect("Oops");
+            Err(details) => {
+                panic!("Failed to read weidu output, error is '{:?}'", details);
             }
         }
     });

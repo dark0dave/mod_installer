@@ -74,14 +74,17 @@ fn main() {
             copy_mod_folder(&args.game_directory, mod_folder)
         }
         log::info!("Installing mod {:?}", &weidu_mod);
-        match  install(
+        match install(
             &args.weidu_binary,
             &args.game_directory,
             &weidu_mod,
             &args.language,
         ) {
             InstallationResult::Fail(message) => {
-                panic!("Failed to install mod {}, error is '{}'", weidu_mod.name, message);
+                panic!(
+                    "Failed to install mod {}, error is '{}'",
+                    weidu_mod.name, message
+                );
             }
             InstallationResult::Success => {
                 log::info!("Installed mod {:?}", &weidu_mod);

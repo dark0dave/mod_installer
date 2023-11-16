@@ -1,10 +1,11 @@
 use core::time;
 use std::{
-    io::{self, BufRead, BufReader, Write, ErrorKind},
+    io::{self, BufRead, BufReader, ErrorKind, Write},
+    panic,
     path::PathBuf,
     process::{Child, ChildStdout, Command, Stdio},
     sync::mpsc::{self, Receiver, Sender, TryRecvError},
-    thread, panic,
+    thread,
 };
 
 use crate::mod_component::ModComponent;
@@ -32,7 +33,7 @@ fn generate_args(weidu_mod: &ModComponent, language: &str) -> Vec<String> {
 pub enum InstallationResult {
     Success,
     Warnings,
-    Fail(String)
+    Fail(String),
 }
 
 pub fn install(
@@ -133,7 +134,9 @@ enum ParserState {
     LookingForInterestingOutput,
 }
 
-fn create_parsed_output_receiver(raw_output_receiver: Receiver<String>) -> Receiver<ProcessStateChange> {
+fn create_parsed_output_receiver(
+    raw_output_receiver: Receiver<String>,
+) -> Receiver<ProcessStateChange> {
     let (sender, receiver) = mpsc::channel::<ProcessStateChange>();
     parse_raw_output(sender, raw_output_receiver);
     receiver
@@ -150,7 +153,9 @@ fn parse_raw_output(sender: Sender<ProcessStateChange>, receiver: Receiver<Strin
             Ok(string) => match current_state {
                 ParserState::CollectingQuestion | ParserState::WaitingForMoreQuestionContent => {
                     if string_looks_like_weidu_is_doing_something_useful(&string) {
-                        log::debug!("Weidu seems to know an answer for the last question, ignoring it");
+                        log::debug!(
+                            "Weidu seems to know an answer for the last question, ignoring it"
+                        );
                         current_state = ParserState::LookingForInterestingOutput;
                         question.clear();
                     } else {
@@ -191,9 +196,7 @@ fn parse_raw_output(sender: Sender<ProcessStateChange>, receiver: Receiver<Strin
                     ParserState::WaitingForMoreQuestionContent => {
                         log::debug!("No new weidu otput, sending question to user");
                         sender
-                            .send(ProcessStateChange::RequiresInput {
-                                question: question,
-                            })
+                            .send(ProcessStateChange::RequiresInput { question: question })
                             .expect("Failed to send question");
                         current_state = ParserState::LookingForInterestingOutput;
                         question = String::new();
@@ -216,7 +219,9 @@ fn parse_raw_output(sender: Sender<ProcessStateChange>, receiver: Receiver<Strin
 
 fn detect_weidu_finished_state(string: &str) -> Option<ProcessStateChange> {
     if string_looks_like_weidu_completed_with_errors(&string) {
-        Some(ProcessStateChange::CompletedWithErrors { error_details: string.trim().to_string() })
+        Some(ProcessStateChange::CompletedWithErrors {
+            error_details: string.trim().to_string(),
+        })
     } else if string_looks_like_weidu_completed_with_warnings(&string) {
         Some(ProcessStateChange::CompletedWithWarnings)
     } else {
@@ -233,8 +238,8 @@ fn string_looks_like_question(string: &str) -> bool {
             || lowercase_string.starts_with("do you want")
             || lowercase_string.starts_with("would you like")
             || lowercase_string.starts_with("enter"))
-            || lowercase_string.ends_with("?")
-            || lowercase_string.ends_with(":")
+        || lowercase_string.ends_with("?")
+        || lowercase_string.ends_with(":")
 }
 
 fn string_looks_like_weidu_is_doing_something_useful(string: &str) -> bool {
@@ -247,8 +252,6 @@ fn string_looks_like_weidu_is_doing_something_useful(string: &str) -> bool {
         || lowercase_string.contains("patched")
         || lowercase_string.contains("processing")
         || lowercase_string.contains("processed")
-
-
 }
 
 fn string_looks_like_weidu_completed_with_errors(string: &str) -> bool {
@@ -276,8 +279,8 @@ fn create_output_reader(out: ChildStdout) -> Receiver<String> {
                 tx.send(line).expect("Failed to sent process output line");
             }
             Err(ref e) if e.kind() == ErrorKind::InvalidData => {
-                // sometimes there is a non-unicode gibberish in process output, it 
-                // does not seem to be an indicator of error or break anything, ignore it 
+                // sometimes there is a non-unicode gibberish in process output, it
+                // does not seem to be an indicator of error or break anything, ignore it
                 log::warn!("Failed to read weidu output");
             }
             Err(details) => {

@@ -1,6 +1,6 @@
 use core::time;
 use std::{
-    io::{self, BufRead, BufReader, Write},
+    io::{self, BufRead, BufReader, Write, ErrorKind},
     path::PathBuf,
     process::{Child, ChildStdout, Command, Stdio},
     sync::mpsc::{self, Receiver, Sender, TryRecvError},
@@ -29,12 +29,18 @@ fn generate_args(weidu_mod: &ModComponent, language: &str) -> Vec<String> {
     .collect()
 }
 
+pub enum InstallationResult {
+    Success,
+    Warnings,
+    Fail(String)
+}
+
 pub fn install(
     weidu_binary: &PathBuf,
     game_directory: &PathBuf,
     weidu_mod: &ModComponent,
     language: &str,
-) -> Result<(), String> {
+) -> InstallationResult {
     let weidu_args = generate_args(weidu_mod, language);
     let mut command = Command::new(weidu_binary);
     let weidu_process = command.current_dir(game_directory).args(weidu_args.clone());
@@ -55,9 +61,10 @@ enum ProcessStateChange {
     InProgress,
     Completed,
     CompletedWithErrors { error_details: String },
+    CompletedWithWarnings,
 }
 
-pub fn handle_io(mut child: Child) -> Result<(), String> {
+pub fn handle_io(mut child: Child) -> InstallationResult {
     let mut weidu_stdin = child.stdin.take().unwrap();
     let output_lines_receiver = create_output_reader(child.stdout.take().unwrap());
     let parsed_output_receiver = create_parsed_output_receiver(output_lines_receiver);
@@ -77,7 +84,14 @@ pub fn handle_io(mut child: Child) -> Result<(), String> {
                         weidu_stdin
                             .write("\n".as_bytes())
                             .expect("Failed to send final ENTER to weidu process");
-                        return Err(error_details);
+                        return InstallationResult::Fail(error_details);
+                    }
+                    ProcessStateChange::CompletedWithWarnings => {
+                        log::debug!("Weidu process seem to have completed with warnings");
+                        weidu_stdin
+                            .write("\n".as_bytes())
+                            .expect("Failed to send final ENTER to weidu process");
+                        return InstallationResult::Warnings;
                     }
                     ProcessStateChange::InProgress => {
                         log::debug!("In progress...");
@@ -95,8 +109,8 @@ pub fn handle_io(mut child: Child) -> Result<(), String> {
                 }
             }
             Err(TryRecvError::Empty) => {
-                print!("No relevant output from child process, waiting");
-                print!("{}", ".".repeat(wait_counter));
+                print!("Waiting for child process to end");
+                print!("{}\r", ".".repeat(wait_counter));
                 std::io::stdout().flush().expect("Failed to flush stdout");
 
                 wait_counter += 1;
@@ -109,7 +123,7 @@ pub fn handle_io(mut child: Child) -> Result<(), String> {
             Err(TryRecvError::Disconnected) => break,
         }
     }
-    Ok(())
+    InstallationResult::Success
 }
 
 #[derive(Debug)]
@@ -146,11 +160,10 @@ fn parse_raw_output(sender: Sender<ProcessStateChange>, receiver: Receiver<Strin
                     }
                 }
                 ParserState::LookingForInterestingOutput => {
-                    if string_looks_like_weidu_completed_with_errors(&string)
-                        || string_looks_like_weidu_completed_with_warnings(&string) {
-                        log::debug!("Weidu seems to have encountered errors during installation");
+                    let weidu_finished_state = detect_weidu_finished_state(&string);
+                    if weidu_finished_state.is_some() {
                         sender
-                            .send(ProcessStateChange::CompletedWithErrors { error_details: string.trim().to_string() })
+                            .send(weidu_finished_state.unwrap())
                             .expect("Failed to send process error event");
                         break;
                     } else if string_looks_like_question(&string) {
@@ -201,6 +214,16 @@ fn parse_raw_output(sender: Sender<ProcessStateChange>, receiver: Receiver<Strin
     });
 }
 
+fn detect_weidu_finished_state(string: &str) -> Option<ProcessStateChange> {
+    if string_looks_like_weidu_completed_with_errors(&string) {
+        Some(ProcessStateChange::CompletedWithErrors { error_details: string.trim().to_string() })
+    } else if string_looks_like_weidu_completed_with_warnings(&string) {
+        Some(ProcessStateChange::CompletedWithWarnings)
+    } else {
+        None
+    }
+}
+
 fn string_looks_like_question(string: &str) -> bool {
     let lowercase_string = string.trim().to_lowercase();
     !lowercase_string.contains("installing")
@@ -245,15 +268,21 @@ fn create_output_reader(out: ChildStdout) -> Receiver<String> {
         let mut line = String::new();
         match buffered_reader.read_line(&mut line) {
             Ok(0) => {
-                log::debug!("Weidu process ended");
+                log::debug!("Process ended");
                 break;
             }
             Ok(_) => {
-                log::debug!("Got line from weidu: '{}'", line);
+                log::debug!("Got line from process: '{}'", line);
                 tx.send(line).expect("Failed to sent process output line");
             }
+            Err(ref e) if e.kind() == ErrorKind::InvalidData => {
+                // sometimes there is a non-unicode gibberish in process output, it 
+                // does not seem to be an indicator of error or break anything, ignore it 
+                log::warn!("Failed to read weidu output");
+            }
             Err(details) => {
-                panic!("Failed to read weidu output, error is '{:?}'", details);
+                log::error!("Failed to read process output, error is '{:?}'", details);
+                panic!("Failed to read process output, error is '{:?}'", details);
             }
         }
     });

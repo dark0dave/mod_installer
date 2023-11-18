@@ -1,7 +1,9 @@
+use core::time;
 use fs_extra::dir::{copy, CopyOptions};
 use std::{
     fs::File,
     path::{Path, PathBuf},
+    thread,
 };
 use walkdir::WalkDir;
 
@@ -68,6 +70,11 @@ fn find_mod_folder(mod_component: &ModComponent, mod_dir: &Path, depth: usize) -
             }
             _ => None,
         })
+}
+
+pub fn sleep(millis: u64) {
+    let duration = time::Duration::from_millis(millis);
+    thread::sleep(duration);
 }
 
 #[cfg(test)]

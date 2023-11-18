@@ -15,12 +15,14 @@ use crate::{
 
 mod args;
 mod mod_component;
+mod state;
 mod utils;
 mod weidu;
+mod weidu_parser;
 
 fn main() {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
-    println!(
+    log::info!(
         r"
                  /\/\   ___   __| | (_)_ __  ___| |_ __ _| | | ___ _ __
                 /    \ / _ \ / _` | | | '_ \/ __| __/ _` | | |/ _ \ '__|
@@ -90,11 +92,11 @@ fn main() {
                 log::info!("Installed mod {:?}", &weidu_mod);
             }
             InstallationResult::Warnings => {
-                if args.stop_on_warnings {
-                    log::info!("Installed mod {:?} with warnings, stopping", &weidu_mod);
+                if args.abort_on_warnings {
+                    log::error!("Installed mod {:?} with warnings, stopping", &weidu_mod);
                     break;
                 } else {
-                    log::info!("Installed mod {:?} with warnings, keep going", &weidu_mod);
+                    log::warn!("Installed mod {:?} with warnings, keep going", &weidu_mod);
                 }
             }
         }

@@ -41,8 +41,9 @@ pub struct Args {
     #[clap(long, short, action=ArgAction::SetTrue)]
     pub skip_installed: bool,
 
-    #[clap(long, action=ArgAction::SetTrue)]
-    pub stop_on_warnings: bool,
+    /// If a warning occurs in the weidu child process exit
+    #[clap(long, short, action=ArgAction::SetTrue)]
+    pub abort_on_warnings: bool,
 }
 
 fn parse_absolute_path(arg: &str) -> Result<PathBuf, String> {

@@ -44,7 +44,7 @@ pub fn install(
 ) -> InstallationResult {
     let weidu_args = generate_args(weidu_mod, language);
     let mut command = Command::new(weidu_binary);
-    let weidu_process = command.current_dir(game_directory).args(weidu_args.clone());
+    let weidu_process = command.current_dir(game_directory).args(weidu_args);
 
     let child = weidu_process
         .stdin(Stdio::piped())
@@ -83,14 +83,14 @@ pub fn handle_io(mut child: Child) -> InstallationResult {
                     ProcessStateChange::CompletedWithErrors { error_details } => {
                         log::debug!("Weidu process seem to have completed with errors");
                         weidu_stdin
-                            .write("\n".as_bytes())
+                            .write_all("\n".as_bytes())
                             .expect("Failed to send final ENTER to weidu process");
                         return InstallationResult::Fail(error_details);
                     }
                     ProcessStateChange::CompletedWithWarnings => {
                         log::debug!("Weidu process seem to have completed with warnings");
                         weidu_stdin
-                            .write("\n".as_bytes())
+                            .write_all("\n".as_bytes())
                             .expect("Failed to send final ENTER to weidu process");
                         return InstallationResult::Warnings;
                     }
@@ -98,11 +98,11 @@ pub fn handle_io(mut child: Child) -> InstallationResult {
                         log::debug!("In progress...");
                     }
                     ProcessStateChange::RequiresInput { question } => {
-                        println!("User Input required");
-                        println!("Question is {}", question);
-                        println!("Please do so something!");
+                        log::info!("User Input required");
+                        log::info!("Question is");
+                        log::info!("{}\n", question);
+                        log::info!("Please do so something!");
                         let user_input = get_user_input();
-                        println!("");
                         log::debug!("Read user input {}, sending it to process ", user_input);
                         weidu_stdin.write_all(user_input.as_bytes()).unwrap();
                         log::debug!("Input sent");
@@ -165,10 +165,10 @@ fn parse_raw_output(sender: Sender<ProcessStateChange>, receiver: Receiver<Strin
                     }
                 }
                 ParserState::LookingForInterestingOutput => {
-                    let weidu_finished_state = detect_weidu_finished_state(&string);
-                    if weidu_finished_state.is_some() {
+                    let may_be_weidu_finished_state = detect_weidu_finished_state(&string);
+                    if let Some(weidu_finished_state) = may_be_weidu_finished_state {
                         sender
-                            .send(weidu_finished_state.unwrap())
+                            .send(weidu_finished_state)
                             .expect("Failed to send process error event");
                         break;
                     } else if string_looks_like_question(&string) {
@@ -196,7 +196,7 @@ fn parse_raw_output(sender: Sender<ProcessStateChange>, receiver: Receiver<Strin
                     ParserState::WaitingForMoreQuestionContent => {
                         log::debug!("No new weidu otput, sending question to user");
                         sender
-                            .send(ProcessStateChange::RequiresInput { question: question })
+                            .send(ProcessStateChange::RequiresInput { question })
                             .expect("Failed to send question");
                         current_state = ParserState::LookingForInterestingOutput;
                         question = String::new();
@@ -218,11 +218,11 @@ fn parse_raw_output(sender: Sender<ProcessStateChange>, receiver: Receiver<Strin
 }
 
 fn detect_weidu_finished_state(string: &str) -> Option<ProcessStateChange> {
-    if string_looks_like_weidu_completed_with_errors(&string) {
+    if string_looks_like_weidu_completed_with_errors(string) {
         Some(ProcessStateChange::CompletedWithErrors {
             error_details: string.trim().to_string(),
         })
-    } else if string_looks_like_weidu_completed_with_warnings(&string) {
+    } else if string_looks_like_weidu_completed_with_warnings(string) {
         Some(ProcessStateChange::CompletedWithWarnings)
     } else {
         None
@@ -238,8 +238,8 @@ fn string_looks_like_question(string: &str) -> bool {
             || lowercase_string.starts_with("do you want")
             || lowercase_string.starts_with("would you like")
             || lowercase_string.starts_with("enter"))
-        || lowercase_string.ends_with("?")
-        || lowercase_string.ends_with(":")
+        || lowercase_string.ends_with('?')
+        || lowercase_string.ends_with(':')
 }
 
 fn string_looks_like_weidu_is_doing_something_useful(string: &str) -> bool {

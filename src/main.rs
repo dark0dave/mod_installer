@@ -10,7 +10,7 @@ use crate::{
         copy_mod_folder, create_weidu_log_if_not_exists, mod_folder_present_in_game_directory,
         search_mod_folders,
     },
-    weidu::install,
+    weidu::{install, InstallationResult},
 };
 
 mod args;
@@ -73,12 +73,30 @@ fn main() {
             );
             copy_mod_folder(&args.game_directory, mod_folder)
         }
-        install(
+        log::info!("Installing mod {:?}", &weidu_mod);
+        match install(
             &args.weidu_binary,
             &args.game_directory,
             &weidu_mod,
             &args.language,
-        );
-        log::info!("Installed mod {:?}", &weidu_mod);
+        ) {
+            InstallationResult::Fail(message) => {
+                panic!(
+                    "Failed to install mod {}, error is '{}'",
+                    weidu_mod.name, message
+                );
+            }
+            InstallationResult::Success => {
+                log::info!("Installed mod {:?}", &weidu_mod);
+            }
+            InstallationResult::Warnings => {
+                if args.stop_on_warnings {
+                    log::info!("Installed mod {:?} with warnings, stopping", &weidu_mod);
+                    break;
+                } else {
+                    log::info!("Installed mod {:?} with warnings, keep going", &weidu_mod);
+                }
+            }
+        }
     }
 }

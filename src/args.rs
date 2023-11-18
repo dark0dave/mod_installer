@@ -40,6 +40,9 @@ pub struct Args {
     /// Compare against installed weidu log, note this is best effort
     #[clap(long, short, action=ArgAction::SetTrue)]
     pub skip_installed: bool,
+
+    #[clap(long, action=ArgAction::SetTrue)]
+    pub stop_on_warnings: bool,
 }
 
 fn parse_absolute_path(arg: &str) -> Result<PathBuf, String> {

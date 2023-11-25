@@ -91,7 +91,7 @@ pub fn parse_raw_output(sender: Sender<State>, receiver: Receiver<String>) {
                         current_state = ParserState::WaitingForMoreQuestionContent;
                     }
                     ParserState::WaitingForMoreQuestionContent => {
-                        log::debug!("No new weidu otput, sending question to user");
+                        log::debug!("No new weidu output, sending question to user");
                         sender
                             .send(State::RequiresInput { question })
                             .expect("Failed to send question");

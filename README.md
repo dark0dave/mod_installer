@@ -46,7 +46,7 @@ Additional information can be shown with:
 RUST_LOG=INFO mod_installer [OPTIONS]
 ```
 
-For line by line debuging:
+For line by line debugging:
 ```sh
 RUST_LOG=DEBUG mod_installer [OPTIONS]
 ```

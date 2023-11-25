@@ -131,13 +131,26 @@ fn string_looks_like_question(weidu_output: &str) -> bool {
 
 fn detect_weidu_finished_state(weidu_output: &str) -> Option<State> {
     let comparable_output = weidu_output.trim().to_lowercase();
-    if WEIDU_FAILED_WITH_ERROR.eq(&comparable_output) {
+    if comparable_output.contains(WEIDU_FAILED_WITH_ERROR) {
         Some(State::CompletedWithErrors {
             error_details: comparable_output,
         })
-    } else if WEIDU_COMPLETED_WITH_WARNINGS.eq(&comparable_output) {
+    } else if comparable_output.contains(WEIDU_COMPLETED_WITH_WARNINGS) {
         Some(State::CompletedWithWarnings)
     } else {
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_exit_warnings() {
+        let test = "INSTALLED WITH WARNINGS     Additional equipment for Thieves and Bards";
+        assert_eq!(
+            detect_weidu_finished_state(test),
+            Some(State::CompletedWithWarnings)
+        )
     }
 }

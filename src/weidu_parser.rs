@@ -1,5 +1,9 @@
 use std::{
-    sync::mpsc::{Receiver, Sender, TryRecvError},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        mpsc::{Receiver, Sender, TryRecvError},
+        Arc,
+    },
     thread,
 };
 
@@ -40,7 +44,12 @@ enum ParserState {
     LookingForInterestingOutput,
 }
 
-pub fn parse_raw_output(sender: Sender<State>, receiver: Receiver<String>) {
+pub fn parse_raw_output(
+    sender: Sender<State>,
+    receiver: Receiver<String>,
+    wait_count: Arc<AtomicUsize>,
+    timeout: usize,
+) {
     let mut current_state = ParserState::LookingForInterestingOutput;
     let mut question = String::new();
     sender
@@ -101,7 +110,11 @@ pub fn parse_raw_output(sender: Sender<State>, receiver: Receiver<String>) {
                         question = String::new();
                     }
                     _ => {
-                        // TODO: Exit here if we come here too much
+                        if wait_count.load(Ordering::Relaxed) >= timeout {
+                            sender
+                                .send(State::TimedOut)
+                                .expect("Could send timeout error");
+                        }
                         // there is no new weidu output and we are not waiting for any, so there is nothing to do
                     }
                 }

@@ -81,6 +81,7 @@ fn main() {
             &args.game_directory,
             &weidu_mod,
             &args.language,
+            args.timeout,
         ) {
             InstallationResult::Fail(message) => {
                 panic!(

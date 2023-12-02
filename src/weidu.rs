@@ -3,7 +3,11 @@ use std::{
     panic,
     path::PathBuf,
     process::{Child, ChildStdout, Command, Stdio},
-    sync::mpsc::{self, Receiver, TryRecvError},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        mpsc::{self, Receiver, TryRecvError},
+        Arc,
+    },
     thread,
 };
 
@@ -42,6 +46,7 @@ pub fn install(
     game_directory: &PathBuf,
     weidu_mod: &ModComponent,
     language: &str,
+    timeout: usize,
 ) -> InstallationResult {
     let weidu_args = generate_args(weidu_mod, language);
     let mut command = Command::new(weidu_binary);
@@ -54,16 +59,16 @@ pub fn install(
         .spawn()
         .expect("Failed to spawn weidu process");
 
-    handle_io(child)
+    handle_io(child, timeout)
 }
 
-pub fn handle_io(mut child: Child) -> InstallationResult {
+pub fn handle_io(mut child: Child, timeout: usize) -> InstallationResult {
     let mut weidu_stdin = child.stdin.take().unwrap();
+    let wait_counter = Arc::new(AtomicUsize::new(0));
     let raw_output_receiver = create_output_reader(child.stdout.take().unwrap());
     let (sender, parsed_output_receiver) = mpsc::channel::<State>();
-    parse_raw_output(sender, raw_output_receiver);
+    parse_raw_output(sender, raw_output_receiver, wait_counter.clone(), timeout);
 
-    let mut wait_counter = 0;
     loop {
         match parsed_output_receiver.try_recv() {
             Ok(state) => {
@@ -79,6 +84,13 @@ pub fn handle_io(mut child: Child) -> InstallationResult {
                             .write_all("\n".as_bytes())
                             .expect("Failed to send final ENTER to weidu process");
                         return InstallationResult::Fail(error_details);
+                    }
+                    State::TimedOut => {
+                        log::error!(
+                            "Weidu process seem to have been running for {} seconds, exiting",
+                            timeout
+                        );
+                        return InstallationResult::Fail("Timed out".to_string());
                     }
                     State::CompletedWithWarnings => {
                         log::warn!("Weidu process seem to have completed with warnings");
@@ -103,11 +115,13 @@ pub fn handle_io(mut child: Child) -> InstallationResult {
                 }
             }
             Err(TryRecvError::Empty) => {
-                log::info!("{}\r", ".".repeat(wait_counter));
+                log::info!(
+                    "{}\r",
+                    ".".repeat(wait_counter.load(Ordering::Relaxed) % 10)
+                );
                 std::io::stdout().flush().expect("Failed to flush stdout");
 
-                wait_counter += 1;
-                wait_counter %= 10;
+                wait_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 sleep(1000);
 
                 std::io::stdout().flush().expect("Failed to flush stdout");

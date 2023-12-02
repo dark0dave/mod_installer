@@ -34,16 +34,20 @@ pub struct Args {
     pub language: String,
 
     /// Depth to walk folder structure
-    #[clap(long, short, default_value = "3")]
+    #[clap(env, long, short, default_value = "3")]
     pub depth: usize,
 
     /// Compare against installed weidu log, note this is best effort
-    #[clap(long, short, action=ArgAction::SetTrue)]
+    #[clap(env, long, short, action=ArgAction::SetTrue)]
     pub skip_installed: bool,
 
     /// If a warning occurs in the weidu child process exit
-    #[clap(long, short, action=ArgAction::SetTrue)]
+    #[clap(env, long, short, action=ArgAction::SetTrue)]
     pub abort_on_warnings: bool,
+
+    /// Timeout time per mod in seconds, default is 1 hour
+    #[clap(env, long, short, default_value = "3600")]
+    pub timeout: usize,
 }
 
 fn parse_absolute_path(arg: &str) -> Result<PathBuf, String> {

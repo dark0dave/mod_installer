@@ -31,6 +31,8 @@ const WEIDU_COMPLETED_WITH_WARNINGS: &str = "installed with warnings";
 
 const WEIDU_FAILED_WITH_ERROR: &str = "not installed due to errors";
 
+const WEIDU_FINISHED: &str = "successfully installed";
+
 #[derive(Debug)]
 enum ParserState {
     CollectingQuestion,
@@ -99,6 +101,7 @@ pub fn parse_raw_output(sender: Sender<State>, receiver: Receiver<String>) {
                         question = String::new();
                     }
                     _ => {
+                        // TODO: Exit here if we come here too much
                         // there is no new weidu output and we are not waiting for any, so there is nothing to do
                     }
                 }
@@ -137,6 +140,8 @@ fn detect_weidu_finished_state(weidu_output: &str) -> Option<State> {
         })
     } else if comparable_output.contains(WEIDU_COMPLETED_WITH_WARNINGS) {
         Some(State::CompletedWithWarnings)
+    } else if comparable_output.contains(WEIDU_FINISHED) {
+        Some(State::Completed)
     } else {
         None
     }
@@ -152,5 +157,10 @@ mod tests {
             detect_weidu_finished_state(test),
             Some(State::CompletedWithWarnings)
         )
+    }
+    #[test]
+    fn test_exit_success() {
+        let test = "SUCCESSFULLY INSTALLED      Jan's Extended Quest";
+        assert_eq!(detect_weidu_finished_state(test), Some(State::Completed))
     }
 }

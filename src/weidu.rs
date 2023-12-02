@@ -103,17 +103,13 @@ pub fn handle_io(mut child: Child) -> InstallationResult {
                 }
             }
             Err(TryRecvError::Empty) => {
-                log::info!("Waiting for child process to end");
                 log::info!("{}\r", ".".repeat(wait_counter));
                 std::io::stdout().flush().expect("Failed to flush stdout");
 
                 wait_counter += 1;
                 wait_counter %= 10;
-                sleep(500);
+                sleep(1000);
 
-                log::info!(
-                    "\r                                                                   \r"
-                );
                 std::io::stdout().flush().expect("Failed to flush stdout");
             }
             Err(TryRecvError::Disconnected) => break,

@@ -132,7 +132,7 @@ pub fn parse_raw_output(
 
 fn string_looks_like_question(weidu_output: &str) -> bool {
     let comparable_output = weidu_output.trim().to_lowercase();
-    if comparable_output.contains("installing") {
+    if comparable_output.contains("installing") || comparable_output.contains("creating") {
         return false;
     }
     (WEIDU_CHOICE.contains(&comparable_output.as_str()))
@@ -175,5 +175,11 @@ mod tests {
     fn test_exit_success() {
         let test = "SUCCESSFULLY INSTALLED      Jan's Extended Quest";
         assert_eq!(detect_weidu_finished_state(test), Some(State::Completed))
+    }
+
+    #[test]
+    fn is_not_question() {
+        let test = "Creating epilogues. Too many epilogues... Why are there so many options here?";
+        assert_eq!(string_looks_like_question(test), false)
     }
 }

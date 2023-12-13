@@ -106,7 +106,6 @@ pub fn handle_io(mut child: Child, timeout: usize) -> InstallationResult {
                         log::info!("User Input required");
                         log::info!("Question is");
                         log::info!("{}\n", question);
-                        log::info!("Please do so something!");
                         let user_input = get_user_input();
                         log::debug!("Read user input {}, sending it to process ", user_input);
                         weidu_stdin.write_all(user_input.as_bytes()).unwrap();

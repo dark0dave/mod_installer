@@ -18,34 +18,34 @@ impl From<String> for ModComponent {
 
         let install_path = parts
             .nth(1)
-            .expect("Could not get full name of mod")
+            .expect(&format!("Could not get full name of mod, from: {}", line))
             .to_string();
 
         let tp_file = install_path
             .split(MAIN_SEPARATOR)
             .nth(1)
-            .expect("Could find tp2 file")
+            .expect(&format!("Could not find tp2 file, from: {}", line))
             .to_string();
 
         let name = install_path
             .split(MAIN_SEPARATOR)
             .next()
-            .expect("Could not split mod into name and component")
+            .expect(&format!("Could not split {} into mod into name and component", line))
             .to_ascii_lowercase();
 
         let mut lang_and_component = parts
             .next()
-            .expect("Could not find lang and component")
+            .expect(&format!("Could not find lang and component, from {}", line))
             .split(' ');
 
         let lang = lang_and_component
             .nth(1)
-            .expect("Could not find lang")
+            .expect(&format!("Could not find lang, from: {}", line))
             .replace('#', "");
 
         let component = lang_and_component
             .next()
-            .expect("Could not find component")
+            .expect(&format!("Could not find component, from {}", line))
             .replace('#', "");
 
         ModComponent {

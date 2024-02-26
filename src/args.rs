@@ -38,11 +38,11 @@ pub struct Args {
     pub depth: usize,
 
     /// Compare against installed weidu log, note this is best effort
-    #[clap(env, long, short, action=ArgAction::SetTrue)]
+    #[clap(env, long, short, action=ArgAction::SetTrue, default_value = "true")]
     pub skip_installed: bool,
 
     /// If a warning occurs in the weidu child process exit
-    #[clap(env, long, short, action=ArgAction::SetTrue)]
+    #[clap(env, long, short, action=ArgAction::SetTrue, default_value = "true")]
     pub abort_on_warnings: bool,
 
     /// Timeout time per mod in seconds, default is 1 hour

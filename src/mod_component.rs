@@ -4,12 +4,15 @@ use std::{
     path::{PathBuf, MAIN_SEPARATOR},
 };
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct ModComponent {
     pub tp_file: String,
     pub name: String,
     pub lang: String,
     pub component: String,
+    pub component_name: String,
+    pub sub_component: String,
+    pub version: String,
 }
 
 impl From<String> for ModComponent {
@@ -33,10 +36,12 @@ impl From<String> for ModComponent {
             .unwrap_or_else(|| panic!("Could not split {} into mod into name and component", line))
             .to_ascii_lowercase();
 
-        let mut lang_and_component = parts
+        let mut tail = parts
             .next()
             .unwrap_or_else(|| panic!("Could not find lang and component, from {}", line))
-            .split(' ');
+            .split("//");
+
+        let mut lang_and_component = tail.next().unwrap_or_default().split(' ');
 
         let lang = lang_and_component
             .nth(1)
@@ -48,11 +53,39 @@ impl From<String> for ModComponent {
             .unwrap_or_else(|| panic!("Could not find component, from {}", line))
             .replace('#', "");
 
+        let mut component_name_sub_component_version = tail.next().unwrap_or_default().split(':');
+
+        let mut component_name_sub_component = component_name_sub_component_version
+            .next()
+            .unwrap_or_default()
+            .split("->");
+
+        let component_name = component_name_sub_component
+            .next()
+            .unwrap_or_default()
+            .trim()
+            .to_string();
+
+        let sub_component = component_name_sub_component
+            .next()
+            .unwrap_or_default()
+            .trim()
+            .to_string();
+
+        let version = component_name_sub_component_version
+            .next()
+            .unwrap_or_default()
+            .trim()
+            .to_string();
+
         ModComponent {
             tp_file,
             name,
             lang,
             component,
+            component_name,
+            sub_component,
+            version,
         }
     }
 }
@@ -88,22 +121,55 @@ mod tests {
         let test_log = Path::new("fixtures/test.log");
         let logs = parse_weidu_log(test_log.to_path_buf());
         assert_eq!(
-            logs.first(),
-            Some(&ModComponent {
-                tp_file: "TEST.TP2".to_string(),
-                name: "test_mod_name_1".to_string(),
-                lang: "0".to_string(),
-                component: "0".to_string()
-            })
-        );
-        assert_eq!(
-            logs.last(),
-            Some(&ModComponent {
-                tp_file: "TEST.TP2".to_string(),
-                name: "test_mod_name_2".to_string(),
-                lang: "0".to_string(),
-                component: "0".to_string()
-            })
+            logs,
+            vec![
+                ModComponent {
+                    tp_file: "TEST.TP2".to_string(),
+                    name: "test_mod_name_1".to_string(),
+                    lang: "0".to_string(),
+                    component: "0".to_string(),
+                    component_name: "test mod one".to_string(),
+                    sub_component: "".to_string(),
+                    version: "".to_string()
+                },
+                ModComponent {
+                    tp_file: "TEST.TP2".to_string(),
+                    name: "test_mod_name_1".to_string(),
+                    lang: "0".to_string(),
+                    component: "1".to_string(),
+                    component_name: "test mod two".to_string(),
+                    sub_component: "".to_string(),
+                    version: "".to_string()
+                },
+                ModComponent {
+                    tp_file: "END.TP2".to_string(),
+                    name: "test_mod_name_2".to_string(),
+                    lang: "0".to_string(),
+                    component: "0".to_string(),
+                    component_name: "test mod with subcomponent information".to_string(),
+                    sub_component: "Standard installation".to_string(),
+                    version: "".to_string()
+                },
+                ModComponent {
+                    tp_file: "END.TP2".to_string(),
+                    name: "test_mod_name_3".to_string(),
+                    lang: "0".to_string(),
+                    component: "0".to_string(),
+                    component_name: "test mod with version".to_string(),
+                    sub_component: "".to_string(),
+                    version: "1.02".to_string()
+                },
+                ModComponent {
+                    tp_file: "TWEAKS.TP2".to_string(),
+                    name: "test_mod_name_4".to_string(),
+                    lang: "0".to_string(),
+                    component: "3346".to_string(),
+                    component_name: "test mod with both subcomponent information and version"
+                        .to_string(),
+                    sub_component: "Casting speed only".to_string(),
+                    version: "v16".to_string()
+                }
+            ]
         );
     }
 }

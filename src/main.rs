@@ -41,6 +41,7 @@ fn main() {
         mods.iter()
             .filter_map(|weidu_mod| {
                 if !installed_mods.contains(weidu_mod) {
+                    log::debug!("Mod to be installed {:?}", weidu_mod);
                     Some(weidu_mod.clone())
                 } else {
                     None
@@ -51,7 +52,7 @@ fn main() {
         mods
     };
 
-    log::debug!(
+    log::info!(
         "Number of mods found: {}, Number of mods to be installed: {}",
         number_of_mods_found,
         mods_to_be_installed.len()

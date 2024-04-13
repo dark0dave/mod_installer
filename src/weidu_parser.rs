@@ -163,6 +163,8 @@ fn detect_weidu_finished_state(weidu_output: &str) -> Option<State> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
+
     #[test]
     fn test_exit_warnings() {
         let test = "INSTALLED WITH WARNINGS     Additional equipment for Thieves and Bards";

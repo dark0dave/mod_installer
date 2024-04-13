@@ -79,8 +79,9 @@ pub fn sleep(millis: u64) {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
+    use pretty_assertions::assert_eq;
+
     #[test]
     fn finds_mod_folder() {
         let mod_component = ModComponent {

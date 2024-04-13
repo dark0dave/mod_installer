@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.5.0
+  rev: v4.6.0
   hooks:
     - id: check-added-large-files
       exclude: (?x)^(docs)
@@ -24,7 +24,7 @@ repos:
     - id: remove-crlf
 
 - repo: https://github.com/commitizen-tools/commitizen
-  rev: v3.18.0
+  rev: v3.22.0
   hooks:
     - id: commitizen
       stages: [commit-msg]

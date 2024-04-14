@@ -21,14 +21,13 @@ const WEIDU_USEFUL_STATUS: [&str; 9] = [
     "processing",
 ];
 
-const WEIDU_CHOICE: [&str; 7] = [
+const WEIDU_CHOICE: [&str; 6] = [
     "choice",
     "choose",
     "select",
     "do you want",
     "would you like",
     "enter",
-    "the full path",
 ];
 
 const WEIDU_CHOICE_SYMBOL: [char; 2] = ['?', ':'];
@@ -140,20 +139,12 @@ fn string_looks_like_question(weidu_output: &str) -> bool {
     {
         return false;
     }
-    // enter.*the full path.*
-    if comparable_output.contains(WEIDU_CHOICE[WEIDU_CHOICE.len() - 1])
-        && comparable_output.starts_with(WEIDU_CHOICE[WEIDU_CHOICE.len() - 2])
-    {
-        return true;
-    }
     (WEIDU_CHOICE.contains(&comparable_output.as_str()))
-        || WEIDU_CHOICE_SYMBOL.contains(
-            &comparable_output
-                .as_str()
-                .chars()
-                .last()
-                .unwrap_or_default(),
-        )
+        || WEIDU_CHOICE_SYMBOL.contains(&comparable_output.chars().last().unwrap_or_default())
+        || comparable_output
+            .split(' ')
+            .take(1)
+            .any(|c| WEIDU_CHOICE.contains(&c))
 }
 
 fn detect_weidu_finished_state(weidu_output: &str) -> Option<State> {

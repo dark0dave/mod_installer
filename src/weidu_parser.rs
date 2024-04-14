@@ -9,24 +9,26 @@ use std::{
 
 use crate::{state::State, utils::sleep};
 
-const WEIDU_USEFUL_STATUS: [&str; 8] = [
-    "copying",
+const WEIDU_USEFUL_STATUS: [&str; 9] = [
     "copied",
-    "installing",
+    "copying",
+    "creating",
     "installed",
-    "patching",
+    "installing",
     "patched",
-    "processing",
+    "patching",
     "processed",
+    "processing",
 ];
 
-const WEIDU_CHOICE: [&str; 6] = [
+const WEIDU_CHOICE: [&str; 7] = [
     "choice",
     "choose",
     "select",
     "do you want",
     "would you like",
     "enter",
+    "the full path",
 ];
 
 const WEIDU_CHOICE_SYMBOL: [char; 2] = ['?', ':'];
@@ -131,9 +133,18 @@ pub fn parse_raw_output(
 }
 
 fn string_looks_like_question(weidu_output: &str) -> bool {
-    let comparable_output = weidu_output.trim().to_lowercase();
-    if comparable_output.contains("installing") || comparable_output.contains("creating") {
+    let comparable_output = weidu_output.trim().to_ascii_lowercase();
+    // installing|creating
+    if comparable_output.contains(WEIDU_USEFUL_STATUS[2])
+        || comparable_output.contains(WEIDU_USEFUL_STATUS[4])
+    {
         return false;
+    }
+    // enter.*the full path.*
+    if comparable_output.contains(WEIDU_CHOICE[WEIDU_CHOICE.len() - 1])
+        && comparable_output.starts_with(WEIDU_CHOICE[WEIDU_CHOICE.len() - 2])
+    {
+        return true;
     }
     (WEIDU_CHOICE.contains(&comparable_output.as_str()))
         || WEIDU_CHOICE_SYMBOL.contains(
@@ -168,6 +179,7 @@ mod tests {
     #[test]
     fn test_exit_warnings() {
         let test = "INSTALLED WITH WARNINGS     Additional equipment for Thieves and Bards";
+        assert_eq!(string_looks_like_question(test), false);
         assert_eq!(
             detect_weidu_finished_state(test),
             Some(State::CompletedWithWarnings)
@@ -176,6 +188,7 @@ mod tests {
     #[test]
     fn test_exit_success() {
         let test = "SUCCESSFULLY INSTALLED      Jan's Extended Quest";
+        assert_eq!(string_looks_like_question(test), false);
         assert_eq!(detect_weidu_finished_state(test), Some(State::Completed))
     }
 
@@ -183,5 +196,14 @@ mod tests {
     fn is_not_question() {
         let test = "Creating epilogues. Too many epilogues... Why are there so many options here?";
         assert_eq!(string_looks_like_question(test), false)
+    }
+
+    #[test]
+    fn is_a_question() {
+        let test = "Enter the full path to your Baldur's Gate installation then press Enter.";
+        assert_eq!(string_looks_like_question(test), true);
+        let test = "Enter the full path to your BG:EE+SoD installation then press Enter.\
+Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806";
+        assert_eq!(string_looks_like_question(test), true)
     }
 }

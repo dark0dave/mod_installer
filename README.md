@@ -1,4 +1,9 @@
 # Infinity Engine Mod Installer
+[![](./docs/rust.svg)](https://www.rust-lang.org/tools/install)
+[![](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/dark0dave/mod_installer/releases/latest)
+[![](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/dark0dave/mod_installer/releases/latest)
+[![](https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/dark0dave/mod_installer/releases/latest)
+
       /\/\   ___   __| | (_)_ __  ___| |_ __ _| | | ___ _ __
      /    \ / _ \ / _` | | | '_ \/ __| __/ _` | | |/ _ \ '__|
     / /\/\ \ (_) | (_| | | | | | \__ \ || (_| | | |  __/ |

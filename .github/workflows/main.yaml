@@ -6,6 +6,11 @@ on:
     tags:
     - "*"
   pull_request:
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+env:
+  CARGO_TERM_COLOR: always
 jobs:
   pre-commit:
     runs-on: ubuntu-latest

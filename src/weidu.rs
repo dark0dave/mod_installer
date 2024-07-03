@@ -22,10 +22,11 @@ pub fn get_user_input() -> String {
     input.to_string()
 }
 
-fn generate_args(weidu_mod: &ModComponent, language: &str) -> Vec<String> {
-    format!("{mod_name}/{mod_tp_file} --autolog --force-install {component} --use-lang {game_lang} --language {mod_lang}",
+fn generate_args(weidu_mod: &ModComponent, weidu_log_mode: &str, language: &str) -> Vec<String> {
+    format!("{mod_name}/{mod_tp_file} {weidu_log_mode} --force-install {component} --use-lang {game_lang} --language {mod_lang}",
         mod_name = weidu_mod.name,
         mod_tp_file = weidu_mod.tp_file,
+        weidu_log_mode = weidu_log_mode,
         component = weidu_mod.component,
         mod_lang = weidu_mod.lang,
         game_lang = language
@@ -46,9 +47,10 @@ pub fn install(
     game_directory: &PathBuf,
     weidu_mod: &ModComponent,
     language: &str,
+    weidu_log_mode: &str,
     timeout: usize,
 ) -> InstallationResult {
-    let weidu_args = generate_args(weidu_mod, language);
+    let weidu_args = generate_args(weidu_mod, weidu_log_mode, language);
     let mut command = Command::new(weidu_binary);
     let weidu_process = command.current_dir(game_directory).args(weidu_args);
 

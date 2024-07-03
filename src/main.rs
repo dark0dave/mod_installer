@@ -82,6 +82,7 @@ fn main() {
             &args.game_directory,
             &weidu_mod,
             &args.language,
+            &args.weidu_log_mode,
             args.timeout,
         ) {
             InstallationResult::Fail(message) => {

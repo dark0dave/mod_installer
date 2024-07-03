@@ -21,10 +21,13 @@ jobs:
           toolchain: stable
       - name: Create docs
         run: |
-          cargo doc
-          mv target/doc/mod_installer ./_site
+          cargo clean --doc
+          cargo doc --all --no-deps
+          mv target/doc/mod_installer target/doc/rust_docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/doc
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

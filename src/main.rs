@@ -5,7 +5,7 @@ use clap::Parser;
 use env_logger::Env;
 
 use crate::{
-    mod_component::parse_weidu_log,
+    component::parse_weidu_log,
     utils::{
         copy_mod_folder, create_weidu_log_if_not_exists, mod_folder_present_in_game_directory,
         search_mod_folders,
@@ -14,7 +14,7 @@ use crate::{
 };
 
 mod args;
-mod mod_component;
+mod component;
 mod state;
 mod utils;
 mod weidu;

@@ -11,9 +11,7 @@ use std::{
     thread,
 };
 
-use crate::{
-    mod_component::ModComponent, state::State, utils::sleep, weidu_parser::parse_raw_output,
-};
+use crate::{component::Component, state::State, utils::sleep, weidu_parser::parse_raw_output};
 
 pub fn get_user_input() -> String {
     let stdin = io::stdin();
@@ -22,7 +20,7 @@ pub fn get_user_input() -> String {
     input.to_string()
 }
 
-fn generate_args(weidu_mod: &ModComponent, weidu_log_mode: &str, language: &str) -> Vec<String> {
+fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) -> Vec<String> {
     format!("{mod_name}/{mod_tp_file} {weidu_log_mode} --force-install {component} --use-lang {game_lang} --language {mod_lang}",
         mod_name = weidu_mod.name,
         mod_tp_file = weidu_mod.tp_file,
@@ -45,7 +43,7 @@ pub enum InstallationResult {
 pub fn install(
     weidu_binary: &PathBuf,
     game_directory: &PathBuf,
-    weidu_mod: &ModComponent,
+    weidu_mod: &Component,
     language: &str,
     weidu_log_mode: &str,
     timeout: usize,

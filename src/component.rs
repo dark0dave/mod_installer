@@ -4,8 +4,10 @@ use std::{
     path::PathBuf,
 };
 
+// This should mirror the weidu component
+// https://github.com/WeiDUorg/weidu/blob/devel/src/tp.ml#L98
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub struct ModComponent {
+pub struct Component {
     pub tp_file: String,
     pub name: String,
     pub lang: String,
@@ -15,7 +17,7 @@ pub struct ModComponent {
     pub version: String,
 }
 
-impl From<String> for ModComponent {
+impl From<String> for Component {
     fn from(line: String) -> Self {
         let mut parts = line.split('~');
 
@@ -102,7 +104,7 @@ impl From<String> for ModComponent {
             .trim()
             .to_string();
 
-        ModComponent {
+        Component {
             tp_file,
             name,
             lang,
@@ -114,7 +116,7 @@ impl From<String> for ModComponent {
     }
 }
 
-pub fn parse_weidu_log(weidu_log_path: PathBuf) -> Vec<ModComponent> {
+pub fn parse_weidu_log(weidu_log_path: PathBuf) -> Vec<Component> {
     let file = File::open(weidu_log_path).expect("Could not open weidu log exiting");
     let reader = BufReader::new(file);
 
@@ -127,7 +129,7 @@ pub fn parse_weidu_log(weidu_log_path: PathBuf) -> Vec<ModComponent> {
                     && !component.starts_with('\n')
                     && !component.starts_with("//") =>
             {
-                Some(ModComponent::from(component))
+                Some(Component::from(component))
             }
             _ => None,
         })
@@ -147,7 +149,7 @@ mod tests {
         assert_eq!(
             logs,
             vec![
-                ModComponent {
+                Component {
                     tp_file: "TEST.TP2".to_string(),
                     name: "test_mod_name_1".to_string(),
                     lang: "0".to_string(),
@@ -156,7 +158,7 @@ mod tests {
                     sub_component: "".to_string(),
                     version: "".to_string()
                 },
-                ModComponent {
+                Component {
                     tp_file: "TEST.TP2".to_string(),
                     name: "test_mod_name_1".to_string(),
                     lang: "0".to_string(),
@@ -165,7 +167,7 @@ mod tests {
                     sub_component: "".to_string(),
                     version: "".to_string()
                 },
-                ModComponent {
+                Component {
                     tp_file: "END.TP2".to_string(),
                     name: "test_mod_name_2".to_string(),
                     lang: "0".to_string(),
@@ -174,7 +176,7 @@ mod tests {
                     sub_component: "Standard installation".to_string(),
                     version: "".to_string()
                 },
-                ModComponent {
+                Component {
                     tp_file: "END.TP2".to_string(),
                     name: "test_mod_name_3".to_string(),
                     lang: "0".to_string(),
@@ -183,7 +185,7 @@ mod tests {
                     sub_component: "".to_string(),
                     version: "1.02".to_string()
                 },
-                ModComponent {
+                Component {
                     tp_file: "TWEAKS.TP2".to_string(),
                     name: "test_mod_name_4".to_string(),
                     lang: "0".to_string(),
@@ -200,8 +202,8 @@ mod tests {
     #[test]
     fn test_parse_windows() {
         let mod_string = r"~TOBEX\TOBEX.TP2~ #0 #100 // TobEx - Core: v28";
-        let mod_component = ModComponent::from(mod_string.to_string());
-        let expected = ModComponent {
+        let mod_component = Component::from(mod_string.to_string());
+        let expected = Component {
             tp_file: "TOBEX.TP2".to_string(),
             name: "tobex".to_string(),
             lang: "0".to_string(),

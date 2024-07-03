@@ -7,7 +7,7 @@ use std::{
 };
 use walkdir::WalkDir;
 
-use crate::mod_component::ModComponent;
+use crate::component::Component;
 
 pub fn create_weidu_log_if_not_exists(game_directory: &Path) -> PathBuf {
     let weidu_log_file = game_directory.join("weidu").with_extension("log");
@@ -33,7 +33,7 @@ pub fn copy_mod_folder(game_directory: &Path, mod_folder: &Path) {
 
 pub fn search_mod_folders(
     folder_directories: &[PathBuf],
-    weidu_mod: &ModComponent,
+    weidu_mod: &Component,
     depth: usize,
 ) -> PathBuf {
     let mod_folder_locations = folder_directories
@@ -48,7 +48,7 @@ pub fn search_mod_folders(
     }
 }
 
-fn find_mod_folder(mod_component: &ModComponent, mod_dir: &Path, depth: usize) -> Option<PathBuf> {
+fn find_mod_folder(mod_component: &Component, mod_dir: &Path, depth: usize) -> Option<PathBuf> {
     WalkDir::new(mod_dir)
         .follow_links(true)
         .max_depth(depth)
@@ -84,7 +84,7 @@ mod tests {
 
     #[test]
     fn finds_mod_folder() {
-        let mod_component = ModComponent {
+        let mod_component = Component {
             tp_file: "TEST.TP2".to_string(),
             name: "test_mod_name_1".to_string(),
             lang: "0".to_string(),

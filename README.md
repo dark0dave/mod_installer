@@ -41,7 +41,7 @@ Options:
   -t, --timeout <TIMEOUT>
     Timeout time per mod in seconds, default is 1 hour [env: TIMEOUT=] [default: 3600]
   -u, --weidu-log-mode <WEIDU_LOG_MODE>
-    Full path to debug log for weidu [env: WEIDU_LOG_MODE=] [default: --autolog]
+    Weidu log setting "--autolog" is default [env: WEIDU_LOG_MODE=] [default: --autolog]
   -h, --help
     Print help
   -V, --version

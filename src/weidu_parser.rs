@@ -139,12 +139,12 @@ fn string_looks_like_question(weidu_output: &str) -> bool {
     {
         return false;
     }
-    (WEIDU_CHOICE.contains(&comparable_output.as_str()))
-        || WEIDU_CHOICE_SYMBOL.contains(&comparable_output.chars().last().unwrap_or_default())
-        || comparable_output
-            .split(' ')
-            .take(1)
-            .any(|c| WEIDU_CHOICE.contains(&c))
+    return WEIDU_CHOICE
+        .iter()
+        .map(|choice| comparable_output.contains(choice))
+        .reduce(|a, b| a | b)
+        .unwrap_or(false)
+        || WEIDU_CHOICE_SYMBOL.contains(&comparable_output.chars().last().unwrap_or_default());
 }
 
 fn detect_weidu_finished_state(weidu_output: &str) -> Option<State> {
@@ -191,10 +191,15 @@ mod tests {
 
     #[test]
     fn is_a_question() {
-        let test = "Enter the full path to your Baldur's Gate installation then press Enter.";
-        assert_eq!(string_looks_like_question(test), true);
-        let test = "Enter the full path to your BG:EE+SoD installation then press Enter.\
-Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806";
-        assert_eq!(string_looks_like_question(test), true)
+        let tests = vec!["Enter the full path to your Baldur's Gate installation then press Enter.", "Enter the full path to your BG:EE+SoD installation then press Enter.\
+Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806", "[N]o, [Q]uit or choose one:", "Please enter the chance for items to randomly not be randomised as a integet number (e.g. 10 for 10%)"];
+        for question in tests {
+            assert_eq!(
+                string_looks_like_question(question),
+                true,
+                "String {} doesn't look like a string",
+                question
+            );
+        }
     }
 }

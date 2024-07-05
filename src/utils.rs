@@ -26,7 +26,7 @@ pub fn copy_mod_folder(game_directory: &Path, mod_folder: &Path) {
     options.skip_exist = true;
     let copied = copy(mod_folder, game_directory, &options);
     if let Err(error) = copied {
-        log::error!("Failed to copy with error: {}", error);
+        log::error!("Failed to copy mod {:?} with error: {}", mod_folder, error);
         panic!()
     }
 }

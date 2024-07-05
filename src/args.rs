@@ -58,7 +58,7 @@ pub struct Args {
     pub timeout: usize,
 
     /// Weidu log setting "--autolog" is default
-    #[clap(env, long, short='u', default_value = "--autolog", value_parser = parse_weidu_log_mode, required = false)]
+    #[clap(env, long, short='u', default_value = "autolog", value_parser = parse_weidu_log_mode, required = false)]
     pub weidu_log_mode: String,
 }
 

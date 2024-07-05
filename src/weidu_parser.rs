@@ -30,8 +30,6 @@ const WEIDU_CHOICE: [&str; 6] = [
     "enter",
 ];
 
-const WEIDU_CHOICE_SYMBOL: [char; 2] = ['?', ':'];
-
 const WEIDU_COMPLETED_WITH_WARNINGS: &str = "installed with warnings";
 
 const WEIDU_FAILED_WITH_ERROR: &str = "not installed due to errors";
@@ -73,8 +71,8 @@ pub fn parse_raw_output(
                     }
                 }
                 ParserState::LookingForInterestingOutput => {
-                    let may_be_weidu_finished_state = detect_weidu_finished_state(&string);
-                    if let Some(weidu_finished_state) = may_be_weidu_finished_state {
+                    log::trace!("{}", string);
+                    if let Some(weidu_finished_state) = detect_weidu_finished_state(&string) {
                         sender
                             .send(weidu_finished_state)
                             .expect("Failed to send process error event");
@@ -143,8 +141,7 @@ fn string_looks_like_question(weidu_output: &str) -> bool {
         .iter()
         .map(|choice| comparable_output.contains(choice))
         .reduce(|a, b| a | b)
-        .unwrap_or(false)
-        || WEIDU_CHOICE_SYMBOL.contains(&comparable_output.chars().last().unwrap_or_default());
+        .unwrap_or(false);
 }
 
 fn detect_weidu_finished_state(weidu_output: &str) -> Option<State> {
@@ -197,7 +194,23 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806", "[N]o, [Q]uit or choos
             assert_eq!(
                 string_looks_like_question(question),
                 true,
-                "String {} doesn't look like a string",
+                "String {} doesn't look like a question",
+                question
+            );
+        }
+    }
+
+    #[test]
+    fn is_not_a_question() {
+        let tests = vec![
+            "FAILURE:",
+            "NOT INSTALLED DUE TO ERRORS The BG1 NPC Project: Required Modifications",
+        ];
+        for question in tests {
+            assert_eq!(
+                string_looks_like_question(question),
+                false,
+                "String {} does look like a question",
                 question
             );
         }

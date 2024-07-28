@@ -3,18 +3,16 @@ use std::collections::HashMap;
 use args::Args;
 use clap::Parser;
 use env_logger::Env;
+use log_file::LogFile;
 
 use crate::{
-    component::parse_weidu_log,
-    utils::{
-        copy_mod_folder, create_weidu_log_if_not_exists, mod_folder_present_in_game_directory,
-        search_mod_folders,
-    },
+    utils::{copy_mod_folder, mod_folder_present_in_game_directory, search_mod_folders},
     weidu::{install, InstallationResult},
 };
 
 mod args;
 mod component;
+mod log_file;
 mod state;
 mod utils;
 mod weidu;
@@ -32,22 +30,16 @@ fn main() {
     );
     let args = Args::parse();
 
-    let installed_log_path = create_weidu_log_if_not_exists(&args.game_directory);
-
-    let mods = parse_weidu_log(args.log_file);
+    let mut mods = LogFile::try_from(args.log_file).expect("Could not open log file");
     let number_of_mods_found = mods.len();
     let mods_to_be_installed = if args.skip_installed {
-        let installed_mods = parse_weidu_log(installed_log_path);
-        mods.iter()
-            .filter_map(|weidu_mod| {
-                if !installed_mods.contains(weidu_mod) {
-                    log::debug!("Mod to be installed {:?}", weidu_mod);
-                    Some(weidu_mod.clone())
-                } else {
-                    None
-                }
-            })
-            .collect()
+        let existing_weidu_log_file_path = args.game_directory.join("weidu").with_extension("log");
+        if let Ok(installed_mods) = LogFile::try_from(existing_weidu_log_file_path) {
+            for installed_mod in &installed_mods {
+                mods.retain(|mod_to_install| installed_mod != mod_to_install);
+            }
+        }
+        mods
     } else {
         mods
     };
@@ -59,12 +51,10 @@ fn main() {
     );
 
     let mut mod_folder_cache = HashMap::new();
-    for weidu_mod in mods_to_be_installed {
+    for weidu_mod in &mods_to_be_installed {
         let mod_folder = mod_folder_cache
             .entry(weidu_mod.tp_file.clone())
-            .or_insert_with(|| {
-                search_mod_folders(&args.mod_directories, &weidu_mod.clone(), args.depth)
-            });
+            .or_insert_with(|| search_mod_folders(&args.mod_directories, weidu_mod, args.depth));
 
         log::debug!("Found mod folder {:?}, for mod {:?}", mod_folder, weidu_mod);
 
@@ -80,7 +70,7 @@ fn main() {
         match install(
             &args.weidu_binary,
             &args.game_directory,
-            &weidu_mod,
+            weidu_mod,
             &args.language,
             &args.weidu_log_mode,
             args.timeout,
@@ -96,10 +86,10 @@ fn main() {
             }
             InstallationResult::Warnings => {
                 if args.abort_on_warnings {
-                    log::error!("Installed mod {:?} with warnings, stopping", &weidu_mod);
+                    log::error!("Installed mod {:?} with warnings, stopping", weidu_mod);
                     break;
                 } else {
-                    log::warn!("Installed mod {:?} with warnings, keep going", &weidu_mod);
+                    log::warn!("Installed mod {:?} with warnings, keep going", weidu_mod);
                 }
             }
         }

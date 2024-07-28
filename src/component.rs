@@ -1,20 +1,14 @@
-use std::{
-    fs::File,
-    io::{BufRead, BufReader},
-    path::PathBuf,
-};
-
 // This should mirror the weidu component
 // https://github.com/WeiDUorg/weidu/blob/devel/src/tp.ml#L98
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
-pub struct Component {
-    pub tp_file: String,
-    pub name: String,
-    pub lang: String,
-    pub component: String,
-    pub component_name: String,
-    pub sub_component: String,
-    pub version: String,
+pub(crate) struct Component {
+    pub(crate) tp_file: String,
+    pub(crate) name: String,
+    pub(crate) lang: String,
+    pub(crate) component: String,
+    pub(crate) component_name: String,
+    pub(crate) sub_component: String,
+    pub(crate) version: String,
 }
 
 impl From<String> for Component {
@@ -116,88 +110,10 @@ impl From<String> for Component {
     }
 }
 
-pub fn parse_weidu_log(weidu_log_path: PathBuf) -> Vec<Component> {
-    let file = File::open(weidu_log_path).expect("Could not open weidu log exiting");
-    let reader = BufReader::new(file);
-
-    reader
-        .lines()
-        .flat_map(|line| match line {
-            // Ignore comments and empty lines
-            Ok(component)
-                if !component.is_empty()
-                    && !component.starts_with('\n')
-                    && !component.starts_with("//") =>
-            {
-                Some(Component::from(component))
-            }
-            _ => None,
-        })
-        .collect()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
-    use std::path::Path;
-
-    #[test]
-    fn test_parse_weidu_log() {
-        let test_log = Path::new("fixtures/test.log");
-        let logs = parse_weidu_log(test_log.to_path_buf());
-        assert_eq!(
-            logs,
-            vec![
-                Component {
-                    tp_file: "TEST.TP2".to_string(),
-                    name: "test_mod_name_1".to_string(),
-                    lang: "0".to_string(),
-                    component: "0".to_string(),
-                    component_name: "test mod one".to_string(),
-                    sub_component: "".to_string(),
-                    version: "".to_string()
-                },
-                Component {
-                    tp_file: "TEST.TP2".to_string(),
-                    name: "test_mod_name_1".to_string(),
-                    lang: "0".to_string(),
-                    component: "1".to_string(),
-                    component_name: "test mod two".to_string(),
-                    sub_component: "".to_string(),
-                    version: "".to_string()
-                },
-                Component {
-                    tp_file: "END.TP2".to_string(),
-                    name: "test_mod_name_2".to_string(),
-                    lang: "0".to_string(),
-                    component: "0".to_string(),
-                    component_name: "test mod with subcomponent information".to_string(),
-                    sub_component: "Standard installation".to_string(),
-                    version: "".to_string()
-                },
-                Component {
-                    tp_file: "END.TP2".to_string(),
-                    name: "test_mod_name_3".to_string(),
-                    lang: "0".to_string(),
-                    component: "0".to_string(),
-                    component_name: "test mod with version".to_string(),
-                    sub_component: "".to_string(),
-                    version: "1.02".to_string()
-                },
-                Component {
-                    tp_file: "TWEAKS.TP2".to_string(),
-                    name: "test_mod_name_4".to_string(),
-                    lang: "0".to_string(),
-                    component: "3346".to_string(),
-                    component_name: "test mod with both subcomponent information and version"
-                        .to_string(),
-                    sub_component: "Casting speed only".to_string(),
-                    version: "v16".to_string()
-                }
-            ]
-        );
-    }
 
     #[test]
     fn test_parse_windows() {

@@ -1,6 +1,5 @@
 use std::{
     io::{self, BufRead, BufReader, ErrorKind, Write},
-    panic,
     path::PathBuf,
     process::{Child, ChildStdout, Command, Stdio},
     sync::{
@@ -13,7 +12,7 @@ use std::{
 
 use crate::{component::Component, state::State, utils::sleep, weidu_parser::parse_raw_output};
 
-pub fn get_user_input() -> String {
+pub(crate) fn get_user_input() -> String {
     let stdin = io::stdin();
     let mut input = String::new();
     stdin.read_line(&mut input).unwrap_or_default();
@@ -34,13 +33,13 @@ fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) ->
     .collect()
 }
 
-pub enum InstallationResult {
+pub(crate) enum InstallationResult {
     Success,
     Warnings,
     Fail(String),
 }
 
-pub fn install(
+pub(crate) fn install(
     weidu_binary: &PathBuf,
     game_directory: &PathBuf,
     weidu_mod: &Component,
@@ -62,7 +61,7 @@ pub fn install(
     handle_io(child, timeout)
 }
 
-pub fn handle_io(mut child: Child, timeout: usize) -> InstallationResult {
+pub(crate) fn handle_io(mut child: Child, timeout: usize) -> InstallationResult {
     let mut weidu_stdin = child.stdin.take().unwrap();
     let wait_counter = Arc::new(AtomicUsize::new(0));
     let raw_output_receiver = create_output_reader(child.stdout.take().unwrap());

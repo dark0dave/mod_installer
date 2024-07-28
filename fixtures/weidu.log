@@ -1,0 +1,6 @@
+// Log of Currently Installed WeiDU Mods
+// The top of the file is the 'oldest' mod
+// ~TP2_File~ #language_number #component_number // [Subcomponent Name -> ] Component Name [ : Version]
+~TEST_MOD_NAME_1/TEST.TP2~ #0 #0 // test mod one
+~TEST_MOD_NAME_2/END.TP2~ #0 #0 // test mod with subcomponent information -> Standard installation
+~TEST_MOD_NAME_4/TWEAKS.TP2~ #0 #3346 // test mod with both subcomponent information and version -> Casting speed only: v16

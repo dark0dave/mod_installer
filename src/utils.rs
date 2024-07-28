@@ -1,21 +1,12 @@
 use core::time;
 use fs_extra::dir::{copy, CopyOptions};
 use std::{
-    fs::File,
     path::{Path, PathBuf},
     thread,
 };
 use walkdir::WalkDir;
 
 use crate::component::Component;
-
-pub fn create_weidu_log_if_not_exists(game_directory: &Path) -> PathBuf {
-    let weidu_log_file = game_directory.join("weidu").with_extension("log");
-    if !weidu_log_file.exists() {
-        File::create(weidu_log_file.clone()).unwrap();
-    }
-    weidu_log_file
-}
 
 pub fn mod_folder_present_in_game_directory(game_directory: &Path, mod_name: &str) -> bool {
     game_directory.join(mod_name).is_dir()

@@ -1,6 +1,5 @@
 use std::{
     io::{self, BufRead, BufReader, ErrorKind, Write},
-    panic,
     path::PathBuf,
     process::{Child, ChildStdout, Command, Stdio},
     sync::{

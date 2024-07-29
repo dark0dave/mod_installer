@@ -14,7 +14,7 @@ Please provide a valid weidu logging setting, options are:
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
     /// Full path to target log
-    #[clap(env, long, short = 'f', required = true)]
+    #[clap(env, long, short = 'f', value_parser = path_must_exist, required = true)]
     pub log_file: PathBuf,
 
     /// Full path to game directory
@@ -84,14 +84,21 @@ fn parse_weidu_log_mode(arg: &str) -> Result<String, String> {
     Ok(output.join(" "))
 }
 
+fn path_must_exist(arg: &str) -> Result<PathBuf, std::io::Error> {
+    let path = PathBuf::from(arg);
+    path.try_exists()?;
+    Ok(path)
+}
+
 fn parse_absolute_path(arg: &str) -> Result<PathBuf, String> {
-    let path = Path::new(arg);
+    let path = path_must_exist(arg).map_err(|err| err.to_string())?;
     if path.is_absolute() {
-        Ok(path.to_path_buf())
+        Ok(path)
     } else {
-        Err("Please provide the absolute path".to_string())
+        Err("Please provide an absolute path".to_string())
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;

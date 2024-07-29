@@ -43,7 +43,7 @@ enum ParserState {
     LookingForInterestingOutput,
 }
 
-pub fn parse_raw_output(
+pub(crate) fn parse_raw_output(
     sender: Sender<State>,
     receiver: Receiver<String>,
     wait_count: Arc<AtomicUsize>,

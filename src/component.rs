@@ -1,3 +1,5 @@
+use std::error::Error;
+
 // This should mirror the weidu component
 // https://github.com/WeiDUorg/weidu/blob/devel/src/tp.ml#L98
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
@@ -11,18 +13,18 @@ pub(crate) struct Component {
     pub(crate) version: String,
 }
 
-impl From<String> for Component {
-    fn from(line: String) -> Self {
+impl TryFrom<String> for Component {
+    type Error = Box<dyn Error>;
+
+    fn try_from(line: String) -> Result<Self, Self::Error> {
         let mut parts = line.split('~');
 
         let install_path = parts
             .nth(1)
-            .unwrap_or_else(|| {
-                panic!(
-                    "Could not get full name of mod, from provided string: {}",
-                    line
-                )
-            })
+            .ok_or(format!(
+                "Could not get full name of mod, from provided string: {}",
+                line
+            ))?
             .to_string();
 
         // This allows for both linux, macos and windows parsing
@@ -30,47 +32,54 @@ impl From<String> for Component {
             let name = install_path
                 .split('\\')
                 .next()
-                .unwrap_or_else(|| {
-                    panic!("Could not split {} into mod into name and component", line)
-                })
+                .ok_or(format!(
+                    "Could not split {} into mod into name and component",
+                    line
+                ))?
                 .to_ascii_lowercase();
             (windows_path.to_string(), name)
         } else if let Some(linux_path) = install_path.split('/').nth(1) {
             let name = install_path
                 .split('/')
                 .next()
-                .unwrap_or_else(|| {
-                    panic!("Could not split {} into mod into name and component", line)
-                })
+                .ok_or(format!(
+                    "Could not split {} into mod into name and component",
+                    line
+                ))?
                 .to_ascii_lowercase();
             (linux_path.to_string(), name)
         } else {
-            panic!(
+            return Err(format!(
                 "Could not find tp2 file name, from provided string: {}",
                 line
             )
+            .into());
         };
 
         let mut tail = parts
             .next()
-            .unwrap_or_else(|| {
-                panic!(
-                    "Could not find lang and component, from provided string {}",
-                    line
-                )
-            })
+            .ok_or(format!(
+                "Could not find lang and component, from provided string {}",
+                line
+            ))?
             .split("//");
 
         let mut lang_and_component = tail.next().unwrap_or_default().split(' ');
 
         let lang = lang_and_component
             .nth(1)
-            .unwrap_or_else(|| panic!("Could not find lang, from provided string: {}", line))
+            .ok_or(format!(
+                "Could not find lang, from provided string: {}",
+                line
+            ))?
             .replace('#', "");
 
         let component = lang_and_component
             .next()
-            .unwrap_or_else(|| panic!("Could not find component, from provided string {}", line))
+            .ok_or(format!(
+                "Could not find component, from provided string {}",
+                line
+            ))?
             .replace('#', "");
 
         let mut component_name_sub_component_version = tail.next().unwrap_or_default().split(':');
@@ -98,7 +107,7 @@ impl From<String> for Component {
             .trim()
             .to_string();
 
-        Component {
+        Ok(Component {
             tp_file,
             name,
             lang,
@@ -106,7 +115,7 @@ impl From<String> for Component {
             component_name,
             sub_component,
             version,
-        }
+        })
     }
 }
 
@@ -118,7 +127,7 @@ mod tests {
     #[test]
     fn test_parse_windows() {
         let mod_string = r"~TOBEX\TOBEX.TP2~ #0 #100 // TobEx - Core: v28";
-        let mod_component = Component::from(mod_string.to_string());
+        let mod_component = Component::try_from(mod_string.to_string()).unwrap();
         let expected = Component {
             tp_file: "TOBEX.TP2".to_string(),
             name: "tobex".to_string(),

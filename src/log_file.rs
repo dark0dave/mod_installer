@@ -1,6 +1,7 @@
 use std::{
+    error::Error,
     fs::File,
-    io::{self, BufRead, BufReader},
+    io::{BufRead, BufReader},
     path::PathBuf,
     slice::Iter,
 };
@@ -8,7 +9,7 @@ use std::{
 use crate::component::Component;
 
 #[derive(Debug, PartialEq, PartialOrd)]
-pub(crate) struct LogFile(Vec<Component>);
+pub(crate) struct LogFile(pub(crate) Vec<Component>);
 
 impl LogFile {
     pub(crate) fn len(&self) -> usize {
@@ -33,28 +34,20 @@ impl<'a> IntoIterator for &'a LogFile {
 }
 
 impl TryFrom<PathBuf> for LogFile {
-    type Error = io::Error;
+    type Error = Box<dyn Error>;
 
     fn try_from(value: PathBuf) -> Result<Self, Self::Error> {
         let file = File::open(value)?;
         let reader = BufReader::new(file);
+        let mut components = vec![];
 
-        Ok(LogFile(
-            reader
-                .lines()
-                .flat_map(|line| match line {
-                    // Ignore comments and empty lines
-                    Ok(component)
-                        if !component.is_empty()
-                            && !component.starts_with('\n')
-                            && !component.starts_with("//") =>
-                    {
-                        Some(Component::from(component))
-                    }
-                    _ => None,
-                })
-                .collect(),
-        ))
+        for line in reader.lines().map_while(|line| line.ok()) {
+            // Ignore comments and empty lines
+            if !line.is_empty() && !line.starts_with('\n') && !line.starts_with("//") {
+                components.push(Component::try_from(line)?)
+            }
+        }
+        Ok(Self(components))
     }
 }
 

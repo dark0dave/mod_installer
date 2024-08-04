@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use clap::{ArgAction, Parser};
 
@@ -13,24 +13,24 @@ Please provide a valid weidu logging setting, options are:
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
-    /// Full path to target log
+    /// Path to target log
     #[clap(env, long, short = 'f', value_parser = path_must_exist, required = true)]
     pub log_file: PathBuf,
 
-    /// Full path to game directory
+    /// Absolute Path to game directory
     #[clap(env, short, long, value_parser = parse_absolute_path, required = true)]
     pub game_directory: PathBuf,
 
-    /// Full Path to weidu binary
+    /// Absolute Path to weidu binary
     #[clap(env, short, long, value_parser = parse_absolute_path, required = true)]
     pub weidu_binary: PathBuf,
 
-    /// Full Path to mod directories
+    /// Path to mod directories
     #[clap(
         env,
         short,
         long,
-        value_parser = parse_absolute_path,
+        value_parser = path_must_exist,
         use_value_delimiter = true,
         value_delimiter = ',',
         required = true
@@ -67,18 +67,14 @@ fn parse_weidu_log_mode(arg: &str) -> Result<String, String> {
     let mut output = vec![];
     while let Some(arg) = args.next() {
         match arg {
-            "log"
-                if Path::new(args.clone().next().unwrap_or("").trim())
-                    .parent()
-                    .is_some() =>
-            {
+            "log" if path_must_exist(arg).is_ok() => {
                 let path = args.next().unwrap();
                 output.push(format!("--{arg} {path}"));
             }
             "autolog" => output.push(format!("--{arg}")),
             "logapp" => output.push(format!("--{arg}")),
             "log-extern" => output.push(format!("--{arg}")),
-            _ => return Err(format!("{}Provided {}", WEIDU_LOG_MODE_ERROR, arg)),
+            _ => return Err(format!("{}, Provided {}", WEIDU_LOG_MODE_ERROR, arg)),
         };
     }
     Ok(output.join(" "))
@@ -120,11 +116,11 @@ mod tests {
             ),
             (
                 "fish",
-                Err(format!("{}Provided {}", WEIDU_LOG_MODE_ERROR, "fish")),
+                Err(format!("{}, Provided {}", WEIDU_LOG_MODE_ERROR, "fish")),
             ),
             (
                 "log /home fish",
-                Err(format!("{}Provided {}", WEIDU_LOG_MODE_ERROR, "fish")),
+                Err(format!("{}, Provided {}", WEIDU_LOG_MODE_ERROR, "fish")),
             ),
         ];
         for (test, expected) in tests {

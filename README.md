@@ -23,13 +23,13 @@ Usage: mod_installer [OPTIONS] --log-file <LOG_FILE> \
 
 Options:
   -f, --log-file <LOG_FILE>
-    Full path to target log [env: LOG_FILE=]
+    Path to target log [env: LOG_FILE=]
   -g, --game-directory <GAME_DIRECTORY>
-    Full path to game directory [env: GAME_DIRECTORY=]
+    Absolute Path to game directory [env: GAME_DIRECTORY=]
   -w, --weidu-binary <WEIDU_BINARY>
-    Full Path to weidu binary [env: WEIDU_BINARY=]
+    Absolute Path to weidu binary [env: WEIDU_BINARY=]
   -m, --mod-directories <MOD_DIRECTORIES>
-    Full Path to mod directories [env: MOD_DIRECTORIES=]
+    Path to mod directories [env: MOD_DIRECTORIES=]
   -l, --language <LANGUAGE>
     Game Language [default: en_US]
   -d, --depth <DEPTH>

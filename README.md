@@ -1,9 +1,9 @@
 # Infinity Engine Mod Installer
 [![](./docs/rust.svg)](https://www.rust-lang.org/tools/install)
 [![](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/dark0dave/mod_installer/releases/latest)
-[![](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/dark0dave/mod_installer/releases/latest)
-[![](https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/dark0dave/mod_installer/releases/latest)
-[![](https://img.shields.io/github/actions/workflow/status/dark0dave/mod_installer/main.yml?style=for-the-badge)](https://github.com/dark0dave/mod_installer/actions/workflows/main.yaml)
+[![](https://img.shields.io/badge/Windows-0078D6?&style=for-the-badge&logoColor=white&logo=git-for-windows)](https://github.com/dark0dave/mod_installer/releases/latest)
+[![](https://img.shields.io/badge/mac%20os-grey?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/dark0dave/mod_installer/releases/latest)
+[![](https://img.shields.io/github/actions/workflow/status/dark0dave/mod_installer/main.yaml?style=for-the-badge)](https://github.com/dark0dave/mod_installer/actions/workflows/main.yaml)
 [![](https://img.shields.io/github/license/dark0dave/mod_installer?style=for-the-badge)](./LICENSE)
 
       /\/\   ___   __| | (_)_ __  ___| |_ __ _| | | ___ _ __
@@ -11,46 +11,19 @@
     / /\/\ \ (_) | (_| | | | | | \__ \ || (_| | | |  __/ |
     \/    \/\___/ \__,_| |_|_| |_|___/\__\__,_|_|_|\___|_|
 
-Automatically install mods from a prepopulated weidu.log file.
-
-## What is this?
-
 The Infinity Engine Mod Installer is a tool designed to automate the installation of mods for Infinity Engine games such as Baldur's Gate, Icewind Dale, and Planescape: Torment. It uses a file called "weidu.log" to determine which mods to install and how to install them.
 
-### Weidu Log
+## Installation
 
-The Weidu log file contains a list of installed mods and is typically found in your game directory if you have previously installed mods. Here's an example of what a Weidu log might look like:
+`mod_installer` can be installed via crates.io:
 
 ```sh
-// Log of Currently Installed WeiDU Mods
-// The top of the file is the 'oldest' mod
-// ~TP2_File~ #language_number #component_number // [Subcomponent Name -> ] Component Name [ : Version]
-~TEST_MOD_NAME_1/TEST.TP2~ #0 #0 // test mod one
+cargo install mod_installer
 ```
-If you're new to modding Infinity Engine games, we recommend installing mods manually first to familiarize yourself with the process. This will help you understand how mods work and how they interact with your game.
 
-## Getting Started with Weidu Logs
+or you can grab it from the latest releases page on github, [here](https://github.com/dark0dave/mod_installer/releases/latest).
 
-If you're looking for an example `weidu.log` to get started:
-
-Check online forums and modding communities. Experienced players and modders often share their mod lists and corresponding Weidu logs.
-Look for "mod packs" or "recommended mod lists" for your specific game. These often come with pre-configured Weidu logs.
-Start with a small number of popular mods and gradually build up your log as you become more comfortable with the modding process.
-Some mod managers for Infinity Engine games can generate Weidu logs based on your selected mods.
-
-Remember, the Weidu log is a powerful tool, but it's important to understand what you're installing. Always back up your game files before installing mods, and be aware that some mods may conflict with others.
-
-## What does it do?
-
-The Infinity Engine Mod Installer looks at a "weidu.log" file that you provide. This file contains information about mods you want to install. The tool then goes through this list and installs each mod automatically. This saves you time and effort, as you don't have to manually install each mod one by one.
-
-## How can I see it in action?
-
-We have a short video that shows how the tool works:
-
-![](docs/mod_installer.gif)
-
-## How do I use it?
+## Usage
 
 To use the Infinity Engine Mod Installer, you need to run it from the command line. Here's the basic structure of the command:
 
@@ -73,6 +46,38 @@ Let's break down what each part means:
 * --weidu-binary <WEIDU_BINARY>: This is where you tell the program where to find the WeiDU program (WeiDU is a tool used to install mods).
 
 * --mod-directories <MOD_DIRECTORIES>: This is where you tell the program where to find the mod files.
+
+## FAQ
+
+The Infinity Engine Mod Installer looks at a "weidu.log" file that you provide. This file contains information about mods you want to install. The tool then goes through this list and installs each mod automatically. This saves you time and effort, as you don't have to manually install each mod one by one.
+
+### Weidu Log
+
+The Weidu log file contains a list of installed mods and is typically found in your game directory if you have previously installed mods. Here's an example of what a Weidu log might look like:
+
+```sh
+// Log of Currently Installed WeiDU Mods
+// The top of the file is the 'oldest' mod
+// ~TP2_File~ #language_number #component_number // [Subcomponent Name -> ] Component Name [ : Version]
+~TEST_MOD_NAME_1/TEST.TP2~ #0 #0 // test mod one
+```
+If you're new to modding Infinity Engine games, we recommend installing mods manually first to familiarize yourself with the process. This will help you understand how mods work and how they interact with your game.
+
+### Getting Started with Weidu Logs
+
+If you're looking for an example `weidu.log` to get started:
+
+Check online forums and modding communities. Experienced players and modders often share their mod lists and corresponding Weidu logs.
+Look for "mod packs" or "recommended mod lists" for your specific game. These often come with pre-configured Weidu logs.
+Start with a small number of popular mods and gradually build up your log as you become more comfortable with the modding process.
+Some mod managers for Infinity Engine games can generate Weidu logs based on your selected mods.
+
+Remember, the Weidu log is a powerful tool, but it's important to understand what you're installing. Always back up your game files before installing mods, and be aware that some mods may conflict with others.
+
+### Demo
+We have a short video that shows how the tool works:
+
+![](docs/mod_installer.gif)
 
 ### What options can I use?
 
@@ -175,7 +180,7 @@ Here's a detailed explanation of all the options you can use:
   How to use it: Just add this option to your command if you want to check the version.
   Example: mod_installer --version
 
-## How can I see more information about what the program is doing?
+### Logging
 
 You can make the program show more information by setting the RUST_LOG environment variable. Here are three levels you can use:
 

@@ -2,15 +2,31 @@
 name = "mod_installer"
 version = "8.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = [ "dark0dave" ]
+documentation = "https://raw.githubusercontent.com/dark0dave/mod_installer/main/README.md"
+homepage = "https://github.com/dark0dave/mod_installer"
+description = "The Infinity Engine Mod Installer is a tool designed to automate the installation of mods for Infinity Engine games such as Baldur's Gate, Icewind Dale, and Planescape: Torment. It uses a file called 'weidu.log' to determine which mods to install and how to install them."
+license-file = "LICENSE"
+readme = "README.md"
+repository = "https://github.com/dark0dave/mod_installer"
+categories = [ "command-line-interface", "filesystem" ]
+keywords = [
+  "cli",
+  "infinity-engine",
+  "modding-tools",
+  "terminal",
+  "tool"
+]
 
 [dependencies]
-clap = { version = "4.5.9", features = ["derive", "env"] }
 env_logger = "0.11.1"
 fs_extra = "1.3.0"
-log = "*"
+log = "0.4.22"
 walkdir = "2.3.2"
+
+  [dependencies.clap]
+  version = "4.5.9"
+  features = [ "derive", "env" ]
 
 [dev-dependencies]
 pretty_assertions = "1.3.0"

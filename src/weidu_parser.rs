@@ -36,6 +36,8 @@ const WEIDU_FAILED_WITH_ERROR: &str = "not installed due to errors";
 
 const WEIDU_FINISHED: &str = "successfully installed";
 
+const EET_FINISHED: &str = "Process ended";
+
 #[derive(Debug)]
 enum ParserState {
     CollectingQuestion,
@@ -152,7 +154,8 @@ fn detect_weidu_finished_state(weidu_output: &str) -> Option<State> {
         })
     } else if comparable_output.contains(WEIDU_COMPLETED_WITH_WARNINGS) {
         Some(State::CompletedWithWarnings)
-    } else if comparable_output.contains(WEIDU_FINISHED) {
+    } else if comparable_output.contains(WEIDU_FINISHED) || comparable_output.contains(EET_FINISHED)
+    {
         Some(State::Completed)
     } else {
         None

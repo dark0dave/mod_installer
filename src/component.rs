@@ -2,7 +2,7 @@ use std::error::Error;
 
 // This should mirror the weidu component
 // https://github.com/WeiDUorg/weidu/blob/devel/src/tp.ml#L98
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, PartialOrd, Clone)]
 pub(crate) struct Component {
     pub(crate) tp_file: String,
     pub(crate) name: String,
@@ -11,6 +11,24 @@ pub(crate) struct Component {
     pub(crate) component_name: String,
     pub(crate) sub_component: String,
     pub(crate) version: String,
+}
+
+impl PartialEq for Component {
+    fn eq(&self, other: &Self) -> bool {
+        self.tp_file == other.tp_file
+            && self.name == other.name
+            && self.lang == other.lang
+            && self.component == other.component
+    }
+}
+
+impl Component {
+    pub(crate) fn strict_matching(&self, other: &Self) -> bool {
+        self.eq(other)
+            && self.component_name == other.component_name
+            && self.sub_component == other.sub_component
+            && self.version == other.version
+    }
 }
 
 impl TryFrom<String> for Component {
@@ -138,5 +156,33 @@ mod tests {
             version: "v28".to_string(),
         };
         assert_eq!(mod_component, expected)
+    }
+
+    #[test]
+    fn test_strict_match() {
+        let non_strict_match_1 = Component {
+            tp_file: "TOBEX.TP2".to_string(),
+            name: "tobex".to_string(),
+            lang: "0".to_string(),
+            component: "100".to_string(),
+            component_name: "TobEx - Core".to_string(),
+            sub_component: "".to_string(),
+            version: "v28".to_string(),
+        };
+
+        let non_strict_match_2 = Component {
+            tp_file: "TOBEX.TP2".to_string(),
+            name: "tobex".to_string(),
+            lang: "0".to_string(),
+            component: "100".to_string(),
+            component_name: "TobEx - Core Chicken".to_string(),
+            sub_component: "".to_string(),
+            version: "v28".to_string(),
+        };
+        assert_eq!(non_strict_match_1, non_strict_match_2);
+        assert_eq!(
+            non_strict_match_1.strict_matching(&non_strict_match_2),
+            false
+        )
     }
 }

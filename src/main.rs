@@ -1,9 +1,9 @@
-use std::{collections::HashMap, error::Error, path::PathBuf, process::ExitCode};
+use std::{collections::HashMap, process::ExitCode};
 
 use args::Args;
 use clap::Parser;
 use env_logger::Env;
-use log_file::LogFile;
+use utils::find_mods;
 
 use crate::{
     utils::{copy_mod_folder, mod_folder_present_in_game_directory, search_mod_folders},
@@ -17,33 +17,6 @@ mod state;
 mod utils;
 mod weidu;
 mod weidu_parser;
-
-fn find_mods(
-    log_file: PathBuf,
-    skip_installed: bool,
-    game_directory: PathBuf,
-) -> Result<LogFile, Box<dyn Error>> {
-    let mut mods = LogFile::try_from(log_file)?;
-    let number_of_mods_found = mods.len();
-    let mods_to_be_installed = if skip_installed {
-        let existing_weidu_log_file_path = game_directory.join("weidu").with_extension("log");
-        if let Ok(installed_mods) = LogFile::try_from(existing_weidu_log_file_path) {
-            for installed_mod in &installed_mods {
-                mods.retain(|mod_to_install| installed_mod != mod_to_install);
-            }
-        }
-        mods
-    } else {
-        mods
-    };
-
-    log::info!(
-        "Number of mods found: {}, Number of mods to be installed: {}",
-        number_of_mods_found,
-        mods_to_be_installed.len()
-    );
-    Ok(mods_to_be_installed)
-}
 
 fn main() -> ExitCode {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
@@ -61,6 +34,7 @@ fn main() -> ExitCode {
         args.log_file,
         args.skip_installed,
         args.game_directory.clone(),
+        args.strict_matching,
     ) {
         Ok(mods) => mods,
         Err(err) => {
@@ -116,51 +90,4 @@ fn main() -> ExitCode {
         }
     }
     ExitCode::SUCCESS
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use component::Component;
-    use pretty_assertions::assert_eq;
-    use std::path::PathBuf;
-
-    #[test]
-    fn test_find_mods() {
-        let log_file = PathBuf::from("./fixtures/test.log");
-        let skip_installed = false;
-        let game_directory = PathBuf::from("./fixtures");
-        let result = find_mods(log_file.clone(), skip_installed, game_directory);
-        let expected = LogFile::try_from(log_file);
-        assert_eq!(expected.ok(), result.ok())
-    }
-
-    #[test]
-    fn test_find_mods_skip_installed() {
-        let log_file = PathBuf::from("./fixtures/test.log");
-        let skip_installed = true;
-        let game_directory = PathBuf::from("./fixtures");
-        let result = find_mods(log_file, skip_installed, game_directory).unwrap();
-        let expected = LogFile(vec![
-            Component {
-                tp_file: "TEST.TP2".to_string(),
-                name: "test_mod_name_1".to_string(),
-                lang: "0".to_string(),
-                component: "1".to_string(),
-                component_name: "test mod two".to_string(),
-                sub_component: "".to_string(),
-                version: "".to_string(),
-            },
-            Component {
-                tp_file: "END.TP2".to_string(),
-                name: "test_mod_name_3".to_string(),
-                lang: "0".to_string(),
-                component: "0".to_string(),
-                component_name: "test mod with version".to_string(),
-                sub_component: "".to_string(),
-                version: "1.02".to_string(),
-            },
-        ]);
-        assert_eq!(expected, result)
-    }
 }

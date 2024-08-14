@@ -60,6 +60,10 @@ pub struct Args {
     /// Weidu log setting "--autolog" is default
     #[clap(env, long, short='u', default_value = "autolog", value_parser = parse_weidu_log_mode, required = false)]
     pub weidu_log_mode: String,
+
+    /// Strict Version and Component/SubComponent matching, default is false
+    #[clap(env, long, short = 'x', action=ArgAction::SetFalse, default_value = "false")]
+    pub strict_matching: bool,
 }
 
 fn parse_weidu_log_mode(arg: &str) -> Result<String, String> {

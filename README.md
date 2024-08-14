@@ -3,6 +3,8 @@
 [![](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/dark0dave/mod_installer/releases/latest)
 [![](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/dark0dave/mod_installer/releases/latest)
 [![](https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/dark0dave/mod_installer/releases/latest)
+[![](https://img.shields.io/github/actions/workflow/status/dark0dave/mod_installer/main.yml?style=for-the-badge)](https://github.com/dark0dave/mod_installer/actions/workflows/main.yaml)
+[![](https://img.shields.io/github/license/dark0dave/mod_installer?style=for-the-badge)](./LICENSE)
 
       /\/\   ___   __| | (_)_ __  ___| |_ __ _| | | ___ _ __
      /    \ / _ \ / _` | | | '_ \/ __| __/ _` | | |/ _ \ '__|
@@ -46,7 +48,7 @@ The Infinity Engine Mod Installer looks at a "weidu.log" file that you provide. 
 
 We have a short video that shows how the tool works:
 
-[mod_installer.webm](https://github.com/dark0dave/mod_installer/assets/52840419/98127744-850e-43a1-a9be-adc078b2a829)
+![](docs/mod_installer.gif)
 
 ## How do I use it?
 

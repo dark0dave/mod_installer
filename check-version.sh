@@ -1,5 +1,5 @@
-#!/usr/bin/env sh
-set -eou pipefail
+#!/usr/bin/env bash
+set -euo pipefail
 
 release_tag=$(git describe --tags --abbrev=0);
 trap "rm -f Cargo.toml.test" SIGINT;

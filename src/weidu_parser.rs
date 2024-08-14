@@ -21,14 +21,9 @@ const WEIDU_USEFUL_STATUS: [&str; 9] = [
     "processing",
 ];
 
-const WEIDU_CHOICE: [&str; 6] = [
-    "choice",
-    "choose",
-    "select",
-    "do you want",
-    "would you like",
-    "enter",
-];
+const WEIDU_CHOICE_WORDS: [&str; 4] = ["choice", "choose", "select", "enter"];
+
+const WEIDU_CHOICE_PHRASE: [&str; 2] = ["do you want", "would you like"];
 
 const WEIDU_COMPLETED_WITH_WARNINGS: &str = "installed with warnings";
 
@@ -139,11 +134,27 @@ fn string_looks_like_question(weidu_output: &str) -> bool {
     {
         return false;
     }
-    return WEIDU_CHOICE
-        .iter()
-        .map(|choice| comparable_output.contains(choice))
-        .reduce(|a, b| a | b)
-        .unwrap_or(false);
+
+    for question in WEIDU_CHOICE_PHRASE {
+        if comparable_output.contains(question) {
+            return true;
+        }
+    }
+
+    for question in WEIDU_CHOICE_WORDS {
+        for word in comparable_output.split_whitespace() {
+            if word
+                .chars()
+                .filter(|c| c.is_alphabetic())
+                .collect::<String>()
+                == question
+            {
+                return true;
+            }
+        }
+    }
+
+    false
 }
 
 fn detect_weidu_finished_state(weidu_output: &str) -> Option<State> {
@@ -186,7 +197,9 @@ mod tests {
     #[test]
     fn is_not_question() {
         let test = "Creating epilogues. Too many epilogues... Why are there so many options here?";
-        assert_eq!(string_looks_like_question(test), false)
+        assert_eq!(string_looks_like_question(test), false);
+        let test = "Including file(s) spellchoices_defensive/vanilla/ENCHANTER.TPH";
+        assert_eq!(string_looks_like_question(test), false);
     }
 
     #[test]

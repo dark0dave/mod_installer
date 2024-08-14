@@ -42,7 +42,7 @@ pub struct Args {
     pub language: String,
 
     /// Depth to walk folder structure
-    #[clap(env, long, short, default_value = "3")]
+    #[clap(env, long, short, default_value = "5")]
     pub depth: usize,
 
     /// Compare against installed weidu log, note this is best effort

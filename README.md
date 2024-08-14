@@ -33,11 +33,11 @@ Options:
   -l, --language <LANGUAGE>
     Game Language [default: en_US]
   -d, --depth <DEPTH>
-    Depth to walk folder structure [env: DEPTH=] [default: 3]
+    Depth to walk folder structure [env: DEPTH=] [default: 5]
   -s, --skip-installed
-    Compare against installed weidu log, note this is best effort [env: SKIP_INSTALLED=]
+    Compare against installed weidu log, note this is best effort [env: SKIP_INSTALLED=] [default: true]
   -a, --abort-on-warnings
-    If a warning occurs in the weidu child process exit [env: ABORT_ON_WARNINGS=]
+    If a warning occurs in the weidu child process exit, note this is best effort [env: ABORT_ON_WARNINGS=] [default: true]
   -t, --timeout <TIMEOUT>
     Timeout time per mod in seconds, default is 1 hour [env: TIMEOUT=] [default: 3600]
   -u, --weidu-log-mode <WEIDU_LOG_MODE>

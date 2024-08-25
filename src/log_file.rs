@@ -53,14 +53,15 @@ impl TryFrom<PathBuf> for LogFile {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use pretty_assertions::assert_eq;
     use std::path::PathBuf;
 
     #[test]
-    fn test_parse_weidu_log() {
+    fn test_parse_weidu_log() -> Result<(), Box<dyn Error>> {
         let test_log = PathBuf::from("fixtures/test.log");
-        let result = LogFile::try_from(test_log).unwrap();
+        let result = LogFile::try_from(test_log)?;
         let expected = LogFile(vec![
             Component {
                 tp_file: "TEST.TP2".to_string(),
@@ -109,6 +110,7 @@ mod tests {
                 version: "v16".to_string(),
             },
         ]);
-        assert_eq!(expected, result)
+        assert_eq!(expected, result);
+        Ok(())
     }
 }

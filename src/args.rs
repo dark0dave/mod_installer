@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 use clap::{ArgAction, Parser};
 
-const WEIDU_LOG_MODE_ERROR: &str = r"
+pub(crate) const CARGO_PKG_NAME: &str = env!("CARGO_PKG_NAME");
+
+pub(crate) const WEIDU_LOG_MODE_ERROR: &str = r"
 Please provide a valid weidu logging setting, options are:
 --weidu-log-mode log X       log output and details to X
 --weidu-log-mode autolog     log output and details to WSETUP.DEBUG
@@ -101,11 +103,13 @@ fn parse_absolute_path(arg: &str) -> Result<PathBuf, String> {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use pretty_assertions::assert_eq;
+    use std::error::Error;
 
     #[test]
-    fn test_parse_weidu_log_mode() {
+    fn test_parse_weidu_log_mode() -> Result<(), Box<dyn Error>> {
         let tests = vec![
             ("autolog", Ok("--autolog".to_string())),
             ("log /home", Ok("--log /home".to_string())),
@@ -134,5 +138,6 @@ mod tests {
                 "Result {result:?} didn't match Expected {expected:?}",
             );
         }
+        Ok(())
     }
 }

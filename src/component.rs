@@ -139,13 +139,14 @@ impl TryFrom<String> for Component {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn test_parse_windows() {
+    fn test_parse_windows() -> Result<(), Box<dyn Error>> {
         let mod_string = r"~TOBEX\TOBEX.TP2~ #0 #100 // TobEx - Core: v28";
-        let mod_component = Component::try_from(mod_string.to_string()).unwrap();
+        let mod_component = Component::try_from(mod_string.to_string())?;
         let expected = Component {
             tp_file: "TOBEX.TP2".to_string(),
             name: "tobex".to_string(),
@@ -155,11 +156,12 @@ mod tests {
             sub_component: "".to_string(),
             version: "v28".to_string(),
         };
-        assert_eq!(mod_component, expected)
+        assert_eq!(mod_component, expected);
+        Ok(())
     }
 
     #[test]
-    fn test_strict_match() {
+    fn test_strict_match() -> Result<(), Box<dyn Error>> {
         let non_strict_match_1 = Component {
             tp_file: "TOBEX.TP2".to_string(),
             name: "tobex".to_string(),
@@ -183,6 +185,7 @@ mod tests {
         assert_eq!(
             non_strict_match_1.strict_matching(&non_strict_match_2),
             false
-        )
+        );
+        Ok(())
     }
 }

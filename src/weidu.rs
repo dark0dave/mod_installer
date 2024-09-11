@@ -10,7 +10,10 @@ use std::{
     thread,
 };
 
-use crate::{component::Component, state::State, utils::sleep, weidu_parser::parse_raw_output};
+use crate::{
+    component::Component, parser_config::ParserConfig, state::State, utils::sleep,
+    weidu_parser::parse_raw_output,
+};
 
 pub(crate) fn get_user_input() -> String {
     let stdin = io::stdin();
@@ -42,6 +45,7 @@ pub(crate) enum InstallationResult {
 pub(crate) fn install(
     weidu_binary: &PathBuf,
     game_directory: &PathBuf,
+    parser_config: Arc<ParserConfig>,
     weidu_mod: &Component,
     language: &str,
     weidu_log_mode: &str,
@@ -58,15 +62,25 @@ pub(crate) fn install(
         .spawn()
         .expect("Failed to spawn weidu process");
 
-    handle_io(child, timeout)
+    handle_io(child, parser_config, timeout)
 }
 
-pub(crate) fn handle_io(mut child: Child, timeout: usize) -> InstallationResult {
+pub(crate) fn handle_io(
+    mut child: Child,
+    parser_config: Arc<ParserConfig>,
+    timeout: usize,
+) -> InstallationResult {
     let mut weidu_stdin = child.stdin.take().unwrap();
     let wait_counter = Arc::new(AtomicUsize::new(0));
     let raw_output_receiver = create_output_reader(child.stdout.take().unwrap());
     let (sender, parsed_output_receiver) = mpsc::channel::<State>();
-    parse_raw_output(sender, raw_output_receiver, wait_counter.clone(), timeout);
+    parse_raw_output(
+        sender,
+        raw_output_receiver,
+        parser_config,
+        wait_counter.clone(),
+        timeout,
+    );
 
     loop {
         match parsed_output_receiver.try_recv() {

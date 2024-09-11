@@ -1,8 +1,9 @@
-use std::{collections::HashMap, process::ExitCode};
+use std::{collections::HashMap, process::ExitCode, sync::Arc};
 
-use args::Args;
+use args::{Args, CARGO_PKG_NAME};
 use clap::Parser;
 use env_logger::Env;
+use parser_config::ParserConfig;
 use utils::find_mods;
 
 use crate::{
@@ -13,6 +14,7 @@ use crate::{
 mod args;
 mod component;
 mod log_file;
+mod parser_config;
 mod state;
 mod utils;
 mod weidu;
@@ -29,6 +31,13 @@ fn main() -> ExitCode {
         "
     );
     let args = Args::parse();
+    let parser_config: Arc<ParserConfig> = match confy::load(CARGO_PKG_NAME, None) {
+        Ok(config) => Arc::new(config),
+        Err(err) => {
+            log::error!("Internal error with config crate, {:?}", err);
+            return ExitCode::FAILURE;
+        }
+    };
 
     let mods_to_be_installed = match find_mods(
         args.log_file,
@@ -63,6 +72,7 @@ fn main() -> ExitCode {
         match install(
             &args.weidu_binary,
             &args.game_directory,
+            parser_config.clone(),
             weidu_mod,
             &args.language,
             &args.weidu_log_mode,

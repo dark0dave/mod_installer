@@ -1,13 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-release_tag=$(git describe --tags --abbrev=0);
-trap "rm -f Cargo.toml.test" SIGINT;
-sed "s/^version \= .*/version = \"${release_tag/v/}\"/" Cargo.toml > Cargo.toml.test;
-diff -sd Cargo.toml.test Cargo.toml;
-if [ $? -eq 0 ]; then
-  rm -f Cargo.toml.test;
-  exit 0;
-else
+function version_gt() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
+
+function main() {
+  local tag_version=$(git describe --tags --abbrev=0);
+  echo "Git tag version: ${tag_version}"
+  local current_version=$(head -3 Cargo.toml | tail -1 |  sed -E "s/^version \= \"(.*)\"/\1/")
+  echo "Cargo.toml version: v${current_version}"
+  if [ "${tag_version}" == "v${current_version}" ]; then
+    echo "Versions are the same"
+    exit 0;
+  fi
+
+  if version_gt "v${current_version}" "${tag_version}"; then
+    echo "Current version greater than tag version"
+    exit 0;
+  fi
+
+  echo "Failed, tag version: ${tag_version} is greater than Cargo,toml: v${current_version}"
   exit 1;
-fi
+}
+
+main

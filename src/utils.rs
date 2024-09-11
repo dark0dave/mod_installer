@@ -103,11 +103,12 @@ pub fn sleep(millis: u64) {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn finds_mod_folder() {
+    fn finds_mod_folder() -> Result<(), Box<dyn Error>> {
         let mod_component = Component {
             tp_file: "TEST.TP2".to_string(),
             name: "test_mod_name_1".to_string(),
@@ -121,25 +122,27 @@ mod tests {
 
         let expected =
             Path::new(&format!("fixtures/mods/mod_a/{}", mod_component.name)).to_path_buf();
-        assert_eq!(mod_folder, Some(expected))
+        assert_eq!(mod_folder, Some(expected));
+        Ok(())
     }
 
     #[test]
-    fn test_find_mods() {
+    fn test_find_mods() -> Result<(), Box<dyn Error>> {
         let log_file = PathBuf::from("./fixtures/test.log");
         let skip_installed = false;
         let game_directory = PathBuf::from("./fixtures");
-        let result = find_mods(log_file.clone(), skip_installed, game_directory, false);
-        let expected = LogFile::try_from(log_file);
-        assert_eq!(expected.ok(), result.ok())
+        let result = find_mods(log_file.clone(), skip_installed, game_directory, false)?;
+        let expected = LogFile::try_from(log_file)?;
+        assert_eq!(expected, result);
+        Ok(())
     }
 
     #[test]
-    fn test_find_mods_skip_installed() {
+    fn test_find_mods_skip_installed() -> Result<(), Box<dyn Error>> {
         let log_file = PathBuf::from("./fixtures/test.log");
         let skip_installed = true;
         let game_directory = PathBuf::from("./fixtures");
-        let result = find_mods(log_file, skip_installed, game_directory, false).unwrap();
+        let result = find_mods(log_file, skip_installed, game_directory, false)?;
         let expected = LogFile(vec![
             Component {
                 tp_file: "TEST.TP2".to_string(),
@@ -160,6 +163,7 @@ mod tests {
                 version: "1.02".to_string(),
             },
         ]);
-        assert_eq!(expected, result)
+        assert_eq!(expected, result);
+        Ok(())
     }
 }

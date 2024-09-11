@@ -112,4 +112,3 @@ jobs:
           asset_path: ./mod_installer${{ matrix.suffix }}
           asset_name: mod_installer-${{ matrix.target }}${{ matrix.suffix }}
           asset_content_type: application/octet-stream
-

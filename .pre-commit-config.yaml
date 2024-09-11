@@ -27,6 +27,8 @@ repos:
       exclude: (?x)^(docs)
     - id: git-dirty
       stages: [pre-commit]
+    - id: git-check
+      stages: [pre-commit]
 
 - repo: https://github.com/Lucas-C/pre-commit-hooks
   rev: v1.5.5
@@ -35,9 +37,13 @@ repos:
       stages: [pre-commit]
     - id: remove-crlf
       stages: [pre-commit]
+    - id: forbid-tabs
+      stages: [pre-commit]
+    - id: remove-tabs
+      stages: [pre-commit]
 
 - repo: https://github.com/commitizen-tools/commitizen
-  rev: v3.27.0
+  rev: v3.29.0
   hooks:
     - id: commitizen
       stages: [commit-msg]

@@ -28,10 +28,10 @@ or you can grab it from the latest releases page on github, [here](https://githu
 To use the Infinity Engine Mod Installer, you need to run it from the command line. Here's the basic structure of the command:
 
 ```sh
-mod_installer(.exe) [OPTIONS] 
-  --log-file <LOG_FILE> 
-  --game-directory <GAME_DIRECTORY> 
-  --weidu-binary <WEIDU_BINARY> 
+mod_installer(.exe) [OPTIONS]
+  --log-file <LOG_FILE>
+  --game-directory <GAME_DIRECTORY>
+  --weidu-binary <WEIDU_BINARY>
   --mod-directories <MOD_DIRECTORIES>
 ```
 Let's break down what each part means:
@@ -197,7 +197,7 @@ Name|Category|Description|Example
 
 Note: **All words/phrases are compared in lowercase ascii.**
 
-If you wish to changes the above; or you are using a different game language (apologies for not translating all of this); have found a exemption; or just want to change the way the parser works you'll need to create your own mod_installer.toml. 
+If you wish to changes the above; or you are using a different game language (apologies for not translating all of this); have found a exemption; or just want to change the way the parser works you'll need to create your own mod_installer.toml.
 
 We use the rust crate [`confy`](https://crates.io/crates/confy) to load configuration. Confy uses the rust crate [`directories`](https://crates.io/crates/directories) to find the the expected path for your operating system. The `directories` crate uses:
 

@@ -31,7 +31,7 @@ fn main() -> ExitCode {
         "
     );
     let args = Args::parse();
-    let parser_config: Arc<ParserConfig> = match confy::load(CARGO_PKG_NAME, None) {
+    let parser_config: Arc<ParserConfig> = match confy::load(CARGO_PKG_NAME, "config") {
         Ok(config) => Arc::new(config),
         Err(err) => {
             log::error!("Internal error with config crate, {:?}", err);

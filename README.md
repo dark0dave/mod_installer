@@ -180,9 +180,40 @@ Here's a detailed explanation of all the options you can use:
   How to use it: Just add this option to your command if you want to check the version.
   Example: mod_installer --version
 
+### Configuring the Parser
+
+See the `example_config.toml` for defaults parser uses. Here we provide a brief breakdown of what each configuration does:
+
+Name|Category|Description|Example
+----|----|:----|----
+| in_progress_words | A list of words | Checks if weidu is currently running | ["installing", "creating",]
+| useful_status_words | A list of words | Provides feedback on the weidu process | ["copied", "copying",]
+| choice_words | A list of words | Words which check if weidu wants user input | ["choice", "choose",]
+| choice_phrase | A list of phrases | Phrases which check if weidu wants user input | ["do you want", "would you like",]
+| completed_with_warnings | A single phrase | Standard phrase wiedu uses if it finishes with warning | "installed with warnings"
+| failed_with_error | A single phrase | Standard phrase wiedu uses if it finishes with an error | "not installed due to errors"
+| finished | A single phrase | Standard phrase wiedu uses if it finishes successfully | "successfully installed"
+| eet_finished | A single phrase | A special exemption for EET for EET Core install | "process ended"
+
+Note: **All words/phrases are compared in lowercase ascii.**
+
+If you wish to changes the above; or you are using a different game language (apologies for not translating all of this); have found a exemption; or just want to change the way the parser works you'll need to create your own mod_installer.toml. 
+
+We use the rust crate [`confy`](https://crates.io/crates/confy) to load configuration. Confy uses the rust crate [`directories`](https://crates.io/crates/directories) to find the the expected path for your operating system. The `directories` crate uses:
+
+- the XDG base directory and the XDG user directory specifications on Linux
+- the Known Folder API on Windows
+- the Standard Directories guidelines on macOS
+
+In order to save you some time reading all the above we will put the expected locations below:
+
+- Windows: `{FOLDERID_RoamingAppData}\mod_installer\config`
+- Macos: `$HOME/Library/Application Support/mod_installer/config.toml`
+- Linux: `$XDG_CONFIG_HOME/mod_installer/config.toml` or `$HOME/.config/mod_installer/config.toml`
+
 ### Logging
 
-You can make the program show more information by setting the RUST_LOG environment variable. Here are three levels you can use:
+You can show more install information by setting the `RUST_LOG` environment variable. Here are some of the levels you can use:
 
 For some additional information:
 
@@ -199,3 +230,5 @@ For absolutely everything, including WeiDU logs:
 ```sh
 RUST_LOG=TRACE mod_installer [OPTIONS]
 ```
+
+For more information on logging visit the rust crate [`log`](https://crates.io/crates/log).

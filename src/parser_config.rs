@@ -172,7 +172,7 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806", "[N]o, [Q]uit or choos
     #[test]
     fn load_config() -> Result<(), Box<dyn Error>> {
         let root = std::env::current_dir()?;
-        let config_path = Path::join(&root, Path::new("example_parser_config.toml"));
+        let config_path = Path::join(&root, Path::new("example_config.toml"));
         let config: ParserConfig = confy::load_path(config_path)?;
         let expected = ParserConfig::default();
         assert_eq!(expected, config);

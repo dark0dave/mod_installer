@@ -48,17 +48,19 @@ fn find_mod_folder(mod_component: &Component, mod_dir: &Path, depth: usize) -> O
         .find_map(|entry| match entry {
             Ok(entry)
                 if entry
-                    .path()
-                    .parent()
-                    .unwrap()
                     .file_name()
-                    .unwrap_or_default()
-                    .eq_ignore_ascii_case(&mod_component.name)
-                    && entry
-                        .file_name()
-                        .eq_ignore_ascii_case(&mod_component.tp_file) =>
+                    .eq_ignore_ascii_case(&mod_component.tp_file) =>
             {
-                return Some(entry.into_path().parent().unwrap().into());
+                if let Some(parent) = entry.path().parent() {
+                    if parent
+                        .file_name()
+                        .unwrap_or_default()
+                        .eq_ignore_ascii_case(&mod_component.name)
+                    {
+                        return Some(parent.to_path_buf());
+                    }
+                }
+                None
             }
             _ => None,
         })

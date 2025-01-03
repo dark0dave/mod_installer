@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{ArgAction, Parser};
+use clap::{builder::BoolishValueParser, Parser};
 
 pub(crate) const CARGO_PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
@@ -12,7 +12,7 @@ Please provide a valid weidu logging setting, options are:
 --weidu-log-mode log-extern  also log output from commands invoked by WeiDU
 ";
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, PartialEq)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
     /// Path to target log
@@ -48,11 +48,29 @@ pub struct Args {
     pub depth: usize,
 
     /// Compare against installed weidu log, note this is best effort
-    #[clap(env, long, short, action=ArgAction::SetTrue, default_value = "true")]
+    #[clap(
+        env,
+        short,
+        long,
+        num_args=0..=1,
+        action = clap::ArgAction::Set,
+        default_value_t = true,
+        default_missing_value = "true",
+        value_parser = BoolishValueParser::new(),
+    )]
     pub skip_installed: bool,
 
     /// If a warning occurs in the weidu child process exit
-    #[clap(env, long, short, action=ArgAction::SetTrue, default_value = "true")]
+    #[clap(
+        env,
+        short,
+        long,
+        num_args=0..=1,
+        action = clap::ArgAction::Set,
+        default_value_t = true,
+        default_missing_value = "true",
+        value_parser = BoolishValueParser::new(),
+    )]
     pub abort_on_warnings: bool,
 
     /// Timeout time per mod in seconds, default is 1 hour
@@ -63,8 +81,17 @@ pub struct Args {
     #[clap(env, long, short='u', default_value = "autolog", value_parser = parse_weidu_log_mode, required = false)]
     pub weidu_log_mode: String,
 
-    /// Strict Version and Component/SubComponent matching, default is false
-    #[clap(env, long, short = 'x', action=ArgAction::SetFalse, default_value = "false")]
+    /// Strict Version and Component/SubComponent matching
+    #[clap(
+        env,
+        short = 'x',
+        long,
+        num_args=0..=1,
+        action = clap::ArgAction::Set,
+        default_value_t = false,
+        default_missing_value = "false",
+        value_parser = BoolishValueParser::new(),
+    )]
     pub strict_matching: bool,
 }
 
@@ -133,6 +160,55 @@ mod tests {
         ];
         for (test, expected) in tests {
             let result = parse_weidu_log_mode(test);
+            assert_eq!(
+                result, expected,
+                "Result {result:?} didn't match Expected {expected:?}",
+            );
+        }
+        Ok(())
+    }
+    #[test]
+    fn test_bool_flags() -> Result<(), Box<dyn Error>> {
+        let fake_game_dir = std::env::current_dir().unwrap().join("fixtures");
+        let fake_weidu_bin = fake_game_dir.clone().join("weidu");
+        let fake_log_file = fake_game_dir.clone().join("weidu.log");
+        let fake_mod_dirs = fake_game_dir.clone().join("mods");
+        let tests = vec![
+            ("true", true),
+            ("t", true),
+            ("yes", true),
+            ("y", true),
+            ("1", true),
+            ("false", false),
+            ("f", false),
+            ("no", false),
+            ("n", false),
+            ("0", false),
+        ];
+        for (flag_value, expected_flag_value) in tests {
+            let expected = Args {
+                log_file: fake_log_file.clone(),
+                game_directory: fake_game_dir.clone(),
+                weidu_binary: fake_weidu_bin.clone(),
+                mod_directories: vec![fake_mod_dirs.clone()],
+                language: "en_US".to_string(),
+                depth: 5,
+                skip_installed: expected_flag_value,
+                abort_on_warnings: expected_flag_value,
+                timeout: 3600,
+                weidu_log_mode: "--autolog".to_string(),
+                strict_matching: false,
+            };
+            let test_arg_string = format!(
+                "mod_installer -a {} -s {} -w {} -f {} -g {} -m {}",
+                flag_value,
+                flag_value,
+                fake_weidu_bin.to_str().unwrap_or_default(),
+                fake_log_file.to_str().unwrap_or_default(),
+                fake_game_dir.to_str().unwrap_or_default(),
+                fake_mod_dirs.to_str().unwrap_or_default()
+            );
+            let result = Args::parse_from(test_arg_string.split(' '));
             assert_eq!(
                 result, expected,
                 "Result {result:?} didn't match Expected {expected:?}",

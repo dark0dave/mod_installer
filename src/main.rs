@@ -24,6 +24,7 @@ fn main() -> ExitCode {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     log::info!(
         r"
+
                  /\/\   ___   __| | (_)_ __  ___| |_ __ _| | | ___ _ __
                 /    \ / _ \ / _` | | | '_ \/ __| __/ _` | | |/ _ \ '__|
                / /\/\ \ (_) | (_| | | | | | \__ \ || (_| | | |  __/ |

@@ -140,7 +140,7 @@ Here's a detailed explanation of all the options you can use:
   What it does: This makes the program check what's already installed and skip those mods.
   How to use it: Just add this option to your command if you want to use it.
   Default: This is on by default.
-  Example: --skip-installed
+  Example: --skip-installed=false
 
 
 * -a, --abort-on-warnings
@@ -148,7 +148,7 @@ Here's a detailed explanation of all the options you can use:
   What it does: This makes the program stop if it encounters any warnings.
   How to use it: Just add this option to your command if you want to use it.
   Default: This is on by default.
-  Example: --abort-on-warnings
+  Example: --abort-on-warnings=false
 
 
 * -t, --timeout <TIMEOUT>

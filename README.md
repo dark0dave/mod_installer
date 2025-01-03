@@ -39,7 +39,7 @@ Let's break down what each part means:
 * mod_installer(.exe): This is the name of the program you're running.
 [OPTIONS]: These are additional settings you can use to customize how the program works (we'll explain these in detail below).
 
-* --log-file <LOG_FILE>: This is where you tell the program where to find the "weidu.log" file.
+* --log-file <LOG_FILE>: This is where you tell the program where to find the "weidu.log" file, which contains the mods you want to install, please note this is not the same as the weidu.log file in the game directory.
 
 * --game-directory <GAME_DIRECTORY>: This is where you tell the program where your game is installed.
 

@@ -197,10 +197,11 @@ mod tests {
                 abort_on_warnings: expected_flag_value,
                 timeout: 3600,
                 weidu_log_mode: "--autolog".to_string(),
-                strict_matching: false,
+                strict_matching: expected_flag_value,
             };
             let test_arg_string = format!(
-                "mod_installer -a {} -s {} -w {} -f {} -g {} -m {}",
+                "mod_installer -x {} -a {} -s {} -w {} -f {} -g {} -m {}",
+                flag_value,
                 flag_value,
                 flag_value,
                 fake_weidu_bin.to_str().unwrap_or_default(),

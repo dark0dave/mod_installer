@@ -1,6 +1,7 @@
+use std::env::{split_paths, var_os};
 use std::path::PathBuf;
 
-use clap::{builder::BoolishValueParser, Parser};
+use clap::{builder::BoolishValueParser, builder::OsStr, Parser};
 
 pub(crate) const CARGO_PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
@@ -12,6 +13,12 @@ Please provide a valid weidu logging setting, options are:
 --weidu-log-mode log-extern  also log output from commands invoked by WeiDU
 ";
 
+#[cfg(not(target_os = "windows"))]
+pub(crate) const WEIDU_FILE_NAME: &str = "weidu";
+#[cfg(target_os = "windows")]
+pub(crate) const WEIDU_FILE_NAME: &str = "weidu.exe";
+
+// https://docs.rs/clap/latest/clap/_derive/index.html#arg-attributes
 #[derive(Parser, Debug, PartialEq)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
@@ -24,7 +31,14 @@ pub struct Args {
     pub game_directory: PathBuf,
 
     /// Absolute Path to weidu binary
-    #[clap(env, short, long, value_parser = parse_absolute_path, required = true)]
+    #[clap(
+        env,
+        short,
+        long,
+        value_parser = parse_absolute_path,
+        default_missing_value = find_weidu_bin_on_path(),
+        required = weidu_bin_not_on_path()
+    )]
     pub weidu_binary: PathBuf,
 
     /// Path to mod directories
@@ -126,6 +140,30 @@ fn parse_absolute_path(arg: &str) -> Result<PathBuf, String> {
     } else {
         Err("Please provide an absolute path".to_string())
     }
+}
+
+fn weidu_bin_not_on_path() -> bool {
+    if let Some(paths) = var_os("PATH") {
+        for path in split_paths(&paths) {
+            let full_path = path.join(WEIDU_FILE_NAME);
+            if full_path.is_file() {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+fn find_weidu_bin_on_path() -> OsStr {
+    if let Some(paths) = var_os("PATH") {
+        for path in split_paths(&paths) {
+            let full_path = path.join(WEIDU_FILE_NAME);
+            if full_path.is_file() {
+                return OsStr::from(full_path.into_os_string());
+            }
+        }
+    }
+    OsStr::from("")
 }
 
 #[cfg(test)]

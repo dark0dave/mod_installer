@@ -1,6 +1,6 @@
 [package]
 name = "mod_installer"
-version = "9.0.2"
+version = "9.1.0"
 edition = "2021"
 authors = [ "dark0dave" ]
 documentation = "https://raw.githubusercontent.com/dark0dave/mod_installer/main/README.md"
@@ -20,7 +20,7 @@ keywords = [
 
 [dependencies]
 confy = "^0.6"
-clap = { version = "^4.5.9", features = ["derive", "env"] }
+clap = { version = "^4.5.9", features = ["derive", "env", "string"] }
 env_logger = "^0.11.1"
 fs_extra = "^1.3.0"
 log = "^0.4.22"

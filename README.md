@@ -43,9 +43,21 @@ Let's break down what each part means:
 
 * --game-directory <GAME_DIRECTORY>: This is where you tell the program where your game is installed.
 
-* --weidu-binary <WEIDU_BINARY>: This is where you tell the program where to find the WeiDU program (WeiDU is a tool used to install mods).
+* --weidu-binary <WEIDU_BINARY>: This is where you tell the program where to find the WeiDU program (WeiDU is a tool used to install mods). This binary can be auto detected (alpha feature).
 
 * --mod-directories <MOD_DIRECTORIES>: This is where you tell the program where to find the mod files.
+
+### Example Run
+
+With binary or installed from cargo
+```sh
+mod_installer(.exe) --log-file dark0dave_weidu.log --game-directory ~/.steam/steam/steamapps/common/Baldur\'s\ Gate\ Enhanced\ Edition/ --mod-directories ~/Downloads/my_mods/
+```
+
+With cargo:
+```sh
+cargo run -- --log-file dark0dave_weidu.log --game-directory ~/.steam/steam/steamapps/common/Baldur\'s\ Gate\ Enhanced\ Edition/ --mod-directories ~/Downloads/my_mods/
+```
 
 ## FAQ
 

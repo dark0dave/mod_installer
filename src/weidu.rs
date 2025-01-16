@@ -5,7 +5,7 @@ use std::{
     sync::{
         atomic::{AtomicUsize, Ordering},
         mpsc::{self, Receiver, TryRecvError},
-        Arc,
+        Arc, RwLock,
     },
     thread,
 };
@@ -14,6 +14,8 @@ use crate::{
     component::Component, parser_config::ParserConfig, state::State, utils::sleep,
     weidu_parser::parse_raw_output,
 };
+
+const TICK: u64 = 1000;
 
 pub(crate) fn get_user_input() -> String {
     let stdin = io::stdin();
@@ -70,15 +72,17 @@ pub(crate) fn handle_io(
     parser_config: Arc<ParserConfig>,
     timeout: usize,
 ) -> InstallationResult {
+    let log = Arc::new(RwLock::new(String::new()));
     let mut weidu_stdin = child.stdin.take().unwrap();
-    let wait_counter = Arc::new(AtomicUsize::new(0));
+    let wait_count = Arc::new(AtomicUsize::new(0));
     let raw_output_receiver = create_output_reader(child.stdout.take().unwrap());
     let (sender, parsed_output_receiver) = mpsc::channel::<State>();
     parse_raw_output(
         sender,
         raw_output_receiver,
         parser_config,
-        wait_counter.clone(),
+        wait_count.clone(),
+        log.clone(),
         timeout,
     );
 
@@ -93,6 +97,7 @@ pub(crate) fn handle_io(
                     }
                     State::CompletedWithErrors { error_details } => {
                         log::error!("Weidu process seem to have completed with errors");
+                        log::error!("Dumping log: {}", log.read().unwrap());
                         weidu_stdin
                             .write_all("\n".as_bytes())
                             .expect("Failed to send final ENTER to weidu process");
@@ -103,10 +108,12 @@ pub(crate) fn handle_io(
                             "Weidu process seem to have been running for {} seconds, exiting",
                             timeout
                         );
+                        log::error!("Dumping log: {}", log.read().unwrap());
                         return InstallationResult::Fail("Timed out".to_string());
                     }
                     State::CompletedWithWarnings => {
                         log::warn!("Weidu process seem to have completed with warnings");
+                        log::warn!("Dumping log: {}", log.read().unwrap());
                         weidu_stdin
                             .write_all("\n".as_bytes())
                             .expect("Failed to send final ENTER to weidu process");
@@ -127,14 +134,11 @@ pub(crate) fn handle_io(
                 }
             }
             Err(TryRecvError::Empty) => {
-                log::info!(
-                    "{}\r",
-                    ".".repeat(wait_counter.load(Ordering::Relaxed) % 10)
-                );
+                log::info!("{}", ".".repeat(wait_count.load(Ordering::Relaxed) % 10));
                 std::io::stdout().flush().expect("Failed to flush stdout");
 
-                wait_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                sleep(1000);
+                wait_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                sleep(TICK);
 
                 std::io::stdout().flush().expect("Failed to flush stdout");
             }

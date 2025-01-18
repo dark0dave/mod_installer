@@ -2,7 +2,7 @@ use std::{
     sync::{
         atomic::{AtomicUsize, Ordering},
         mpsc::{Receiver, Sender, TryRecvError},
-        Arc,
+        Arc, RwLock,
     },
     thread,
 };
@@ -21,6 +21,7 @@ pub(crate) fn parse_raw_output(
     receiver: Receiver<String>,
     parser_config: Arc<ParserConfig>,
     wait_count: Arc<AtomicUsize>,
+    log: Arc<RwLock<String>>,
     timeout: usize,
 ) {
     let mut current_state = ParserState::LookingForInterestingOutput;
@@ -32,6 +33,9 @@ pub(crate) fn parse_raw_output(
         match receiver.try_recv() {
             Ok(string) => match current_state {
                 ParserState::CollectingQuestion | ParserState::WaitingForMoreQuestionContent => {
+                    if let Ok(mut writer) = log.write() {
+                        writer.push_str(&string);
+                    }
                     if parser_config.useful_status_words.contains(&string) {
                         log::debug!(
                             "Weidu seems to know an answer for the last question, ignoring it"
@@ -45,7 +49,9 @@ pub(crate) fn parse_raw_output(
                     }
                 }
                 ParserState::LookingForInterestingOutput => {
-                    log::trace!("{}", string);
+                    if let Ok(mut writer) = log.write() {
+                        writer.push_str(&string);
+                    }
                     if let Some(weidu_finished_state) =
                         parser_config.detect_weidu_finished_state(&string)
                     {

@@ -36,8 +36,9 @@ pub struct Args {
         short,
         long,
         value_parser = parse_absolute_path,
+        default_value_os_t = find_weidu_bin(),
         default_missing_value = find_weidu_bin_on_path(),
-        required = weidu_bin_not_on_path()
+        required = false
     )]
     pub weidu_binary: PathBuf,
 
@@ -142,28 +143,20 @@ fn parse_absolute_path(arg: &str) -> Result<PathBuf, String> {
     }
 }
 
-fn weidu_bin_not_on_path() -> bool {
+fn find_weidu_bin() -> PathBuf {
     if let Some(paths) = var_os("PATH") {
         for path in split_paths(&paths) {
             let full_path = path.join(WEIDU_FILE_NAME);
-            if full_path.is_file() {
-                return false;
+            if full_path.is_file() && !full_path.is_dir() {
+                return full_path;
             }
         }
     }
-    true
+    PathBuf::new()
 }
 
 fn find_weidu_bin_on_path() -> OsStr {
-    if let Some(paths) = var_os("PATH") {
-        for path in split_paths(&paths) {
-            let full_path = path.join(WEIDU_FILE_NAME);
-            if full_path.is_file() {
-                return OsStr::from(full_path.into_os_string());
-            }
-        }
-    }
-    OsStr::from("")
+    OsStr::from(find_weidu_bin().into_os_string())
 }
 
 #[cfg(test)]

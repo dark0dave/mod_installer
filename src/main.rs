@@ -31,13 +31,7 @@ fn main() -> ExitCode {
                \/    \/\___/ \__,_| |_|_| |_|___/\__\__,_|_|_|\___|_|
         "
     );
-    let args = match Args::try_parse() {
-        Ok(args) => args,
-        Err(err) => {
-            log::error!("Could not parse args, {}", err);
-            return ExitCode::FAILURE;
-        }
-    };
+    let args = Args::parse();
     let parser_config: Arc<ParserConfig> = match confy::load(CARGO_PKG_NAME, "config") {
         Ok(config) => Arc::new(config),
         Err(err) => {

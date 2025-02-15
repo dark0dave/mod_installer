@@ -244,3 +244,19 @@ RUST_LOG=TRACE mod_installer [OPTIONS]
 ```
 
 For more information on logging visit the rust crate [`log`](https://crates.io/crates/log).
+
+### Building
+
+We offer two ways of building the mod_installer. Nix or cargo directly.
+
+#### Cargo
+
+```sh
+cargo build --release
+```
+
+#### Nix
+
+```sh
+nix build -f default.nix
+```

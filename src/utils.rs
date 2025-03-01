@@ -67,12 +67,12 @@ fn find_mod_folder(mod_component: &Component, mod_dir: &Path, depth: usize) -> O
 }
 
 pub(crate) fn find_mods(
-    log_file: PathBuf,
+    log_file: &Path,
     skip_installed: bool,
-    game_directory: PathBuf,
+    game_directory: &Path,
     strict_matching: bool,
 ) -> Result<LogFile, Box<dyn Error>> {
-    let mut mods = LogFile::try_from(log_file)?;
+    let mut mods = LogFile::try_from(log_file.to_path_buf())?;
     let number_of_mods_found = mods.len();
     let mods_to_be_installed = if skip_installed {
         let existing_weidu_log_file_path = game_directory.join("weidu").with_extension("log");
@@ -133,7 +133,7 @@ mod tests {
         let log_file = PathBuf::from("./fixtures/test.log");
         let skip_installed = false;
         let game_directory = PathBuf::from("./fixtures");
-        let result = find_mods(log_file.clone(), skip_installed, game_directory, false)?;
+        let result = find_mods(&log_file, skip_installed, &game_directory, false)?;
         let expected = LogFile::try_from(log_file)?;
         assert_eq!(expected, result);
         Ok(())
@@ -144,7 +144,7 @@ mod tests {
         let log_file = PathBuf::from("./fixtures/test.log");
         let skip_installed = true;
         let game_directory = PathBuf::from("./fixtures");
-        let result = find_mods(log_file, skip_installed, game_directory, false)?;
+        let result = find_mods(&log_file, skip_installed, &game_directory, false)?;
         let expected = LogFile(vec![
             Component {
                 tp_file: "TEST.TP2".to_string(),

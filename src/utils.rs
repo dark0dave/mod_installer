@@ -1,7 +1,7 @@
 use core::time;
-use fs_extra::dir::{copy, CopyOptions};
 use std::{
     error::Error,
+    fs,
     path::{Path, PathBuf},
     thread,
 };
@@ -9,35 +9,57 @@ use walkdir::WalkDir;
 
 use crate::{component::Component, log_file::LogFile};
 
-pub fn mod_folder_present_in_game_directory(game_directory: &Path, mod_name: &str) -> bool {
-    game_directory.join(mod_name).is_dir()
+fn find_parent_folder(dest: &Path) -> Result<&Path, String> {
+    dest.parent()
+        .ok_or(format!("Failed to find parent dir of {:#?}", dest))
 }
 
-pub fn copy_mod_folder(game_directory: &Path, mod_folder: &Path) {
-    let mut options = CopyOptions::new();
-    options.skip_exist = true;
-    let copied = copy(mod_folder, game_directory, &options);
-    if let Err(error) = copied {
-        log::error!("Failed to copy mod {:?} with error: {}", mod_folder, error);
-        panic!()
+pub fn copy_folder(
+    src: impl AsRef<Path>,
+    dst: impl AsRef<Path> + std::fmt::Debug,
+) -> Result<(), Box<dyn Error>> {
+    if !dst.as_ref().exists() {
+        fs::create_dir(&dst)?;
     }
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        if ty.is_dir() {
+            copy_folder(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        } else {
+            fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        }
+    }
+    Ok(())
+}
+
+pub fn clone_directory(src: &Path, prefix: &str, suffix: &str) -> Result<PathBuf, Box<dyn Error>> {
+    let parent = find_parent_folder(src)?;
+    let new_directory_name = format!("{}-{}", prefix, suffix);
+    let new_directory = parent.join(new_directory_name);
+    log::info!(
+        "Cloning directory {:?} to new directory: {:?}",
+        src,
+        new_directory
+    );
+
+    copy_folder(src, &new_directory)?;
+    Ok(new_directory)
+}
+
+pub fn mod_folder_present_in_game_directory(game_directory: &Path, mod_name: &str) -> bool {
+    game_directory.join(mod_name).is_dir()
 }
 
 pub fn search_mod_folders(
     folder_directories: &[PathBuf],
     weidu_mod: &Component,
     depth: usize,
-) -> PathBuf {
-    let mod_folder_locations = folder_directories
+) -> Result<PathBuf, String> {
+    folder_directories
         .iter()
-        .find_map(|mod_folder| find_mod_folder(weidu_mod, mod_folder, depth));
-
-    if let Some(mod_folder) = mod_folder_locations {
-        mod_folder
-    } else {
-        log::error!("Could not find {:#?} mod folder ", weidu_mod);
-        panic!()
-    }
+        .find_map(|mod_folder| find_mod_folder(weidu_mod, mod_folder, depth))
+        .ok_or(format!("Could not find {:#?} mod folder ", weidu_mod))
 }
 
 fn find_mod_folder(mod_component: &Component, mod_dir: &Path, depth: usize) -> Option<PathBuf> {

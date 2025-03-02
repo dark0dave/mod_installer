@@ -2,6 +2,8 @@ use crate::state::State;
 
 use serde_derive::{Deserialize, Serialize};
 
+pub(crate) const PARSER_CONFIG_LOCATION: &str = "parser";
+
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub(crate) struct ParserConfig {
     pub(crate) in_progress_words: Vec<String>,

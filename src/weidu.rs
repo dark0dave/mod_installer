@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-    component::Component, parser_config::ParserConfig, state::State, utils::sleep,
+    component::Component, config::parser_config::ParserConfig, state::State, utils::sleep,
     weidu_parser::parse_raw_output,
 };
 

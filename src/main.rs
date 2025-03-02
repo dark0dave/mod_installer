@@ -5,10 +5,9 @@ use std::{
     sync::Arc,
 };
 
-use args::{Args, Eet, InstallType, Options, CARGO_PKG_NAME};
-use clap::Parser;
+use config::args::{Eet, InstallType, Options};
+use config::parser_config::{ParserConfig, PARSER_CONFIG_LOCATION};
 use env_logger::Env;
-use parser_config::ParserConfig;
 use utils::find_mods;
 
 use crate::{
@@ -16,11 +15,9 @@ use crate::{
     weidu::{install, InstallationResult},
 };
 
-mod args;
-mod colors;
 mod component;
+mod config;
 mod log_file;
-mod parser_config;
 mod state;
 mod utils;
 mod weidu;
@@ -98,7 +95,7 @@ fn normal_install(
 }
 
 fn eet_install(command: &Eet, parser_config: Arc<ParserConfig>) -> ExitCode {
-    // Handle BG1EE Install
+    log::info!("Beginning pre eet install process");
     let exit_code = normal_install(
         &command.bg1_log_file,
         &command.bg1_game_directory,
@@ -110,7 +107,7 @@ fn eet_install(command: &Eet, parser_config: Arc<ParserConfig>) -> ExitCode {
         return exit_code;
     }
 
-    // Handle BG2EE Install
+    log::info!("Beginning eet install process");
     normal_install(
         &command.bg2_log_file,
         &command.bg2_game_directory,
@@ -122,22 +119,15 @@ fn eet_install(command: &Eet, parser_config: Arc<ParserConfig>) -> ExitCode {
 fn main() -> ExitCode {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
-    let args = Args::parse();
-    let parser_config: Arc<ParserConfig> = match confy::load(CARGO_PKG_NAME, "config") {
-        Ok(config) => Arc::new(config),
-        Err(err) => {
-            log::error!("Internal error with config crate, {:?}", err);
-            return ExitCode::FAILURE;
-        }
-    };
+    let config = config::Config::new();
 
-    match args.command {
+    match config.args.command {
         InstallType::Normal(command) => normal_install(
             &command.log_file,
             &command.game_directory,
             &command.options,
-            parser_config.clone(),
+            config.parser.clone(),
         ),
-        InstallType::Eet(command) => eet_install(&command, parser_config.clone()),
+        InstallType::Eet(command) => eet_install(&command, config.parser.clone()),
     }
 }

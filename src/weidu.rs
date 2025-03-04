@@ -1,6 +1,6 @@
 use std::{
     io::{self, BufRead, BufReader, ErrorKind, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Child, ChildStdout, Command, Stdio},
     sync::{
         atomic::{AtomicUsize, Ordering},
@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-    component::Component, parser_config::ParserConfig, state::State, utils::sleep,
+    component::Component, config::parser_config::ParserConfig, state::State, utils::sleep,
     weidu_parser::parse_raw_output,
 };
 
@@ -46,7 +46,7 @@ pub(crate) enum InstallationResult {
 
 pub(crate) fn install(
     weidu_binary: &PathBuf,
-    game_directory: &PathBuf,
+    game_directory: &Path,
     parser_config: Arc<ParserConfig>,
     weidu_mod: &Component,
     language: &str,

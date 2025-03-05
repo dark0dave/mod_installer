@@ -9,7 +9,7 @@ use walkdir::WalkDir;
 
 use crate::{component::Component, log_file::LogFile};
 
-fn find_parent_folder(dest: &Path) -> Result<&Path, String> {
+pub fn find_parent_folder(dest: &Path) -> Result<&Path, String> {
     dest.parent()
         .ok_or(format!("Failed to find parent dir of {:#?}", dest))
 }
@@ -34,10 +34,9 @@ pub fn copy_folder(
     Ok(())
 }
 
-pub fn clone_directory(src: &Path, prefix: &str, suffix: &str) -> Result<PathBuf, Box<dyn Error>> {
+pub fn clone_directory(src: &Path, dest: &Path) -> Result<PathBuf, Box<dyn Error>> {
     let parent = find_parent_folder(src)?;
-    let new_directory_name = format!("{}-{}", prefix, suffix);
-    let new_directory = parent.join(new_directory_name);
+    let new_directory = parent.join(dest);
     log::info!(
         "Cloning directory {:?} to new directory: {:?}",
         src,

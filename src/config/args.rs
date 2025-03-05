@@ -2,7 +2,6 @@ use std::env::{split_paths, var_os};
 use std::fmt::Debug;
 use std::fs;
 use std::path::PathBuf;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use clap::Subcommand;
 use clap::{builder::BoolishValueParser, builder::OsStr, Parser};
@@ -67,6 +66,10 @@ pub(crate) struct Normal {
     #[clap(env, short, long, value_parser = parse_absolute_path, required = true)]
     pub(crate) game_directory: PathBuf,
 
+    /// Instead of operating on an existing directory, create a new one with this flag as its name and then copy the original contents into it.
+    #[clap(env, long, short = 'n', required = false)]
+    pub(crate) new_game_directory: Option<PathBuf>,
+
     /// CommonOptions
     #[clap(flatten)]
     pub(crate) options: Options,
@@ -92,26 +95,23 @@ pub(crate) struct Eet {
     #[clap(env, short='z', long, value_parser = path_must_exist, required = true)]
     pub(crate) bg2_log_file: PathBuf,
 
-    /// Instead of using given directories create new ones with files copied into them
+    /// Instead of operating on an existing directory, create a new one with this flag as its name and then copy the original contents into it.
     #[clap(
         env,
-        short='g',
+        short,
         long,
         action = clap::ArgAction::SetTrue,
         required = false,
     )]
-    pub(crate) create_directories: bool,
+    pub(crate) generate_directories: bool,
 
-    /// When create_directories is true, this is the prefix which the created directories have
-    #[clap(
-        env,
-        long,
-        short = 'p',
-        default_value_t = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs().to_string(),
-        default_missing_value = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs().to_string(),
-        required = false
-    )]
-    pub(crate) create_directories_prefix: String,
+    /// If generate_directories is true. This is the path for the new pre-eet directory.
+    #[clap(env, short = 'p', long, value_parser = path_must_exist)]
+    pub(crate) new_pre_eet_dir: Option<PathBuf>,
+
+    /// If generate_directories is true. This is the path for the new eet directory.
+    #[clap(env, short = 'n', long, value_parser = path_must_exist)]
+    pub(crate) new_eet_dir: Option<PathBuf>,
 
     /// CommonOptions
     #[clap(flatten)]
@@ -185,7 +185,14 @@ pub(crate) struct Options {
     pub(crate) timeout: usize,
 
     /// Weidu log setting "--autolog" is default
-    #[clap(env, long, short='u', default_value = "autolog", value_parser = parse_weidu_log_mode, required = false)]
+    #[clap(
+        env,
+        long,
+        short='u',
+        default_value = "autolog",
+        value_parser = parse_weidu_log_mode,
+        required = false
+    )]
     pub(crate) weidu_log_mode: String,
 
     /// Strict Version and Component/SubComponent matching
@@ -193,7 +200,11 @@ pub(crate) struct Options {
         env,
         short = 'x',
         long,
+        num_args=0..=1,
         action = clap::ArgAction::SetTrue,
+        default_value_t = false,
+        default_missing_value = "false",
+        value_parser = BoolishValueParser::new(),
         required = false,
     )]
     pub(crate) strict_matching: bool,
@@ -324,6 +335,7 @@ mod tests {
                 command: InstallType::Normal(Normal {
                     log_file: fake_log_file.clone(),
                     game_directory: fake_game_dir.clone(),
+                    new_game_directory: None,
                     options: Options {
                         weidu_binary: fake_weidu_bin.clone(),
                         mod_directories: vec![fake_mod_dirs.clone()],
@@ -333,7 +345,7 @@ mod tests {
                         abort_on_warnings: expected_flag_value,
                         timeout: 3600,
                         weidu_log_mode: "--autolog".to_string(),
-                        strict_matching: true,
+                        strict_matching: false,
                     },
                 }),
             };
@@ -360,7 +372,7 @@ mod tests {
         let fake_game_dir = std::env::current_dir().unwrap().join("fixtures");
         let fake_weidu_bin = fake_game_dir.clone().join("weidu");
         let fake_log_file = fake_game_dir.clone().join("weidu.log");
-        let prefix = "prefix";
+        let new_dir = PathBuf::new().join("test");
         let expected_flag_value = true;
 
         let expected = Args {
@@ -380,18 +392,19 @@ mod tests {
                     weidu_log_mode: "--autolog".to_string(),
                     strict_matching: !expected_flag_value,
                 },
-                create_directories: true,
-                create_directories_prefix: prefix.to_string(),
+                generate_directories: false,
+                new_pre_eet_dir: None,
+                new_eet_dir: Some("test".into()),
             }),
         };
         let test_arg_string = format!(
-            "mod_installer eet -w {} -1 {} -y {} -2 {} -z {} -g -p {}",
+            "mod_installer eet -w {} -1 {} -y {} -2 {} -z {} -n {}",
             fake_weidu_bin.to_str().unwrap_or_default(),
             fake_game_dir.to_str().unwrap_or_default(),
             fake_log_file.to_str().unwrap_or_default(),
             fake_game_dir.to_str().unwrap_or_default(),
             fake_log_file.to_str().unwrap_or_default(),
-            prefix,
+            new_dir.to_str().unwrap_or_default(),
         );
         let result = Args::parse_from(test_arg_string.split(' '));
         assert_eq!(

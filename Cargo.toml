@@ -22,7 +22,7 @@ keywords = [
 anstyle = "1.0.10"
 confy = "^0.6"
 clap = { version = "^4.5.9", features = ["derive", "env", "string"] }
-env_logger = "^0.11.1"
+env_logger = "^0.11.7"
 log = "^0.4.22"
 serde = { version = "^1.0.217", features = ["derive"] }
 serde_derive = "^1.0.152"

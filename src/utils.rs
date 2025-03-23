@@ -18,16 +18,17 @@ pub fn copy_folder(
     src: impl AsRef<Path>,
     dst: impl AsRef<Path> + std::fmt::Debug,
 ) -> Result<(), Box<dyn Error>> {
-    if !dst.as_ref().exists() {
-        fs::create_dir(&dst)?;
+    let destination = dst.as_ref().canonicalize()?;
+    if !destination.exists() {
+        fs::create_dir(&destination)?;
     }
-    for entry in fs::read_dir(src)? {
+    for entry in fs::read_dir(src.as_ref().canonicalize()?)? {
         let entry = entry?;
-        let ty = entry.file_type()?;
-        if ty.is_dir() {
-            copy_folder(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        let full_path = entry.path().canonicalize()?;
+        if entry.file_type()?.is_dir() {
+            copy_folder(full_path, destination.join(entry.file_name()))?;
         } else {
-            fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
+            fs::copy(full_path, destination.join(entry.file_name()))?;
         }
     }
     Ok(())

@@ -1,1 +1,3 @@
+set -a
 use nix
+mkdir -p $TMPDIR

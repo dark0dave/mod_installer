@@ -125,7 +125,7 @@ impl TryFrom<String> for Component {
             .trim()
             .to_string();
 
-        Ok(Component {
+        Ok(Self {
             tp_file,
             name,
             lang,

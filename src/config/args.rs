@@ -208,6 +208,18 @@ pub(crate) struct Options {
         required = false,
     )]
     pub(crate) strict_matching: bool,
+
+    /// When a missing log is discovered ask the user for the download uri, download the mod and install it
+    #[clap(
+        env,
+        long,
+        num_args=0..=1,
+        action = clap::ArgAction::SetFalse,
+        default_value_t = true,
+        default_missing_value = "true",
+        value_parser = BoolishValueParser::new(),
+    )]
+    pub(crate) download: bool,
 }
 
 fn parse_weidu_log_mode(arg: &str) -> Result<String, String> {
@@ -240,11 +252,7 @@ fn path_exists_full(arg: &str) -> Result<PathBuf, std::io::Error> {
 
 fn parse_absolute_path(arg: &str) -> Result<PathBuf, String> {
     let path = path_must_exist(arg).map_err(|err| err.to_string())?;
-    if path.is_absolute() {
-        Ok(path)
-    } else {
-        Err("Please provide an absolute path".to_string())
-    }
+    fs::canonicalize(path).map_err(|err| err.to_string())
 }
 
 fn find_weidu_bin() -> PathBuf {
@@ -346,6 +354,7 @@ mod tests {
                         timeout: 3600,
                         weidu_log_mode: "--autolog".to_string(),
                         strict_matching: false,
+                        download: true,
                     },
                 }),
             };
@@ -391,6 +400,7 @@ mod tests {
                     timeout: 3600,
                     weidu_log_mode: "--autolog".to_string(),
                     strict_matching: !expected_flag_value,
+                    download: true,
                 },
                 generate_directories: false,
                 new_pre_eet_dir: None,

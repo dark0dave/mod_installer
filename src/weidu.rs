@@ -1,5 +1,5 @@
 use std::{
-    io::{self, BufRead, BufReader, ErrorKind, Write},
+    io::{BufRead, BufReader, ErrorKind, Write},
     path::{Path, PathBuf},
     process::{Child, ChildStdout, Command, Stdio},
     sync::{
@@ -11,18 +11,14 @@ use std::{
 };
 
 use crate::{
-    component::Component, config::parser_config::ParserConfig, state::State, utils::sleep,
+    component::Component,
+    config::parser_config::ParserConfig,
+    state::State,
+    utils::{get_user_input, sleep},
     weidu_parser::parse_raw_output,
 };
 
 const TICK: u64 = 1000;
-
-pub(crate) fn get_user_input() -> String {
-    let stdin = io::stdin();
-    let mut input = String::new();
-    stdin.read_line(&mut input).unwrap_or_default();
-    input.to_string()
-}
 
 fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) -> Vec<String> {
     format!("{mod_name}/{mod_tp_file} {weidu_log_mode} --force-install {component} --use-lang {game_lang} --language {mod_lang}",

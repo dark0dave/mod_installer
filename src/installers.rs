@@ -1,12 +1,13 @@
 use std::path::PathBuf;
 use std::{collections::HashMap, error::Error, path::Path, sync::Arc};
 
+use crate::utils::search_or_download;
 use crate::{
     config::args::{Eet, Options},
     config::parser_config::ParserConfig,
     utils::{
         clone_directory, copy_folder, find_mods, find_parent_folder,
-        mod_folder_present_in_game_directory, search_mod_folders,
+        mod_folder_present_in_game_directory,
     },
     weidu::{install, InstallationResult},
 };
@@ -44,7 +45,7 @@ pub(crate) fn normal_install(
         let mod_folder = mod_folder_cache
             .entry(weidu_mod.tp_file.clone())
             .or_insert_with(|| {
-                search_mod_folders(&options.mod_directories, weidu_mod, options.depth).unwrap()
+                search_or_download(options, weidu_mod).expect("Couldn't find mod exiting")
             });
 
         log::debug!("Found mod folder {:?}, for mod {:?}", mod_folder, weidu_mod);

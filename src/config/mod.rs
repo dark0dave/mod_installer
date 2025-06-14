@@ -16,14 +16,14 @@ pub(crate) struct Config {
 }
 
 impl Config {
-    pub(crate) fn new() -> Config {
+    pub(crate) fn new() -> Self {
         let parser_config: Arc<ParserConfig> =
             if let Ok(config) = confy::load(CARGO_PKG_NAME, PARSER_CONFIG_LOCATION) {
                 Arc::new(config)
             } else {
                 Arc::new(ParserConfig::default())
             };
-        Config {
+        Self {
             args: Args::parse(),
             parser: parser_config,
         }

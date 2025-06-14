@@ -1,6 +1,6 @@
 [package]
 name = "mod_installer"
-version = "10.1.0"
+version = "10.2.0"
 edition = "2021"
 authors = [ "dark0dave" ]
 documentation = "https://raw.githubusercontent.com/dark0dave/mod_installer/main/README.md"
@@ -20,13 +20,17 @@ keywords = [
 
 [dependencies]
 anstyle = "1.0.10"
-confy = "^0.6"
 clap = { version = "^4.5.9", features = ["derive", "env", "string"] }
-env_logger = "^0.11.1"
+confy = "^1.0.0"
+env_logger = "^0.11.8"
 log = "^0.4.22"
+reqwest = {version = "0.10.8", features = ["blocking"]}
 serde = { version = "^1.0.217", features = ["derive"] }
 serde_derive = "^1.0.152"
+tempfile = "^3"
+url = "2.5.4"
 walkdir = "^2.3.2"
+zip = "4.0.0"
 
 [dev-dependencies]
 pretty_assertions = "^1.4.1"

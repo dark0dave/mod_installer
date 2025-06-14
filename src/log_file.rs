@@ -16,10 +16,7 @@ impl LogFile {
         self.0.len()
     }
 
-    pub(crate) fn retain<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&Component) -> bool,
-    {
+    pub(crate) fn retain<F: FnMut(&Component) -> bool>(&mut self, mut f: F) {
         self.0.retain_mut(|elem| f(elem));
     }
 }

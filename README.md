@@ -111,6 +111,38 @@ Options:
 
 * --mod-directories <MOD_DIRECTORIES>: This is where you tell the program where to find the mod files. This defaults to the current workgin directory
 
+## ALPHA: Download feature
+
+This automation exists purely to help the install process. Currently its very limited. Users can supply the flag `--download` followed by the associated github zip url.
+
+```sh
+Usage: mod_installer -{e|n} ... --download
+```
+
+If a mod is missing users will be presented with the following prompt:
+
+```sh
+[2025-06-14T14:08:34Z INFO  mod_installer::utils] Missing mod: Component {
+        tp_file: "SETUP-EEFIXPACK.TP2",
+        name: "eefixpack",
+        lang: "0",
+        component: "0",
+        component_name: "Core Fixes",
+        sub_component: "",
+        version: "Nightly 031225",
+    }
+[2025-06-14T14:08:34Z INFO  mod_installer::utils] Please provide mod url, or exit
+```
+
+Users can then input the required github zip url, and the mod_installer will download extract and install the provided mod.
+
+
+#### Notes
+
+- Only github is supported (more to come I promise!)
+- No version check is performed, ie it downloads what ever is passed and that must be a zip file
+
+
 ## FAQ
 
 The Infinity Engine Mod Installer looks at a "weidu.log" file that you provide. This file contains information about mods you want to install. The tool then goes through this list and installs each mod automatically. This saves you time and effort, as you don't have to manually install each mod one by one.

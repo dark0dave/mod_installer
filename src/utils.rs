@@ -5,9 +5,11 @@ use std::{
     path::{Path, PathBuf},
     thread,
 };
+use tempfile::tempfile;
+use url::{Host, Url};
 use walkdir::WalkDir;
 
-use crate::{component::Component, log_file::LogFile};
+use crate::{component::Component, config::args::Options, log_file::LogFile};
 
 pub fn find_parent_folder(dest: &Path) -> Result<&Path, String> {
     dest.parent()
@@ -18,9 +20,9 @@ pub fn copy_folder(
     src: impl AsRef<Path>,
     dst: impl AsRef<Path> + std::fmt::Debug,
 ) -> Result<(), Box<dyn Error>> {
-    let destination = dst.as_ref().canonicalize()?;
+    let destination = dst.as_ref();
     if !destination.exists() {
-        fs::create_dir(&destination)?;
+        fs::create_dir(destination)?;
     }
     for entry in fs::read_dir(src.as_ref().canonicalize()?)? {
         let entry = entry?;
@@ -55,11 +57,11 @@ pub fn search_mod_folders(
     folder_directories: &[PathBuf],
     weidu_mod: &Component,
     depth: usize,
-) -> Result<PathBuf, String> {
+) -> Result<PathBuf, Box<dyn Error>> {
     folder_directories
         .iter()
         .find_map(|mod_folder| find_mod_folder(weidu_mod, mod_folder, depth))
-        .ok_or(format!("Could not find {:#?} mod folder ", weidu_mod))
+        .ok_or(format!("Could not find {:#?} mod folder ", weidu_mod).into())
 }
 
 fn find_mod_folder(mod_component: &Component, mod_dir: &Path, depth: usize) -> Option<PathBuf> {
@@ -120,9 +122,49 @@ pub(crate) fn find_mods(
     Ok(mods_to_be_installed)
 }
 
+pub fn search_or_download(
+    options: &Options,
+    weidu_mod: &Component,
+) -> Result<PathBuf, Box<dyn Error>> {
+    if let Ok(found_mod) = search_mod_folders(&options.mod_directories, weidu_mod, options.depth) {
+        return Ok(found_mod);
+    }
+    log::info!("Missing mod: {:#?}", weidu_mod);
+    if options.download {
+        try_download_mod(weidu_mod)
+    } else {
+        Err("Failed to find mod".into())
+    }
+}
+
+pub fn try_download_mod(weidu_mod: &Component) -> Result<PathBuf, Box<dyn Error>> {
+    log::info!("Please provide mod url, or exit");
+    let user_input = get_user_input();
+    let url = Url::parse(&user_input)?;
+    if url.host() == Some(Host::Domain("github.com")) {
+        let mut zip_path = tempfile()?;
+        log::info!("Downloading: {}", url);
+        reqwest::blocking::get(url.as_str())?.copy_to(&mut zip_path)?;
+        let mut zip = zip::ZipArchive::new(zip_path)?;
+        let dest = tempfile::tempdir()?.path().to_path_buf();
+        zip.extract(dest.clone())?;
+        search_mod_folders(&[dest], weidu_mod, 4)
+    } else {
+        log::error!("Only github is supported");
+        Err("Failed to find mod".into())
+    }
+}
+
 pub fn sleep(millis: u64) {
     let duration = time::Duration::from_millis(millis);
     thread::sleep(duration);
+}
+
+pub fn get_user_input() -> String {
+    let stdin = std::io::stdin();
+    let mut input = String::new();
+    stdin.read_line(&mut input).unwrap_or_default();
+    input.to_string()
 }
 
 #[cfg(test)]

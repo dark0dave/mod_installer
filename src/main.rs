@@ -33,7 +33,7 @@ fn main() -> ExitCode {
     match status {
         Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
-            log::error!("{}", err);
+            log::error!("{err}");
             ExitCode::FAILURE
         }
     }

@@ -23,7 +23,14 @@ choice_phrase = [
     "do you want",
     "would you like",
 ]
-completed_with_warnings = "installed with warnings"
-failed_with_error = "not installed due to errors"
-finished = "successfully installed"
-eet_finished = "process ended"
+completed_with_warnings = [
+    "installed with warnings",
+]
+failed_with_error = [
+    "not installed due to errors",
+    "installation aborted",
+]
+finished = [
+    "successfully installed",
+    "process ended",
+]

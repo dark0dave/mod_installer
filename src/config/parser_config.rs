@@ -10,10 +10,9 @@ pub(crate) struct ParserConfig {
     pub(crate) useful_status_words: Vec<String>,
     pub(crate) choice_words: Vec<String>,
     pub(crate) choice_phrase: Vec<String>,
-    pub(crate) completed_with_warnings: String,
-    pub(crate) failed_with_error: String,
-    pub(crate) finished: String,
-    pub(crate) eet_finished: String,
+    pub(crate) completed_with_warnings: Vec<String>,
+    pub(crate) failed_with_error: Vec<String>,
+    pub(crate) finished: Vec<String>,
 }
 
 impl Default for ParserConfig {
@@ -38,10 +37,15 @@ impl Default for ParserConfig {
                 "enter".to_string(),
             ],
             choice_phrase: vec!["do you want".to_string(), "would you like".to_string()],
-            completed_with_warnings: "installed with warnings".to_string(),
-            failed_with_error: "not installed due to errors".to_string(),
-            finished: "successfully installed".to_string(),
-            eet_finished: "process ended".to_string(),
+            completed_with_warnings: vec!["installed with warnings".to_string()],
+            failed_with_error: vec![
+                "not installed due to errors".to_string(),
+                "installation aborted".to_string(),
+            ],
+            finished: vec![
+                "successfully installed".to_string(),
+                "process ended".to_string(),
+            ],
         }
     }
 }
@@ -78,21 +82,32 @@ impl ParserConfig {
         false
     }
 
-    pub fn detect_weidu_finished_state(&self, weidu_output: &str) -> Option<State> {
+    pub fn detect_weidu_finished_state(&self, weidu_output: &str) -> State {
         let comparable_output = weidu_output.trim().to_lowercase();
-        if comparable_output.contains(&self.failed_with_error) {
-            Some(State::CompletedWithErrors {
+        let failure = self.failed_with_error.iter().fold(false, |acc, fail_case| {
+            comparable_output.contains(fail_case) || acc
+        });
+        if failure {
+            return State::CompletedWithErrors {
                 error_details: comparable_output,
-            })
-        } else if comparable_output.contains(&self.completed_with_warnings) {
-            Some(State::CompletedWithWarnings)
-        } else if comparable_output.contains(&self.finished)
-            || comparable_output.contains(&self.eet_finished)
-        {
-            Some(State::Completed)
-        } else {
-            None
+            };
         }
+        let warning = self
+            .completed_with_warnings
+            .iter()
+            .fold(false, |acc, warn_case| {
+                comparable_output.contains(warn_case) || acc
+            });
+        if warning {
+            return State::CompletedWithWarnings;
+        }
+        let finished = self.finished.iter().fold(false, |acc, success_case| {
+            comparable_output.contains(success_case) || acc
+        });
+        if finished {
+            return State::Completed;
+        }
+        State::InProgress
     }
 }
 
@@ -110,7 +125,7 @@ mod tests {
         assert_eq!(config.string_looks_like_question(test), false);
         assert_eq!(
             config.detect_weidu_finished_state(test),
-            Some(State::CompletedWithWarnings)
+            State::CompletedWithWarnings
         );
         Ok(())
     }
@@ -120,10 +135,7 @@ mod tests {
         let config = ParserConfig::default();
         let test = "SUCCESSFULLY INSTALLED      Jan's Extended Quest";
         assert_eq!(config.string_looks_like_question(test), false);
-        assert_eq!(
-            config.detect_weidu_finished_state(test),
-            Some(State::Completed)
-        );
+        assert_eq!(config.detect_weidu_finished_state(test), State::Completed);
         Ok(())
     }
 
@@ -178,6 +190,26 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806", "[N]o, [Q]uit or choos
         let config: ParserConfig = confy::load_path(config_path)?;
         let expected = ParserConfig::default();
         assert_eq!(expected, config);
+        Ok(())
+    }
+
+    #[test]
+    fn failure() -> Result<(), Box<dyn Error>> {
+        let config = ParserConfig::default();
+        let tests = vec![
+            "not installed due to errors the bg1 npc project: required modifications",
+            "installation aborted merge dlc into game -> merge all available dlcs",
+        ];
+        for input in tests {
+            assert_eq!(
+                config.detect_weidu_finished_state(input),
+                State::CompletedWithErrors {
+                    error_details: input.to_string(),
+                },
+                "Input {} did not fail",
+                input
+            );
+        }
         Ok(())
     }
 }

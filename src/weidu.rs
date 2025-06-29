@@ -85,7 +85,7 @@ pub(crate) fn handle_io(
     loop {
         match parsed_output_receiver.try_recv() {
             Ok(state) => {
-                log::debug!("Current installer state is {:?}", state);
+                log::debug!("Current installer state is {state:?}");
                 match state {
                     State::Completed => {
                         log::debug!("Weidu process completed");
@@ -101,8 +101,7 @@ pub(crate) fn handle_io(
                     }
                     State::TimedOut => {
                         log::error!(
-                            "Weidu process seem to have been running for {} seconds, exiting",
-                            timeout
+                            "Weidu process seem to have been running for {timeout} seconds, exiting"
                         );
                         log::error!("Dumping log: {}", log.read().unwrap());
                         return InstallationResult::Fail("Timed out".to_string());
@@ -121,9 +120,9 @@ pub(crate) fn handle_io(
                     State::RequiresInput { question } => {
                         log::info!("User Input required");
                         log::info!("Question is");
-                        log::info!("{}\n", question);
+                        log::info!("{question}\n");
                         let user_input = get_user_input();
-                        log::debug!("Read user input {}, sending it to process ", user_input);
+                        log::debug!("Read user input {user_input}, sending it to process ");
                         weidu_stdin.write_all(user_input.as_bytes()).unwrap();
                         log::debug!("Input sent");
                     }
@@ -155,7 +154,7 @@ fn create_output_reader(out: ChildStdout) -> Receiver<String> {
                 break;
             }
             Ok(_) => {
-                log::debug!("{}", line);
+                log::debug!("{line}");
                 tx.send(line).expect("Failed to sent process output line");
             }
             Err(ref e) if e.kind() == ErrorKind::InvalidData => {
@@ -164,8 +163,8 @@ fn create_output_reader(out: ChildStdout) -> Receiver<String> {
                 log::warn!("Failed to read weidu output");
             }
             Err(details) => {
-                log::error!("Failed to read process output, error is '{:?}'", details);
-                panic!("Failed to read process output, error is '{:?}'", details);
+                log::error!("Failed to read process output, error is '{details:?}'");
+                panic!("Failed to read process output, error is '{details:?}'");
             }
         }
     });

@@ -234,7 +234,7 @@ fn parse_weidu_log_mode(arg: &str) -> Result<String, String> {
             "autolog" => output.push(format!("--{arg}")),
             "logapp" => output.push(format!("--{arg}")),
             "log-extern" => output.push(format!("--{arg}")),
-            _ => return Err(format!("{}, Provided {}", WEIDU_LOG_MODE_ERROR, arg)),
+            _ => return Err(format!("{WEIDU_LOG_MODE_ERROR}, Provided {arg}")),
         };
     }
     Ok(output.join(" "))
@@ -310,7 +310,7 @@ mod tests {
             ),
         ];
         for (test, expected) in tests {
-            println!("{:#?}", test);
+            println!("{test:#?}");
             let result = parse_weidu_log_mode(test);
             assert_eq!(
                 result, expected,

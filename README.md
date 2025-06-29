@@ -372,14 +372,13 @@ See the `example_config.toml` for defaults parser uses. Here we provide a brief 
 
 Name|Category|Description|Example
 ----|----|:----|----
-| in_progress_words | A list of words | Checks if weidu is currently running | ["installing", "creating",]
-| useful_status_words | A list of words | Provides feedback on the weidu process | ["copied", "copying",]
-| choice_words | A list of words | Words which check if weidu wants user input | ["choice", "choose",]
-| choice_phrase | A list of phrases | Phrases which check if weidu wants user input | ["do you want", "would you like",]
-| completed_with_warnings | A single phrase | Standard phrase wiedu uses if it finishes with warning | "installed with warnings"
-| failed_with_error | A single phrase | Standard phrase wiedu uses if it finishes with an error | "not installed due to errors"
-| finished | A single phrase | Standard phrase wiedu uses if it finishes successfully | "successfully installed"
-| eet_finished | A single phrase | A special exemption for EET for EET Core install | "process ended"
+| in_progress_words | A list of words | Checks if weidu is currently running | ["installing", "creating", ...]
+| useful_status_words | A list of words | Provides feedback on the weidu process | ["copied", "copying", ...]
+| choice_words | A list of words | Words which check if weidu wants user input | ["choice", "choose", ...]
+| choice_phrase | A list of phrases | Phrases which check if weidu wants user input | ["do you want", "would you like", ...]
+| completed_with_warnings | A list of phrases | Phrases which wiedu uses if it finishes with warning | ["installed with warnings", ...]
+| failed_with_error | A list of phrases | Phrases which wiedu uses if it finishes with an error | ["not installed due to errors", ...]
+| finished | A list of phrases | Phrases which wiedu uses if it finishes successfully | ["successfully installed","process ended", ...]
 
 Note: **All words/phrases are compared in lowercase ascii.**
 

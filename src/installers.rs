@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::{collections::HashMap, error::Error, path::Path, sync::Arc};
 
-use crate::utils::search_or_download;
+use crate::utils::{search_or_download, validate_install};
 use crate::{
     config::args::{Eet, Options},
     config::parser_config::ParserConfig,
@@ -36,7 +36,7 @@ pub(crate) fn normal_install(
     ) {
         Ok(mods) => mods,
         Err(err) => {
-            return Err(format!("Failed to find weidu log file, {:?}", err).into());
+            return Err(format!("Failed to find weidu log file, {err:?}").into());
         }
     };
 
@@ -48,7 +48,7 @@ pub(crate) fn normal_install(
                 search_or_download(options, weidu_mod).expect("Couldn't find mod exiting")
             });
 
-        log::debug!("Found mod folder {:?}, for mod {:?}", mod_folder, weidu_mod);
+        log::debug!("Found mod folder {mod_folder:?}, for mod {weidu_mod:?}");
 
         if !mod_folder_present_in_game_directory(&game_directory, &weidu_mod.name) {
             log::info!(
@@ -76,15 +76,16 @@ pub(crate) fn normal_install(
                 .into());
             }
             InstallationResult::Success => {
+                validate_install(game_dir, weidu_mod)?;
                 log::info!("Installed mod {:?}", &weidu_mod);
             }
             InstallationResult::Warnings => {
                 if options.abort_on_warnings {
                     return Err(
-                        format!("Installed mod {:?} with warnings, stopping", weidu_mod).into(),
+                        format!("Installed mod {weidu_mod:?} with warnings, stopping").into(),
                     );
                 } else {
-                    log::warn!("Installed mod {:?} with warnings, keep going", weidu_mod);
+                    log::warn!("Installed mod {weidu_mod:?} with warnings, keep going");
                 }
             }
         }

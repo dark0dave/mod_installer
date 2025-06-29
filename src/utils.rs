@@ -1,7 +1,8 @@
 use core::time;
 use std::{
     error::Error,
-    fs,
+    fs::{self, File},
+    io::{BufRead, BufReader},
     path::{Path, PathBuf},
     thread,
 };
@@ -13,7 +14,7 @@ use crate::{component::Component, config::args::Options, log_file::LogFile};
 
 pub fn find_parent_folder(dest: &Path) -> Result<&Path, String> {
     dest.parent()
-        .ok_or(format!("Failed to find parent dir of {:#?}", dest))
+        .ok_or(format!("Failed to find parent dir of {dest:#?}"))
 }
 
 pub fn copy_folder(
@@ -39,11 +40,7 @@ pub fn copy_folder(
 pub fn clone_directory(src: &Path, dest: &Path) -> Result<PathBuf, Box<dyn Error>> {
     let parent = find_parent_folder(src)?;
     let new_directory = parent.join(dest);
-    log::info!(
-        "Cloning directory {:?} to new directory: {:?}",
-        src,
-        new_directory
-    );
+    log::info!("Cloning directory {src:?} to new directory: {new_directory:?}");
 
     copy_folder(src, &new_directory)?;
     Ok(new_directory)
@@ -61,7 +58,7 @@ pub fn search_mod_folders(
     folder_directories
         .iter()
         .find_map(|mod_folder| find_mod_folder(weidu_mod, mod_folder, depth))
-        .ok_or(format!("Could not find {:#?} mod folder ", weidu_mod).into())
+        .ok_or(format!("Could not find {weidu_mod:#?} mod folder ").into())
 }
 
 fn find_mod_folder(mod_component: &Component, mod_dir: &Path, depth: usize) -> Option<PathBuf> {
@@ -129,7 +126,7 @@ pub fn search_or_download(
     if let Ok(found_mod) = search_mod_folders(&options.mod_directories, weidu_mod, options.depth) {
         return Ok(found_mod);
     }
-    log::info!("Missing mod: {:#?}", weidu_mod);
+    log::info!("Missing mod: {weidu_mod:#?}");
     if options.download {
         try_download_mod(weidu_mod)
     } else {
@@ -143,7 +140,7 @@ pub fn try_download_mod(weidu_mod: &Component) -> Result<PathBuf, Box<dyn Error>
     let url = Url::parse(&user_input)?;
     if url.host() == Some(Host::Domain("github.com")) {
         let mut zip_path = tempfile()?;
-        log::info!("Downloading: {}", url);
+        log::info!("Downloading: {url}");
         reqwest::blocking::get(url.as_str())?.copy_to(&mut zip_path)?;
         let mut zip = zip::ZipArchive::new(zip_path)?;
         let dest = tempfile::tempdir()?.path().to_path_buf();
@@ -152,6 +149,21 @@ pub fn try_download_mod(weidu_mod: &Component) -> Result<PathBuf, Box<dyn Error>
     } else {
         log::error!("Only github is supported");
         Err("Failed to find mod".into())
+    }
+}
+
+pub fn validate_install(game_dir: &Path, component: &Component) -> Result<(), Box<dyn Error>> {
+    let file = File::open(game_dir.join("weidu.log"))?;
+    let reader = BufReader::new(file);
+    let last_line = reader.lines().last().ok_or("")??;
+    let last_installed = Component::try_from(last_line)?;
+    if last_installed.ne(component) {
+        Err(format!(
+            "Last installed {last_installed:?} does not match component installed: {component:?}"
+        )
+        .into())
+    } else {
+        Ok(())
     }
 }
 

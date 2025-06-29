@@ -40,8 +40,7 @@ impl TryFrom<String> for Component {
         let install_path = parts
             .nth(1)
             .ok_or(format!(
-                "Could not get full name of mod, from provided string: {}",
-                line
+                "Could not get full name of mod, from provided string: {line}"
             ))?
             .to_string();
 
@@ -51,8 +50,7 @@ impl TryFrom<String> for Component {
                 .split('\\')
                 .next()
                 .ok_or(format!(
-                    "Could not split {} into mod into name and component",
-                    line
+                    "Could not split {line} into mod into name and component"
                 ))?
                 .to_ascii_lowercase();
             (windows_path.to_string(), name)
@@ -61,24 +59,20 @@ impl TryFrom<String> for Component {
                 .split('/')
                 .next()
                 .ok_or(format!(
-                    "Could not split {} into mod into name and component",
-                    line
+                    "Could not split {line} into mod into name and component"
                 ))?
                 .to_ascii_lowercase();
             (linux_path.to_string(), name)
         } else {
-            return Err(format!(
-                "Could not find tp2 file name, from provided string: {}",
-                line
-            )
-            .into());
+            return Err(
+                format!("Could not find tp2 file name, from provided string: {line}").into(),
+            );
         };
 
         let mut tail = parts
             .next()
             .ok_or(format!(
-                "Could not find lang and component, from provided string {}",
-                line
+                "Could not find lang and component, from provided string {line}"
             ))?
             .split("//");
 
@@ -86,17 +80,13 @@ impl TryFrom<String> for Component {
 
         let lang = lang_and_component
             .nth(1)
-            .ok_or(format!(
-                "Could not find lang, from provided string: {}",
-                line
-            ))?
+            .ok_or(format!("Could not find lang, from provided string: {line}"))?
             .replace('#', "");
 
         let component = lang_and_component
             .next()
             .ok_or(format!(
-                "Could not find component, from provided string {}",
-                line
+                "Could not find component, from provided string {line}"
             ))?
             .replace('#', "");
 

@@ -43,7 +43,7 @@ pub(crate) fn parse_raw_output(
                         current_state = ParserState::LookingForInterestingOutput;
                         question.clear();
                     } else {
-                        log::debug!("Appending line '{}' to user question", string);
+                        log::debug!("Appending line '{string}' to user question");
                         question.push_str(&string);
                         current_state = ParserState::CollectingQuestion;
                     }
@@ -52,11 +52,10 @@ pub(crate) fn parse_raw_output(
                     if let Ok(mut writer) = log.write() {
                         writer.push_str(&string);
                     }
-                    if let Some(weidu_finished_state) =
-                        parser_config.detect_weidu_finished_state(&string)
-                    {
+                    let installer_state = parser_config.detect_weidu_finished_state(&string);
+                    if installer_state != State::InProgress {
                         sender
-                            .send(weidu_finished_state)
+                            .send(installer_state)
                             .expect("Failed to send process error event");
                         break;
                     } else if parser_config.string_looks_like_question(&string) {
@@ -69,7 +68,7 @@ pub(crate) fn parse_raw_output(
                         question.push_str(string.as_str());
                     }
                     if !string.trim().is_empty() {
-                        log::trace!("{}", string);
+                        log::trace!("{string}");
                     }
                 }
             },
@@ -104,7 +103,7 @@ pub(crate) fn parse_raw_output(
             Err(TryRecvError::Disconnected) => {
                 sender
                     .send(State::Completed)
-                    .expect("Failed to send provess end event");
+                    .expect("Failed to send process end event");
                 break;
             }
         }

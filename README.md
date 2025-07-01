@@ -168,7 +168,7 @@ Look for "mod packs" or "recommended mod lists" for your specific game. These of
 Start with a small number of popular mods and gradually build up your log as you become more comfortable with the modding process.
 Some mod managers for Infinity Engine games can generate Weidu logs based on your selected mods.
 
-Remember, the Weidu log is a powerful tool, but it's important to understand what you're installing. Always back up your game files before installing mods, and be aware that some mods may conflict with others.
+Remember, Weidu is a powerful tool, but it's important to understand what you're installing. Always back up your game files before installing mods, and be aware that some mods may conflict with others.
 
 ### Demo
 We have a short video that shows how the tool works:
@@ -344,6 +344,16 @@ These flags work for either of the above commands
   > Default: --autolog
 
   > Example: --weidu-log-mode --log
+
+* -o, --overwrite
+
+  > What it does: This tells the mod_installer to overwrite mod directories in the game folder.
+
+  > How to use it: Pass the overwrite flag to the mod_installer
+
+  > Default: false
+
+  > Example: -o
 
 
 * -x, --strict-matching

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::{collections::HashMap, error::Error, path::Path, sync::Arc};
 
-use crate::utils::{search_or_download, validate_install};
+use crate::utils::{delete_folder, search_or_download, validate_install};
 use crate::{
     config::args::{Eet, Options},
     config::parser_config::ParserConfig,
@@ -49,6 +49,11 @@ pub(crate) fn normal_install(
             });
 
         log::debug!("Found mod folder {mod_folder:?}, for mod {weidu_mod:?}");
+
+        if options.overwrite {
+            let possible_mod_directory = game_directory.join(&weidu_mod.name);
+            delete_folder(&possible_mod_directory)?;
+        }
 
         if !mod_folder_present_in_game_directory(&game_directory, &weidu_mod.name) {
             log::info!(

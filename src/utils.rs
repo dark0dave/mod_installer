@@ -17,6 +17,14 @@ pub fn find_parent_folder(dest: &Path) -> Result<&Path, String> {
         .ok_or(format!("Failed to find parent dir of {dest:#?}"))
 }
 
+pub fn delete_folder(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
+    if path.as_ref().exists() {
+        log::debug!("Found {:#?} removing", path.as_ref());
+        fs::remove_dir_all(path)?;
+    }
+    Ok(())
+}
+
 pub fn copy_folder(
     src: impl AsRef<Path>,
     dst: impl AsRef<Path> + std::fmt::Debug,

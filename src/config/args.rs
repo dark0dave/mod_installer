@@ -174,8 +174,8 @@ pub(crate) struct Options {
         long,
         num_args=0..=1,
         action = clap::ArgAction::Set,
-        default_value_t = true,
-        default_missing_value = "true",
+        default_value_t = false,
+        default_missing_value = "false",
         value_parser = BoolishValueParser::new(),
     )]
     pub(crate) abort_on_warnings: bool,
@@ -220,6 +220,19 @@ pub(crate) struct Options {
         value_parser = BoolishValueParser::new(),
     )]
     pub(crate) download: bool,
+
+    /// Force copy mod folder, even if the mod folder was found in the game directory
+    #[clap(
+        env,
+        short,
+        long,
+        num_args=0..=1,
+        action = clap::ArgAction::SetFalse,
+        default_value_t = false,
+        default_missing_value = "false",
+        value_parser = BoolishValueParser::new(),
+    )]
+    pub(crate) overwrite: bool,
 }
 
 fn parse_weidu_log_mode(arg: &str) -> Result<String, String> {
@@ -355,6 +368,7 @@ mod tests {
                         weidu_log_mode: "--autolog".to_string(),
                         strict_matching: false,
                         download: true,
+                        overwrite: false,
                     },
                 }),
             };
@@ -396,11 +410,12 @@ mod tests {
                     language: "en_US".to_string(),
                     depth: 5,
                     skip_installed: expected_flag_value,
-                    abort_on_warnings: expected_flag_value,
+                    abort_on_warnings: !expected_flag_value,
                     timeout: 3600,
                     weidu_log_mode: "--autolog".to_string(),
                     strict_matching: !expected_flag_value,
-                    download: true,
+                    download: expected_flag_value,
+                    overwrite: !expected_flag_value,
                 },
                 generate_directories: false,
                 new_pre_eet_dir: None,

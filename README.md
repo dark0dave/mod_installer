@@ -333,6 +333,16 @@ These flags work for either of the above commands
 
   > Example: --timeout 7200 (2 hours)
 
+* -i, --tick <TICK>
+
+
+  > What it does: This sets how long the program will wait between polling weidu.
+
+  > How to use it: Replace <TIMEOUT> with a number of milliseconds.
+
+  > Default: 500 (1/2 a second)
+
+  > Example: --tick 1000
 
 * -u, --weidu-log-mode <WEIDU_LOG_MODE>
 

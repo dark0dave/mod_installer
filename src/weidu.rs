@@ -1,6 +1,6 @@
 use std::{
     io::{BufRead, BufReader, ErrorKind, Write},
-    path::{Path, PathBuf},
+    path::Path,
     process::{Child, ChildStdout, Command, Stdio},
     sync::{
         atomic::{AtomicUsize, Ordering},
@@ -12,13 +12,11 @@ use std::{
 
 use crate::{
     component::Component,
-    config::parser_config::ParserConfig,
+    config::{args::Options, parser_config::ParserConfig},
     state::State,
     utils::{get_user_input, sleep},
     weidu_parser::parse_raw_output,
 };
-
-const TICK: u64 = 1000;
 
 fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) -> Vec<String> {
     format!("{mod_name}/{mod_tp_file} {weidu_log_mode} --force-install {component} --use-lang {game_lang} --language {mod_lang}",
@@ -41,16 +39,13 @@ pub(crate) enum InstallationResult {
 }
 
 pub(crate) fn install(
-    weidu_binary: &PathBuf,
     game_directory: &Path,
     parser_config: Arc<ParserConfig>,
     weidu_mod: &Component,
-    language: &str,
-    weidu_log_mode: &str,
-    timeout: usize,
+    options: &Options,
 ) -> InstallationResult {
-    let weidu_args = generate_args(weidu_mod, weidu_log_mode, language);
-    let mut command = Command::new(weidu_binary);
+    let weidu_args = generate_args(weidu_mod, &options.weidu_log_mode, &options.language);
+    let mut command = Command::new(options.weidu_binary.clone());
     let weidu_process = command.current_dir(game_directory).args(weidu_args);
 
     let child = weidu_process
@@ -60,13 +55,14 @@ pub(crate) fn install(
         .spawn()
         .expect("Failed to spawn weidu process");
 
-    handle_io(child, parser_config, timeout)
+    handle_io(child, parser_config, options.timeout, options.tick)
 }
 
 pub(crate) fn handle_io(
     mut child: Child,
     parser_config: Arc<ParserConfig>,
     timeout: usize,
+    tick: u64,
 ) -> InstallationResult {
     let log = Arc::new(RwLock::new(String::new()));
     let mut weidu_stdin = child.stdin.take().unwrap();
@@ -80,6 +76,7 @@ pub(crate) fn handle_io(
         wait_count.clone(),
         log.clone(),
         timeout,
+        tick,
     );
 
     loop {
@@ -133,7 +130,7 @@ pub(crate) fn handle_io(
                 std::io::stdout().flush().expect("Failed to flush stdout");
 
                 wait_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                sleep(TICK);
+                sleep(tick);
 
                 std::io::stdout().flush().expect("Failed to flush stdout");
             }

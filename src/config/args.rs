@@ -118,7 +118,7 @@ pub(crate) struct Eet {
     pub(crate) options: Options,
 }
 
-#[derive(Parser, Debug, PartialEq, Clone)]
+#[derive(Parser, Debug, PartialEq, Clone, Default)]
 pub(crate) struct Options {
     /// Absolute Path to weidu binary
     #[clap(
@@ -239,6 +239,10 @@ pub(crate) struct Options {
         value_parser = BoolishValueParser::new(),
     )]
     pub(crate) check_last_installed: bool,
+
+    /// Tick
+    #[clap(env, short = 'i', long, default_value_t = 500)]
+    pub(crate) tick: u64,
 }
 
 fn parse_weidu_log_mode(arg: &str) -> Result<String, String> {
@@ -376,6 +380,7 @@ mod tests {
                         download: true,
                         overwrite: false,
                         check_last_installed: false,
+                        tick: 500,
                     },
                 }),
             };
@@ -424,6 +429,7 @@ mod tests {
                     download: expected_flag_value,
                     overwrite: !expected_flag_value,
                     check_last_installed: !expected_flag_value,
+                    tick: 500,
                 },
                 generate_directories: false,
                 new_pre_eet_dir: None,

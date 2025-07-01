@@ -23,6 +23,7 @@ pub(crate) fn parse_raw_output(
     wait_count: Arc<AtomicUsize>,
     log: Arc<RwLock<String>>,
     timeout: usize,
+    tick: u64,
 ) {
     let mut current_state = ParserState::LookingForInterestingOutput;
     let mut question = String::new();
@@ -98,7 +99,7 @@ pub(crate) fn parse_raw_output(
                         // there is no new weidu output and we are not waiting for any, so there is nothing to do
                     }
                 }
-                sleep(100);
+                sleep(tick);
             }
             Err(TryRecvError::Disconnected) => {
                 sender

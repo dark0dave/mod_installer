@@ -64,15 +64,7 @@ pub(crate) fn normal_install(
             copy_folder(mod_folder, game_directory.join(&weidu_mod.name))?;
         }
         log::info!("Installing mod {:?}", &weidu_mod);
-        match install(
-            &options.weidu_binary,
-            &game_directory,
-            parser_config.clone(),
-            weidu_mod,
-            &options.language,
-            &options.weidu_log_mode,
-            options.timeout,
-        ) {
+        match install(&game_directory, parser_config.clone(), weidu_mod, options) {
             InstallationResult::Fail(message) => {
                 return Err(format!(
                     "Failed to install mod {}, error is '{}'",

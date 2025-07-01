@@ -16,9 +16,9 @@ pub(crate) struct Component {
 impl PartialEq for Component {
     fn eq(&self, other: &Self) -> bool {
         self.tp_file == other.tp_file
-            && self.name == other.name
-            && self.lang == other.lang
-            && self.component == other.component
+            && self.name.to_lowercase() == other.name.to_lowercase()
+            && self.lang.to_lowercase() == other.lang.to_lowercase()
+            && self.component.to_lowercase() == other.component.to_lowercase()
     }
 }
 

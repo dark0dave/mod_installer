@@ -233,6 +233,19 @@ pub(crate) struct Options {
         value_parser = BoolishValueParser::new(),
     )]
     pub(crate) overwrite: bool,
+
+    /// Strict weidu log checking
+    #[clap(
+        env,
+        short,
+        long,
+        num_args=0..=1,
+        action = clap::ArgAction::SetTrue,
+        default_value_t = false,
+        default_missing_value = "false",
+        value_parser = BoolishValueParser::new(),
+    )]
+    pub(crate) check_last_installed: bool,
 }
 
 fn parse_weidu_log_mode(arg: &str) -> Result<String, String> {
@@ -369,6 +382,7 @@ mod tests {
                         strict_matching: false,
                         download: true,
                         overwrite: false,
+                        check_last_installed: false,
                     },
                 }),
             };
@@ -416,6 +430,7 @@ mod tests {
                     strict_matching: !expected_flag_value,
                     download: expected_flag_value,
                     overwrite: !expected_flag_value,
+                    check_last_installed: !expected_flag_value,
                 },
                 generate_directories: false,
                 new_pre_eet_dir: None,

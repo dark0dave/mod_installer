@@ -367,6 +367,17 @@ These flags work for either of the above commands
 
   > Example: --strict-matching
 
+* -c, --check_last_installed
+
+
+  > What it does: This has the mod_installer compare what it just installed vs the last line in the weidu.log file.
+
+  > How to use it: Just add this option to your command if you want to use it.
+
+  > Default: This is off by default.
+
+  > Example: -c --check_last_installed
+
 * -V, --version
 
 

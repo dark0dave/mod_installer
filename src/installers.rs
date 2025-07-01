@@ -81,7 +81,9 @@ pub(crate) fn normal_install(
                 .into());
             }
             InstallationResult::Success => {
-                validate_install(game_dir, weidu_mod)?;
+                if options.check_last_installed {
+                    validate_install(game_dir, weidu_mod)?;
+                }
                 log::info!("Installed mod {:?}", &weidu_mod);
             }
             InstallationResult::Warnings => {

@@ -162,7 +162,6 @@ pub(crate) struct Options {
         num_args=0..=1,
         action = clap::ArgAction::SetFalse,
         default_value_t = true,
-        default_missing_value = "true",
         value_parser = BoolishValueParser::new(),
     )]
     pub(crate) skip_installed: bool,
@@ -175,7 +174,6 @@ pub(crate) struct Options {
         num_args=0..=1,
         action = clap::ArgAction::SetTrue,
         default_value_t = false,
-        default_missing_value = "false",
         value_parser = BoolishValueParser::new(),
     )]
     pub(crate) abort_on_warnings: bool,
@@ -203,9 +201,7 @@ pub(crate) struct Options {
         num_args=0..=1,
         action = clap::ArgAction::SetTrue,
         default_value_t = false,
-        default_missing_value = "false",
         value_parser = BoolishValueParser::new(),
-        required = false,
     )]
     pub(crate) strict_matching: bool,
 
@@ -216,7 +212,6 @@ pub(crate) struct Options {
         num_args=0..=1,
         action = clap::ArgAction::SetFalse,
         default_value_t = true,
-        default_missing_value = "true",
         value_parser = BoolishValueParser::new(),
     )]
     pub(crate) download: bool,
@@ -229,7 +224,6 @@ pub(crate) struct Options {
         num_args=0..=1,
         action = clap::ArgAction::SetTrue,
         default_value_t = false,
-        default_missing_value = "false",
         value_parser = BoolishValueParser::new(),
     )]
     pub(crate) overwrite: bool,
@@ -242,7 +236,6 @@ pub(crate) struct Options {
         num_args=0..=1,
         action = clap::ArgAction::SetTrue,
         default_value_t = false,
-        default_missing_value = "false",
         value_parser = BoolishValueParser::new(),
     )]
     pub(crate) check_last_installed: bool,
@@ -379,7 +372,7 @@ mod tests {
                         abort_on_warnings: expected_flag_value,
                         timeout: 3600,
                         weidu_log_mode: "--autolog".to_string(),
-                        strict_matching: false,
+                        strict_matching: true,
                         download: true,
                         overwrite: false,
                         check_last_installed: false,

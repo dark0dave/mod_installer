@@ -19,6 +19,8 @@ fn main() -> ExitCode {
 
     let config = Config::new();
 
+    log::debug!("{:?}", config.args);
+
     let status = match config.args.command {
         InstallType::Normal(command) => normal_install(
             &command.log_file,

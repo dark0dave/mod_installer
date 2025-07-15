@@ -19,17 +19,19 @@ use crate::{
 };
 
 fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) -> Vec<String> {
-    format!("{mod_name}/{mod_tp_file} {weidu_log_mode} --force-install {component} --use-lang {game_lang} --language {mod_lang}",
-        mod_name = weidu_mod.name,
-        mod_tp_file = weidu_mod.tp_file,
-        weidu_log_mode = weidu_log_mode,
-        component = weidu_mod.component,
-        mod_lang = weidu_mod.lang,
-        game_lang = language
-    )
-    .split(' ')
-    .map(|x|x.to_string())
-    .collect()
+    let mod_name = &weidu_mod.name;
+    let mod_tp_file = &weidu_mod.tp_file;
+    vec![
+        format!("{mod_name}/{mod_tp_file}"),
+        weidu_log_mode.to_string(),
+        "--force-install".to_string(),
+        weidu_mod.component.to_string(),
+        "--use-lang".to_string(),
+        language.to_string(),
+        "--language".to_string(),
+        weidu_mod.lang.to_string(),
+        "--no-exit-pause".to_string(),
+    ]
 }
 
 pub(crate) enum InstallationResult {

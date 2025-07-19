@@ -36,7 +36,7 @@ fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) ->
 
 pub(crate) enum InstallationResult {
     Success,
-    Warnings,
+    Warnings(String),
     Fail(String),
 }
 
@@ -92,10 +92,18 @@ pub(crate) fn handle_io(
                     }
                     State::CompletedWithErrors { error_details } => {
                         log::error!("Weidu process seem to have completed with errors");
-                        log::error!("Dumping log: {}", log.read().unwrap());
-                        weidu_stdin
-                            .write_all("\n".as_bytes())
-                            .expect("Failed to send final ENTER to weidu process");
+                        if let Ok(weidu_log) = log.read() {
+                            log::error!("Dumping log: {weidu_log}");
+                        }
+                        match child.try_wait() {
+                            Ok(exit) => {
+                                log::debug!("Weidu exit status: {exit:?}");
+                            }
+                            Err(err) => {
+                                log::error!("Failed to close weidu process: {err}");
+                            }
+                        };
+
                         return InstallationResult::Fail(error_details);
                     }
                     State::TimedOut => {
@@ -107,11 +115,23 @@ pub(crate) fn handle_io(
                     }
                     State::CompletedWithWarnings => {
                         log::warn!("Weidu process seem to have completed with warnings");
-                        log::warn!("Dumping log: {}", log.read().unwrap());
-                        weidu_stdin
-                            .write_all("\n".as_bytes())
-                            .expect("Failed to send final ENTER to weidu process");
-                        return InstallationResult::Warnings;
+                        if let Ok(weidu_log) = log.read() {
+                            log::warn!("Dumping log: {weidu_log}");
+                        }
+                        return match child.try_wait() {
+                            Ok(exit) => {
+                                log::debug!("Weidu exit status: {exit:?}");
+                                InstallationResult::Warnings(
+                                    "Weidu process exited with warnings".to_string(),
+                                )
+                            }
+                            Err(err) => {
+                                log::error!("Failed to close weidu process: {err}");
+                                InstallationResult::Fail(
+                                    "Failed to close weidu process, exiting".to_string(),
+                                )
+                            }
+                        };
                     }
                     State::InProgress => {
                         log::debug!("In progress...");

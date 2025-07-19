@@ -78,7 +78,8 @@ pub(crate) fn normal_install(
                 }
                 log::info!("Installed mod {:?}", &weidu_mod);
             }
-            InstallationResult::Warnings => {
+            InstallationResult::Warnings(msg) => {
+                log::warn!("{msg}");
                 if options.abort_on_warnings {
                     return Err(
                         format!("Installed mod {weidu_mod:?} with warnings, stopping").into(),

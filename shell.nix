@@ -3,9 +3,6 @@ with import <nixpkgs> {};
 stdenv.mkDerivation {
   name = "rust-env";
   buildInputs = [
-    cargo
-    git
-    gnupg
     openssl
     pre-commit
     rustup

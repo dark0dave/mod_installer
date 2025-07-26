@@ -160,19 +160,11 @@ pub fn try_download_mod(weidu_mod: &Component) -> Result<PathBuf, Box<dyn Error>
     }
 }
 
-pub fn validate_install(game_dir: &Path, component: &Component) -> Result<(), Box<dyn Error>> {
+pub fn get_last_installed(game_dir: &Path) -> Result<Component, Box<dyn Error>> {
     let file = File::open(game_dir.join("weidu.log"))?;
     let reader = BufReader::new(file);
     let last_line = reader.lines().last().ok_or("")??;
-    let last_installed = Component::try_from(last_line)?;
-    if last_installed.ne(component) {
-        Err(format!(
-            "Last installed {last_installed:?} does not match component installed: {component:?}"
-        )
-        .into())
-    } else {
-        Ok(())
-    }
+    Component::try_from(last_line)
 }
 
 pub fn sleep(millis: u64) {

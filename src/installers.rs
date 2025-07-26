@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::{collections::HashMap, error::Error, path::Path, sync::Arc};
 
-use crate::utils::{delete_folder, search_or_download, validate_install};
+use crate::utils::{delete_folder, get_last_installed, search_or_download};
 use crate::{
     config::args::{Eet, Options},
     config::parser_config::ParserConfig,
@@ -56,7 +56,7 @@ pub(crate) fn normal_install(
         }
 
         if !mod_folder_present_in_game_directory(&game_directory, &weidu_mod.name) {
-            log::info!(
+            log::debug!(
                 "Copying mod directory, from {:?} to, {:?}",
                 mod_folder,
                 game_directory.join(&weidu_mod.name)
@@ -73,10 +73,14 @@ pub(crate) fn normal_install(
                 .into());
             }
             InstallationResult::Success => {
-                if options.check_last_installed {
-                    validate_install(game_dir, weidu_mod)?;
+                let last_installed = get_last_installed(game_dir)?;
+                if options.check_last_installed && last_installed.ne(weidu_mod) {
+                    return Err(format!(
+                        "Last installed {last_installed:?} does not match component installed: {weidu_mod:?}"
+                    )
+                    .into());
                 }
-                log::info!("Installed mod {:?}", &weidu_mod);
+                log::info!("Installed mod {:?}", &last_installed);
             }
             InstallationResult::Warnings(msg) => {
                 log::warn!("{msg}");

@@ -19,7 +19,7 @@ jobs:
       with:
         set-safe-directory: true
         fetch-depth: 0
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
     - uses: actions-rs/toolchain@v1
       with:
         toolchain: stable

@@ -6,24 +6,18 @@ on:
     tags:
     - "*"
   pull_request:
-concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
-  cancel-in-progress: true
 env:
   CARGO_TERM_COLOR: always
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@main
       with:
         set-safe-directory: true
         fetch-depth: 0
-    - uses: actions/setup-python@v6
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-    - uses: pre-commit/action@v3.0.1
+    - uses: actions/setup-python@main
+    - uses: pre-commit/action@main
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -39,24 +33,28 @@ jobs:
             target: x86_64-pc-windows-msvc
             suffix: .exe
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@main
+      - name: Cache
+        uses: actions/cache@main
         with:
-          toolchain: stable
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: build
+        run: |
+          cargo build --release
       - name: Archive release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@main
         with:
           name: mod_installer-${{ matrix.target }}${{ matrix.suffix }}
           path: ./target/release/mod_installer${{ matrix.suffix }}
   build-nix:
    runs-on: ubuntu-latest
    steps:
-    - uses: actions/checkout@v5
-    - uses: cachix/install-nix-action@v31
+    - uses: actions/checkout@main
+    - uses: cachix/install-nix-action@master
       with:
         nix_path: nixpkgs=channel:nixos-25.05
     - run: nix build -f default.nix
@@ -69,11 +67,11 @@ jobs:
       tag_name: ${{ steps.get_tag.outputs.git_tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@main
         with:
           fetch-depth: 0
       - name: Generate a changelog
-        uses: orhun/git-cliff-action@v4.4.2
+        uses: orhun/git-cliff-action@main
         id: git-cliff
         with:
           config: cliff.toml
@@ -87,7 +85,7 @@ jobs:
         run: echo ::set-output name=git_tag::${GITHUB_REF/refs\/tags\//}
       - name: Create Release
         id: create_release
-        uses: ncipollo/release-action@v1.20.0
+        uses: ncipollo/release-action@main
         with:
           bodyFile: ./CHANGELOG.md
           prerelease: ${{ startsWith(steps.get_tag.outputs.git_tag, 'nightly') }}
@@ -108,7 +106,7 @@ jobs:
             suffix: .exe
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@main
         with:
           name: mod_installer-${{ matrix.target }}${{ matrix.suffix }}
       - name: Upload Release Asset - ${{ matrix.os }}

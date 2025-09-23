@@ -15,19 +15,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
-      - uses: actions-rs/toolchain@v1
+        uses: actions/checkout@main
+      - name: Cache
+        uses: actions/cache@main
         with:
-          toolchain: stable
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Create docs
         run: |
           cargo clean --doc
           cargo doc --all --no-deps
           mv target/doc/mod_installer target/doc/rust_docs
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@main
         with:
           path: target/doc
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@main

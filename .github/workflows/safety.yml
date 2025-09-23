@@ -1,12 +1,7 @@
 permissions:
   contents: read
 on:
-  push:
-    branches: [main]
   pull_request:
-concurrency:
-  group: ${{ github.ref }}-${{ github.workflow }}
-  cancel-in-progress: true
 env:
   CARGO_TERM_COLOR: always
 name: safety
@@ -15,7 +10,15 @@ jobs:
     name: "Miri"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@main
+      - name: Cache
+        uses: actions/cache@main
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install Miri
         run: |
           rustup toolchain install nightly --component miri

@@ -1,2 +1,2 @@
 [tools]
-rust = "latest"
+rust = "1.88.0"

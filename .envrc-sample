@@ -1,3 +1,0 @@
-set -a
-use nix
-[[ -f "${TMPDIR}" ]] && mkdir -p "${TMPDIR}"

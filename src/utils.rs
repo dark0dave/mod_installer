@@ -12,11 +12,6 @@ use walkdir::WalkDir;
 
 use crate::{component::Component, config::args::Options, log_file::LogFile};
 
-pub fn find_parent_folder(dest: &Path) -> Result<&Path, String> {
-    dest.parent()
-        .ok_or(format!("Failed to find parent dir of {dest:#?}"))
-}
-
 pub fn delete_folder(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
     if path.as_ref().exists() {
         log::debug!("Found {:#?} removing", path.as_ref());
@@ -43,15 +38,6 @@ pub fn copy_folder(
         }
     }
     Ok(())
-}
-
-pub fn clone_directory(src: &Path, dest: &Path) -> Result<PathBuf, Box<dyn Error>> {
-    let parent = find_parent_folder(src)?;
-    let new_directory = parent.join(dest);
-    log::info!("Cloning directory {src:?} to new directory: {new_directory:?}");
-
-    copy_folder(src, &new_directory)?;
-    Ok(new_directory)
 }
 
 pub fn mod_folder_present_in_game_directory(game_directory: &Path, mod_name: &str) -> bool {

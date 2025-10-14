@@ -22,13 +22,7 @@ fn main() -> ExitCode {
     log::debug!("{:?}", config.args);
 
     let status = match config.args.command {
-        InstallType::Normal(command) => normal_install(
-            &command.log_file,
-            &command.game_directory,
-            &command.new_game_directory,
-            &command.options,
-            config.parser.clone(),
-        ),
+        InstallType::Normal(command) => normal_install(&command, config.parser.clone()),
         InstallType::Eet(command) => eet_install(&command, config.parser.clone()),
     };
 

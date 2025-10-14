@@ -68,7 +68,7 @@ pub(crate) struct Normal {
 
     /// Instead of operating on an existing directory, create a new one with this flag as its name and then copy the original contents into it.
     #[clap(env, long, short = 'n', required = false)]
-    pub(crate) new_game_directory: Option<PathBuf>,
+    pub(crate) generate_directory: Option<PathBuf>,
 
     /// CommonOptions
     #[clap(flatten)]
@@ -95,21 +95,11 @@ pub(crate) struct Eet {
     #[clap(env, short='z', long, value_parser = path_must_exist, required = true)]
     pub(crate) bg2_log_file: PathBuf,
 
-    /// Instead of operating on an existing directory, create a new one with this flag as its name and then copy the original contents into it.
-    #[clap(
-        env,
-        short,
-        long,
-        action = clap::ArgAction::SetTrue,
-        required = false,
-    )]
-    pub(crate) generate_directories: bool,
-
-    /// If generate_directories is true. This is the path for the new pre-eet directory.
+    /// Generates a new pre-eet directory.
     #[clap(env, short = 'p', long, value_parser = path_must_exist)]
     pub(crate) new_pre_eet_dir: Option<PathBuf>,
 
-    /// If generate_directories is true. This is the path for the new eet directory.
+    /// Generates a new eet directory.
     #[clap(env, short = 'n', long, value_parser = path_must_exist)]
     pub(crate) new_eet_dir: Option<PathBuf>,
 
@@ -366,7 +356,7 @@ mod tests {
                 command: InstallType::Normal(Normal {
                     log_file: fake_log_file.clone(),
                     game_directory: fake_game_dir.clone(),
-                    new_game_directory: None,
+                    generate_directory: None,
                     options: Options {
                         weidu_binary: fake_weidu_bin.clone(),
                         mod_directories: vec![fake_mod_dirs.clone()],
@@ -431,7 +421,6 @@ mod tests {
                     check_last_installed: !expected_flag_value,
                     tick: 500,
                 },
-                generate_directories: false,
                 new_pre_eet_dir: None,
                 new_eet_dir: Some("test".into()),
             }),

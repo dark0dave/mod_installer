@@ -1,7 +1,7 @@
 { pkgs ? import <nixpkgs> { } }:
 pkgs.rustPlatform.buildRustPackage rec {
   pname = "mod_installer";
-  version = "11.4.1";
+  version = "12.0.0";
   cargoLock.lockFile = ./Cargo.lock;
   src = pkgs.lib.cleanSource ./.;
   buildInputs = with pkgs; [

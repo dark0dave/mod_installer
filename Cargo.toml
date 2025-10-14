@@ -20,17 +20,17 @@ keywords = [
 
 [dependencies]
 anstyle = "1.0.10"
-clap = { version = "^4.5.9", features = ["derive", "env", "string"] }
+clap = { version = "^4.5.49", features = ["derive", "env", "string"] }
 confy = "^1.0.0"
 env_logger = "^0.11.8"
 log = "^0.4.22"
-reqwest = {version = "^0.12.22", features = ["blocking"]}
+reqwest = {version = "^0.12.24", features = ["blocking"]}
 serde = { version = "^1.0.217", features = ["derive"] }
 serde_derive = "^1.0.152"
 tempfile = "^3"
 url = "2.5.4"
 walkdir = "^2.3.2"
-zip = "^5.0.0"
+zip = "^6.0.0"
 
 [dev-dependencies]
 pretty_assertions = "^1.4.1"

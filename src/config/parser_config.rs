@@ -36,7 +36,11 @@ impl Default for ParserConfig {
                 "select".to_string(),
                 "enter".to_string(),
             ],
-            choice_phrase: vec!["do you want".to_string(), "would you like".to_string()],
+            choice_phrase: vec![
+                "do you want".to_string(),
+                "would you like".to_string(),
+                "answer [y]es or [n]o.".to_string(),
+            ],
             completed_with_warnings: vec!["installed with warnings".to_string()],
             failed_with_error: vec![
                 "not installed due to errors".to_string(),

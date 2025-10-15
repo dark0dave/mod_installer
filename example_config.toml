@@ -22,6 +22,7 @@ choice_words = [
 choice_phrase = [
     "do you want",
     "would you like",
+    "answer [y]es or [n]o.",
 ]
 completed_with_warnings = [
     "installed with warnings",

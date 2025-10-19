@@ -52,6 +52,8 @@ pub(crate) enum InstallType {
     Normal(Normal),
     #[command()]
     Eet(Eet),
+    #[command()]
+    Scan(Scan),
 }
 
 /// Normal install for (BG1EE,BG2EE,IWDEE) (STABLE)
@@ -112,6 +114,19 @@ pub(crate) struct Eet {
     /// If generate_directories is true. This is the path for the new eet directory.
     #[clap(env, short = 'n', long, value_parser = path_must_exist)]
     pub(crate) new_eet_dir: Option<PathBuf>,
+
+    /// CommonOptions
+    #[clap(flatten)]
+    pub(crate) options: Options,
+}
+
+/// Normal install for (BG1EE,BG2EE,IWDEE) (STABLE)
+#[derive(Parser, Debug, PartialEq, Clone)]
+#[clap(short_flag = 's')]
+pub(crate) struct Scan {
+    /// Absolute Path to game directory
+    #[clap(env, short, long, value_parser = parse_absolute_path, required = true)]
+    pub(crate) game_directory: PathBuf,
 
     /// CommonOptions
     #[clap(flatten)]

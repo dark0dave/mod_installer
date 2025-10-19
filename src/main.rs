@@ -4,11 +4,13 @@ use config::parser_config::PARSER_CONFIG_LOCATION;
 use config::{args::InstallType, Config};
 use env_logger::Env;
 use installers::{eet_install, normal_install};
+use scan::scan;
 
 mod component;
 mod config;
 mod installers;
 mod log_file;
+mod scan;
 mod state;
 mod utils;
 mod weidu;
@@ -30,6 +32,7 @@ fn main() -> ExitCode {
             config.parser.clone(),
         ),
         InstallType::Eet(command) => eet_install(&command, config.parser.clone()),
+        InstallType::Scan(command) => scan(&command),
     };
 
     match status {

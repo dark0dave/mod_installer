@@ -9,7 +9,7 @@ use crate::{
         clone_directory, copy_folder, find_mods, find_parent_folder,
         mod_folder_present_in_game_directory,
     },
-    weidu::{install, InstallationResult},
+    weidu::{run, InstallationResult},
 };
 
 const EET: &str = "eet";
@@ -64,7 +64,7 @@ pub(crate) fn normal_install(
             copy_folder(mod_folder, game_directory.join(&weidu_mod.name))?;
         }
         log::info!("Installing mod {:?}", &weidu_mod);
-        match install(&game_directory, parser_config.clone(), weidu_mod, options) {
+        match run(&game_directory, parser_config.clone(), weidu_mod, options) {
             InstallationResult::Fail(message) => {
                 return Err(format!(
                     "Failed to install mod {}, error is '{}'",

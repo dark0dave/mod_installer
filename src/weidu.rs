@@ -40,7 +40,7 @@ pub(crate) enum InstallationResult {
     Fail(String),
 }
 
-pub(crate) fn install(
+pub(crate) fn run(
     game_directory: &Path,
     parser_config: Arc<ParserConfig>,
     weidu_mod: &Component,

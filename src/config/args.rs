@@ -4,7 +4,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use clap::Subcommand;
-use clap::{builder::BoolishValueParser, builder::OsStr, Parser};
+use clap::{Parser, builder::BoolishValueParser, builder::OsStr};
 
 use super::colors::styles;
 

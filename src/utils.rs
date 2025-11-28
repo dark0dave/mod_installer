@@ -66,14 +66,13 @@ fn find_mod_folder(mod_component: &Component, mod_dir: &Path, depth: usize) -> O
                     .file_name()
                     .eq_ignore_ascii_case(&mod_component.tp_file) =>
             {
-                if let Some(parent) = entry.path().parent() {
-                    if parent
+                if let Some(parent) = entry.path().parent()
+                    && parent
                         .file_name()
                         .unwrap_or_default()
                         .eq_ignore_ascii_case(&mod_component.name)
-                    {
-                        return Some(parent.to_path_buf());
-                    }
+                {
+                    return Some(parent.to_path_buf());
                 }
                 None
             }

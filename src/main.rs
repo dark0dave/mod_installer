@@ -1,7 +1,7 @@
 use std::process::ExitCode;
 
 use config::parser_config::PARSER_CONFIG_LOCATION;
-use config::{args::InstallType, Config};
+use config::{Config, args::InstallType};
 use env_logger::Env;
 use installers::{eet_install, normal_install};
 

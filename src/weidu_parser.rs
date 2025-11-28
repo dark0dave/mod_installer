@@ -61,7 +61,8 @@ pub(crate) fn parse_raw_output(
                                 .send(installer_state)
                                 .expect("Failed to send process error event");
                             break;
-                        } else if parser_config.string_looks_like_question(&string) {
+                        }
+                        if parser_config.string_looks_like_question(&string) {
                             log::debug!(
                                 "Changing parser state to '{:?}' due to line {}",
                                 ParserState::CollectingQuestion,

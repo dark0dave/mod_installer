@@ -156,8 +156,13 @@ mod tests {
     #[test]
     fn is_a_question() -> Result<(), Box<dyn Error>> {
         let config = ParserConfig::default();
-        let tests = vec!["Enter the full path to your Baldur's Gate installation then press Enter.", "Enter the full path to your BG:EE+SoD installation then press Enter.\
-Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806", "[N]o, [Q]uit or choose one:", "Please enter the chance for items to randomly not be randomised as a integet number (e.g. 10 for 10%)"];
+        let tests = vec![
+            "Enter the full path to your Baldur's Gate installation then press Enter.",
+            "Enter the full path to your BG:EE+SoD installation then press Enter.\
+Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806",
+            "[N]o, [Q]uit or choose one:",
+            "Please enter the chance for items to randomly not be randomised as a integet number (e.g. 10 for 10%)",
+        ];
         for question in tests {
             assert_eq!(
                 config.string_looks_like_question(question),

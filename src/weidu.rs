@@ -3,9 +3,9 @@ use std::{
     path::Path,
     process::{Child, ChildStdout, Command, Stdio},
     sync::{
+        Arc, RwLock,
         atomic::{AtomicUsize, Ordering},
         mpsc::{self, Receiver, TryRecvError},
-        Arc, RwLock,
     },
     thread,
 };
@@ -165,25 +165,27 @@ pub(crate) fn handle_io(
 fn create_output_reader(out: ChildStdout) -> Receiver<String> {
     let (tx, rx) = mpsc::channel::<String>();
     let mut buffered_reader = BufReader::new(out);
-    thread::spawn(move || loop {
-        let mut line = String::new();
-        match buffered_reader.read_line(&mut line) {
-            Ok(0) => {
-                log::debug!("Process ended");
-                break;
-            }
-            Ok(_) => {
-                log::debug!("{line}");
-                tx.send(line).expect("Failed to sent process output line");
-            }
-            Err(ref e) if e.kind() == ErrorKind::InvalidData => {
-                // sometimes there is a non-unicode gibberish in process output, it
-                // does not seem to be an indicator of error or break anything, ignore it
-                log::warn!("Failed to read weidu output");
-            }
-            Err(details) => {
-                log::error!("Failed to read process output, error is '{details:?}'");
-                panic!("Failed to read process output, error is '{details:?}'");
+    thread::spawn(move || {
+        loop {
+            let mut line = String::new();
+            match buffered_reader.read_line(&mut line) {
+                Ok(0) => {
+                    log::debug!("Process ended");
+                    break;
+                }
+                Ok(_) => {
+                    log::debug!("{line}");
+                    tx.send(line).expect("Failed to sent process output line");
+                }
+                Err(ref e) if e.kind() == ErrorKind::InvalidData => {
+                    // sometimes there is a non-unicode gibberish in process output, it
+                    // does not seem to be an indicator of error or break anything, ignore it
+                    log::warn!("Failed to read weidu output");
+                }
+                Err(details) => {
+                    log::error!("Failed to read process output, error is '{details:?}'");
+                    panic!("Failed to read process output, error is '{details:?}'");
+                }
             }
         }
     });

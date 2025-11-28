@@ -1,5 +1,7 @@
 { pkgs ? import <nixpkgs> { } }:
-let manifest = (pkgs.lib.importTOML ./Cargo.toml).package;
+let
+  manifest = (pkgs.lib.importTOML ./Cargo.toml).package;
+  overrides = (builtins.fromTOML (builtins.readFile ./rust-toolchain.toml));
 in
 pkgs.rustPlatform.buildRustPackage rec {
   pname = manifest.name;
@@ -8,8 +10,10 @@ pkgs.rustPlatform.buildRustPackage rec {
   src = pkgs.lib.cleanSource ./.;
   buildInputs = with pkgs; [
     openssl
+    cargo
   ];
   nativeBuildInputs = with pkgs; [
     pkg-config
   ];
+  RUSTC_VERSION = overrides.toolchain.channel;
 }

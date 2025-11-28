@@ -14,6 +14,7 @@
       devShells = forAllSystems (system:
         let
           pkgs = import nixpkgs { inherit system; };
+          overrides = (builtins.fromTOML (builtins.readFile ./rust-toolchain.toml));
         in {
           default = pkgs.mkShell {
             name = "rust-env";
@@ -22,11 +23,15 @@
               openssl
               rustup
             ];
+            RUSTC_VERSION = overrides.toolchain.channel;
             # Tools
             nativeBuildInputs = with pkgs; [
+              clippy
               git
               pkg-config
               pre-commit
+              rust-analyzer
+              rustfmt
             ];
           };
         });

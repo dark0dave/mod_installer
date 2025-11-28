@@ -17,8 +17,6 @@ repos:
       stages: [pre-commit]
     - id: check-builtin-literals
       stages: [pre-commit]
-    - id: check-yaml
-      stages: [pre-commit]
 
 - repo: https://github.com/jumanjihouse/pre-commit-hooks
   rev: 3.0.0

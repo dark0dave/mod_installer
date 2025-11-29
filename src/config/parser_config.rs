@@ -145,16 +145,6 @@ mod tests {
     }
 
     #[test]
-    fn is_not_question() -> Result<(), Box<dyn Error>> {
-        let config = ParserConfig::default();
-        let test = "Creating epilogues. Too many epilogues... Why are there so many options here?";
-        assert_eq!(config.string_looks_like_question(test), false);
-        let test = "Including file(s) spellchoices_defensive/vanilla/ENCHANTER.TPH";
-        assert_eq!(config.string_looks_like_question(test), false);
-        Ok(())
-    }
-
-    #[test]
     fn is_a_question() -> Result<(), Box<dyn Error>> {
         let config = ParserConfig::default();
         let tests = vec![
@@ -163,14 +153,16 @@ mod tests {
 Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806",
             "[N]o, [Q]uit or choose one:",
             "Please enter the chance for items to randomly not be randomised as a integet number (e.g. 10 for 10%)",
+            "Is this correct? [Y]es or [N]o",
         ];
-        for question in tests {
+        for test in tests {
             assert_eq!(
-                config.string_looks_like_question(question),
+                config.string_looks_like_question(test),
                 true,
                 "String {} doesn't look like a question",
-                question
+                test
             );
+            assert_eq!(config.detect_weidu_finished_state(test), State::InProgress);
         }
         Ok(())
     }
@@ -181,13 +173,15 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806",
         let tests = vec![
             "FAILURE:",
             "NOT INSTALLED DUE TO ERRORS The BG1 NPC Project: Required Modifications",
+            "Creating epilogues. Too many epilogues... Why are there so many options here?",
+            "Including file(s) spellchoices_defensive/vanilla/ENCHANTER.TPH",
         ];
-        for question in tests {
+        for test in tests {
             assert_eq!(
-                config.string_looks_like_question(question),
+                config.string_looks_like_question(test),
                 false,
                 "String {} does look like a question",
-                question
+                test
             );
         }
         Ok(())

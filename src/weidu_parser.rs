@@ -1,6 +1,6 @@
 use std::{
     sync::{
-        Arc, RwLock,
+        Arc,
         atomic::{AtomicUsize, Ordering},
         mpsc::{Receiver, Sender, TryRecvError},
     },
@@ -21,7 +21,6 @@ pub(crate) fn parse_raw_output(
     receiver: Receiver<String>,
     parser_config: Arc<ParserConfig>,
     wait_count: Arc<AtomicUsize>,
-    log: Arc<RwLock<String>>,
     timeout: usize,
 ) {
     let mut current_state = ParserState::LookingForInterestingOutput;
@@ -35,9 +34,6 @@ pub(crate) fn parse_raw_output(
                 Ok(string) => match current_state {
                     ParserState::CollectingQuestion
                     | ParserState::WaitingForMoreQuestionContent => {
-                        if let Ok(mut writer) = log.write() {
-                            writer.push_str(&string);
-                        }
                         if parser_config.useful_status_words.contains(&string) {
                             log::debug!(
                                 "Weidu seems to know an answer for the last question, ignoring it"
@@ -51,9 +47,6 @@ pub(crate) fn parse_raw_output(
                         }
                     }
                     ParserState::LookingForInterestingOutput => {
-                        if let Ok(mut writer) = log.write() {
-                            writer.push_str(&string);
-                        }
                         let installer_state = parser_config.detect_weidu_finished_state(&string);
                         if installer_state != State::InProgress {
                             sender

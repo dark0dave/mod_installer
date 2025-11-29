@@ -1,4 +1,5 @@
 use std::{
+    error::Error,
     io::{BufRead, BufReader, ErrorKind, Write},
     path::Path,
     process::{Child, ChildStdout, Command, Stdio},
@@ -23,6 +24,13 @@ const LINE_ENDING: &str = "\r\n";
 #[cfg(not(windows))]
 const LINE_ENDING: &str = "\n";
 
+pub(crate) enum WeiduExitStatus {
+    Success,
+    Warnings(String),
+}
+
+pub(crate) type InstallationResult = Result<WeiduExitStatus, Box<dyn Error>>;
+
 fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) -> Vec<String> {
     let mod_name = &weidu_mod.name;
     let mod_tp_file = &weidu_mod.tp_file;
@@ -37,12 +45,6 @@ fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) ->
         weidu_mod.lang.to_string(),
         "--no-exit-pause".to_string(),
     ]
-}
-
-pub(crate) enum InstallationResult {
-    Success,
-    Warnings(String),
-    Fail(String),
 }
 
 pub(crate) fn install(
@@ -72,16 +74,24 @@ pub(crate) fn handle_io(
     tick: u64,
 ) -> InstallationResult {
     let log = Arc::new(RwLock::new(String::new()));
-    let mut weidu_stdin = child.stdin.take().unwrap();
+    let mut weidu_stdin = child
+        .stdin
+        .take()
+        .ok_or("Failed to get weidu standard in")?;
     let wait_count = Arc::new(AtomicUsize::new(0));
-    let raw_output_receiver = create_output_reader(child.stdout.take().unwrap());
+    let raw_output_receiver = create_output_reader(
+        child
+            .stdout
+            .take()
+            .ok_or("Failed to get weidu standard out")?,
+        log.clone(),
+    );
     let (sender, parsed_output_receiver) = mpsc::channel::<State>();
     parse_raw_output(
         sender,
         raw_output_receiver,
         parser_config,
         wait_count.clone(),
-        log.clone(),
         timeout,
     );
 
@@ -108,14 +118,16 @@ pub(crate) fn handle_io(
                             }
                         };
 
-                        return InstallationResult::Fail(error_details);
+                        return Err(error_details.into());
                     }
                     State::TimedOut => {
                         log::error!(
                             "Weidu process seem to have been running for {timeout} seconds, exiting"
                         );
-                        log::error!("Dumping log: {}", log.read().unwrap());
-                        return InstallationResult::Fail("Timed out".to_string());
+                        if let Ok(weidu_log) = log.read() {
+                            log::error!("Dumping log: {weidu_log}");
+                        }
+                        return Err("Timed out".into());
                     }
                     State::CompletedWithWarnings => {
                         log::warn!("Weidu process seem to have completed with warnings");
@@ -123,17 +135,18 @@ pub(crate) fn handle_io(
                             log::warn!("Dumping log: {weidu_log}");
                         }
                         return match child.try_wait() {
-                            Ok(exit) => {
-                                log::debug!("Weidu exit status: {exit:?}");
-                                InstallationResult::Warnings(
+                            Ok(Some(exit)) => {
+                                log::debug!("Weidu exit status: {exit}");
+                                Ok(WeiduExitStatus::Warnings(
                                     "Weidu process exited with warnings".to_string(),
-                                )
+                                ))
                             }
+                            Ok(None) => Ok(WeiduExitStatus::Warnings(
+                                "Weidu process exited with warnings".to_string(),
+                            )),
                             Err(err) => {
                                 log::error!("Failed to close weidu process: {err}");
-                                InstallationResult::Fail(
-                                    "Failed to close weidu process, exiting".to_string(),
-                                )
+                                Err("Failed to close weidu process, exiting".into())
                             }
                         };
                     }
@@ -146,7 +159,7 @@ pub(crate) fn handle_io(
                         log::info!("{question}\n");
                         let user_input = get_user_input();
                         log::debug!("Read user input {user_input}, sending it to process ");
-                        weidu_stdin.write_all(user_input.as_bytes()).unwrap();
+                        weidu_stdin.write_all(user_input.as_bytes())?;
                         log::debug!("Input sent");
                     }
                 }
@@ -164,10 +177,10 @@ pub(crate) fn handle_io(
             Err(TryRecvError::Disconnected) => break,
         }
     }
-    InstallationResult::Success
+    Ok(WeiduExitStatus::Success)
 }
 
-fn create_output_reader(out: ChildStdout) -> Receiver<String> {
+fn create_output_reader(out: ChildStdout, log: Arc<RwLock<String>>) -> Receiver<String> {
     let (tx, rx) = mpsc::channel::<String>();
     let mut buffered_reader = BufReader::new(out);
     thread::spawn(move || {
@@ -179,6 +192,9 @@ fn create_output_reader(out: ChildStdout) -> Receiver<String> {
                     break;
                 }
                 Ok(_) => {
+                    if let Ok(mut writer) = log.write() {
+                        writer.push_str(&lines);
+                    }
                     lines
                         .split(LINE_ENDING)
                         .filter(|line| !line.trim().is_empty())

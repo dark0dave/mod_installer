@@ -163,6 +163,12 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806",
                 test
             );
             assert_eq!(config.detect_weidu_finished_state(test), State::InProgress);
+            assert_eq!(
+                config.useful_status_words.contains(&test.to_string()),
+                false,
+                "String {} looks like useful status words, it should only look like a question",
+                test
+            )
         }
         Ok(())
     }

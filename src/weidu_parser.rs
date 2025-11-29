@@ -7,7 +7,7 @@ use std::{
     thread,
 };
 
-use crate::{config::parser_config::ParserConfig, state::State, utils::sleep};
+use crate::{config::parser_config::ParserConfig, state::State};
 
 #[derive(Debug)]
 enum ParserState {
@@ -23,7 +23,6 @@ pub(crate) fn parse_raw_output(
     wait_count: Arc<AtomicUsize>,
     log: Arc<RwLock<String>>,
     timeout: usize,
-    tick: u64,
 ) {
     let mut current_state = ParserState::LookingForInterestingOutput;
     let mut question = String::new();
@@ -76,34 +75,29 @@ pub(crate) fn parse_raw_output(
                         }
                     }
                 },
-                Err(TryRecvError::Empty) => {
-                    match current_state {
-                        ParserState::CollectingQuestion => {
-                            log::debug!(
-                                "Changing parser state to '{:?}'",
-                                ParserState::WaitingForMoreQuestionContent
-                            );
-                            current_state = ParserState::WaitingForMoreQuestionContent;
-                        }
-                        ParserState::WaitingForMoreQuestionContent => {
-                            log::debug!("No new weidu output, sending question to user");
-                            sender
-                                .send(State::RequiresInput { question })
-                                .expect("Failed to send question");
-                            current_state = ParserState::LookingForInterestingOutput;
-                            question = String::new();
-                        }
-                        _ => {
-                            if wait_count.load(Ordering::Relaxed) >= timeout {
-                                sender
-                                    .send(State::TimedOut)
-                                    .expect("Could send timeout error");
-                            }
-                            // there is no new weidu output and we are not waiting for any, so there is nothing to do
-                        }
+                Err(TryRecvError::Empty) => match current_state {
+                    ParserState::CollectingQuestion => {
+                        log::debug!(
+                            "Changing parser state to '{:?}'",
+                            ParserState::WaitingForMoreQuestionContent
+                        );
+                        current_state = ParserState::WaitingForMoreQuestionContent;
                     }
-                    sleep(tick);
-                }
+                    ParserState::WaitingForMoreQuestionContent => {
+                        log::debug!("No new weidu output, sending question to user");
+                        sender
+                            .send(State::RequiresInput { question })
+                            .expect("Failed to send question");
+                        current_state = ParserState::LookingForInterestingOutput;
+                        question = String::new();
+                    }
+                    _ if wait_count.load(Ordering::Relaxed) >= timeout => {
+                        sender
+                            .send(State::TimedOut)
+                            .expect("Could send timeout error");
+                    }
+                    _ => {}
+                },
                 Err(TryRecvError::Disconnected) => {
                     sender
                         .send(State::Completed)

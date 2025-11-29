@@ -18,6 +18,11 @@ use crate::{
     weidu_parser::parse_raw_output,
 };
 
+#[cfg(windows)]
+const LINE_ENDING: &str = "\r\n";
+#[cfg(not(windows))]
+const LINE_ENDING: &str = "\n";
+
 fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) -> Vec<String> {
     let mod_name = &weidu_mod.name;
     let mod_tp_file = &weidu_mod.tp_file;
@@ -78,7 +83,6 @@ pub(crate) fn handle_io(
         wait_count.clone(),
         log.clone(),
         timeout,
-        tick,
     );
 
     loop {
@@ -152,6 +156,7 @@ pub(crate) fn handle_io(
                 std::io::stdout().flush().expect("Failed to flush stdout");
 
                 wait_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                log::trace!("Receiver is sleeping");
                 sleep(tick);
 
                 std::io::stdout().flush().expect("Failed to flush stdout");
@@ -167,15 +172,21 @@ fn create_output_reader(out: ChildStdout) -> Receiver<String> {
     let mut buffered_reader = BufReader::new(out);
     thread::spawn(move || {
         loop {
-            let mut line = String::new();
-            match buffered_reader.read_line(&mut line) {
+            let mut lines = String::new();
+            match buffered_reader.read_line(&mut lines) {
                 Ok(0) => {
                     log::debug!("Process ended");
                     break;
                 }
                 Ok(_) => {
-                    log::debug!("{line}");
-                    tx.send(line).expect("Failed to sent process output line");
+                    lines
+                        .split(LINE_ENDING)
+                        .filter(|line| !line.trim().is_empty())
+                        .for_each(|line| {
+                            log::trace!("Sending: `{line}`");
+                            tx.send(line.to_string())
+                                .expect("Failed to sent process output line");
+                        });
                 }
                 Err(ref e) if e.kind() == ErrorKind::InvalidData => {
                     // sometimes there is a non-unicode gibberish in process output, it
@@ -184,7 +195,7 @@ fn create_output_reader(out: ChildStdout) -> Receiver<String> {
                 }
                 Err(details) => {
                     log::error!("Failed to read process output, error is '{details:?}'");
-                    panic!("Failed to read process output, error is '{details:?}'");
+                    panic!()
                 }
             }
         }

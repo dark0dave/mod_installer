@@ -20,9 +20,9 @@ use crate::{
 };
 
 #[cfg(windows)]
-const LINE_ENDING: &str = "\r\n";
+pub(crate) const LINE_ENDING: &str = "\r\n";
 #[cfg(not(windows))]
-const LINE_ENDING: &str = "\n";
+pub(crate) const LINE_ENDING: &str = "\n";
 
 pub(crate) enum WeiduExitStatus {
     Success,

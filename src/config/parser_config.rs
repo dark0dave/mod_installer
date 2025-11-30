@@ -1,4 +1,4 @@
-use crate::state::State;
+use crate::{config::meta::Metadata, state::State};
 
 use serde_derive::{Deserialize, Serialize};
 
@@ -13,6 +13,7 @@ pub(crate) struct ParserConfig {
     pub(crate) completed_with_warnings: Vec<String>,
     pub(crate) failed_with_error: Vec<String>,
     pub(crate) finished: Vec<String>,
+    pub(crate) metadata: Metadata,
 }
 
 impl Default for ParserConfig {
@@ -51,6 +52,7 @@ impl Default for ParserConfig {
                 "successfully installed".to_string(),
                 "process ended".to_string(),
             ],
+            metadata: Metadata::default(),
         }
     }
 }
@@ -198,7 +200,8 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806",
         let root = std::env::current_dir()?;
         let config_path = Path::join(&root, Path::new("example_config.toml"));
         let config: ParserConfig = confy::load_path(config_path)?;
-        let expected = ParserConfig::default();
+        let mut expected = ParserConfig::default();
+        expected.metadata = config.metadata.clone();
         assert_eq!(expected, config);
         Ok(())
     }

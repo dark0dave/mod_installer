@@ -36,3 +36,10 @@ finished = [
     "successfully installed",
     "process ended",
 ]
+
+[metadata]
+mod_installer_version = "12.1.0"
+
+[metadata.created]
+secs_since_epoch = 1764506286
+nanos_since_epoch = 473859137

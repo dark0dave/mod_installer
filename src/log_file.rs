@@ -6,10 +6,10 @@ use std::{
     slice::Iter,
 };
 
-use crate::component::Component;
+use crate::{component::Component, weidu::LINE_ENDING};
 
 #[derive(Debug, PartialEq, PartialOrd)]
-pub(crate) struct LogFile(pub(crate) Vec<Component>);
+pub(crate) struct LogFile(Vec<Component>);
 
 impl LogFile {
     pub(crate) fn len(&self) -> usize {
@@ -40,7 +40,7 @@ impl TryFrom<PathBuf> for LogFile {
 
         for line in reader.lines().map_while(|line| line.ok()) {
             // Ignore comments and empty lines
-            if !line.is_empty() && !line.starts_with('\n') && !line.starts_with("//") {
+            if !line.is_empty() && !line.starts_with(LINE_ENDING) && !line.starts_with("//") {
                 components.push(Component::try_from(line)?)
             }
         }

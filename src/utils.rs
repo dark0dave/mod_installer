@@ -192,9 +192,8 @@ mod tests {
     #[test]
     fn test_find_mods() -> Result<(), Box<dyn Error>> {
         let log_file = PathBuf::from("./fixtures/test.log");
-        let skip_installed = false;
         let game_directory = PathBuf::from("./fixtures");
-        let result = find_mods(&log_file, skip_installed, &game_directory, false)?;
+        let result = find_mods(&log_file, false, &game_directory, false)?;
         let expected = LogFile::try_from(log_file)?;
         assert_eq!(expected, result);
         Ok(())
@@ -203,29 +202,9 @@ mod tests {
     #[test]
     fn test_find_mods_skip_installed() -> Result<(), Box<dyn Error>> {
         let log_file = PathBuf::from("./fixtures/test.log");
-        let skip_installed = true;
         let game_directory = PathBuf::from("./fixtures");
-        let result = find_mods(&log_file, skip_installed, &game_directory, false)?;
-        let expected = LogFile(vec![
-            Component {
-                tp_file: "TEST.TP2".to_string(),
-                name: "test_mod_name_1".to_string(),
-                lang: "0".to_string(),
-                component: "1".to_string(),
-                component_name: "test mod two".to_string(),
-                sub_component: "".to_string(),
-                version: "".to_string(),
-            },
-            Component {
-                tp_file: "END.TP2".to_string(),
-                name: "test_mod_name_3".to_string(),
-                lang: "0".to_string(),
-                component: "0".to_string(),
-                component_name: "test mod with version".to_string(),
-                sub_component: "".to_string(),
-                version: "1.02".to_string(),
-            },
-        ]);
+        let result = find_mods(&log_file, true, &game_directory, false)?;
+        let expected = LogFile::try_from(PathBuf::from("./fixtures/expected.log"))?;
         assert_eq!(expected, result);
         Ok(())
     }

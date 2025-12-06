@@ -73,20 +73,19 @@ pub(crate) fn handle_io(
     timeout: usize,
     tick: u64,
 ) -> InstallationResult {
-    let log = Arc::new(RwLock::new(String::new()));
     let mut weidu_stdin = child
         .stdin
         .take()
         .ok_or("Failed to get weidu standard in")?;
-    let wait_count = Arc::new(AtomicUsize::new(0));
-    let raw_output_receiver = create_output_reader(
-        child
-            .stdout
-            .take()
-            .ok_or("Failed to get weidu standard out")?,
-        log.clone(),
-    );
+    let weidu_stdout = child
+        .stdout
+        .take()
+        .ok_or("Failed to get weidu standard out")?;
+    let log = Arc::new(RwLock::new(String::new()));
+    let raw_output_receiver = create_output_reader(weidu_stdout, log.clone());
     let (sender, parsed_output_receiver) = mpsc::channel::<State>();
+
+    let wait_count = Arc::new(AtomicUsize::new(0));
     parse_raw_output(
         sender,
         raw_output_receiver,
@@ -102,7 +101,18 @@ pub(crate) fn handle_io(
                 match state {
                     State::Completed => {
                         log::debug!("Weidu process completed");
-                        break;
+                        match child.try_wait() {
+                            Ok(Some(exit)) => {
+                                log::debug!("Weidu exit status: {exit}");
+                            }
+                            Ok(None) => {
+                                log::debug!("Weidu exited, but could not get status.");
+                            }
+                            Err(err) => {
+                                log::error!("Failed to close weidu process: {err}");
+                            }
+                        };
+                        return Ok(WeiduExitStatus::Success);
                     }
                     State::CompletedWithErrors { error_details } => {
                         log::error!("Weidu process seem to have completed with errors");
@@ -110,15 +120,18 @@ pub(crate) fn handle_io(
                             log::error!("Dumping log: {weidu_log}");
                         }
                         match child.try_wait() {
-                            Ok(exit) => {
-                                log::debug!("Weidu exit status: {exit:?}");
+                            Ok(Some(exit)) => {
+                                log::debug!("Weidu exit status: {exit}");
+                            }
+                            Ok(None) => {
+                                log::debug!("Weidu exited, but could not get status.");
                             }
                             Err(err) => {
                                 log::error!("Failed to close weidu process: {err}");
                             }
                         };
 
-                        return Err(error_details.into());
+                        return Ok(WeiduExitStatus::Warnings(error_details));
                     }
                     State::TimedOut => {
                         log::error!(
@@ -145,8 +158,7 @@ pub(crate) fn handle_io(
                                 "Weidu process exited with warnings".to_string(),
                             )),
                             Err(err) => {
-                                log::error!("Failed to close weidu process: {err}");
-                                Err("Failed to close weidu process, exiting".into())
+                                Err(format!("Failed to close weidu process, exiting: {err}").into())
                             }
                         };
                     }

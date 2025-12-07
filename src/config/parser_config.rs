@@ -89,15 +89,13 @@ impl ParserConfig {
         false
     }
 
-    pub fn detect_weidu_finished_state(&self, weidu_output: &str) -> State {
-        let comparable_output = weidu_output.trim().to_lowercase();
+    pub fn detect_weidu_finished_state(&self, weidu_log: String) -> State {
+        let comparable_output = weidu_log.trim().to_lowercase();
         let failure = self.failed_with_error.iter().fold(false, |acc, fail_case| {
             comparable_output.contains(fail_case) || acc
         });
         if failure {
-            return State::CompletedWithErrors {
-                error_details: comparable_output,
-            };
+            return State::CompletedWithErrors { weidu_log };
         }
         let warning = self
             .completed_with_warnings
@@ -106,7 +104,7 @@ impl ParserConfig {
                 comparable_output.contains(warn_case) || acc
             });
         if warning {
-            return State::CompletedWithWarnings;
+            return State::CompletedWithWarnings { weidu_log };
         }
         let finished = self.finished.iter().fold(false, |acc, success_case| {
             comparable_output.contains(success_case) || acc
@@ -128,11 +126,12 @@ mod tests {
     #[test]
     fn test_exit_warnings() -> Result<(), Box<dyn Error>> {
         let config = ParserConfig::default();
-        let test = "INSTALLED WITH WARNINGS     Additional equipment for Thieves and Bards";
-        assert_eq!(config.string_looks_like_question(test), false);
+        let test =
+            "INSTALLED WITH WARNINGS     Additional equipment for Thieves and Bards".to_string();
+        assert_eq!(config.string_looks_like_question(&test), false);
         assert_eq!(
-            config.detect_weidu_finished_state(test),
-            State::CompletedWithWarnings
+            config.detect_weidu_finished_state(test.clone()),
+            State::CompletedWithWarnings { weidu_log: test }
         );
         Ok(())
     }
@@ -142,7 +141,10 @@ mod tests {
         let config = ParserConfig::default();
         let test = "SUCCESSFULLY INSTALLED      Jan's Extended Quest";
         assert_eq!(config.string_looks_like_question(test), false);
-        assert_eq!(config.detect_weidu_finished_state(test), State::Completed);
+        assert_eq!(
+            config.detect_weidu_finished_state(test.to_string()),
+            State::Completed
+        );
         Ok(())
     }
 
@@ -164,7 +166,10 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806",
                 "String {} doesn't look like a question",
                 test
             );
-            assert_eq!(config.detect_weidu_finished_state(test), State::InProgress);
+            assert_eq!(
+                config.detect_weidu_finished_state(test.to_string()),
+                State::InProgress
+            );
             assert_eq!(
                 config.useful_status_words.contains(&test.to_string()),
                 false,
@@ -215,9 +220,9 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806",
         ];
         for input in tests {
             assert_eq!(
-                config.detect_weidu_finished_state(input),
+                config.detect_weidu_finished_state(input.to_string()),
                 State::CompletedWithErrors {
-                    error_details: input.to_string(),
+                    weidu_log: input.to_string(),
                 },
                 "Input {} did not fail",
                 input

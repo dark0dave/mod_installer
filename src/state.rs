@@ -2,8 +2,8 @@
 pub enum State {
     RequiresInput { question: String },
     InProgress,
-    TimedOut,
+    TimedOut { timeout: usize, weidu_log: String },
     Completed,
-    CompletedWithErrors { error_details: String },
-    CompletedWithWarnings,
+    CompletedWithErrors { weidu_log: String },
+    CompletedWithWarnings { weidu_log: String },
 }

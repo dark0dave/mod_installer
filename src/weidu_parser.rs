@@ -11,8 +11,8 @@ use crate::{config::parser_config::ParserConfig, state::State};
 
 #[derive(Debug)]
 enum ParserState {
-    CollectingQuestion,
-    WaitingForMoreQuestionContent,
+    CollectingQuestion { question: String },
+    WaitingForMoreQuestionContent { question: String },
     LookingForInterestingOutput,
 }
 
@@ -24,30 +24,30 @@ pub(crate) fn parse_raw_output(
     timeout: usize,
 ) {
     let mut current_state = ParserState::LookingForInterestingOutput;
-    let mut question = String::new();
     sender
         .send(State::InProgress)
         .expect("Failed to send process start event");
     thread::spawn(move || {
         loop {
+            let mut weidu_log = String::new();
             match receiver.try_recv() {
                 Ok(string) => match current_state {
-                    ParserState::CollectingQuestion
-                    | ParserState::WaitingForMoreQuestionContent => {
+                    ParserState::CollectingQuestion { mut question }
+                    | ParserState::WaitingForMoreQuestionContent { mut question } => {
                         if parser_config.useful_status_words.contains(&string) {
                             log::debug!(
                                 "Weidu seems to know an answer for the last question, ignoring it"
                             );
                             current_state = ParserState::LookingForInterestingOutput;
-                            question.clear();
                         } else {
                             log::debug!("Appending line '{string}' to user question");
                             question.push_str(&string);
-                            current_state = ParserState::CollectingQuestion;
+                            current_state = ParserState::CollectingQuestion { question };
                         }
                     }
                     ParserState::LookingForInterestingOutput => {
-                        let installer_state = parser_config.detect_weidu_finished_state(&string);
+                        weidu_log.push_str(&string);
+                        let installer_state = parser_config.detect_weidu_finished_state(weidu_log);
                         if installer_state != State::InProgress {
                             sender
                                 .send(installer_state)
@@ -55,13 +55,10 @@ pub(crate) fn parse_raw_output(
                             break;
                         }
                         if parser_config.string_looks_like_question(&string) {
-                            log::debug!(
-                                "Changing parser state to '{:?}' due to line {}",
-                                ParserState::CollectingQuestion,
-                                string
-                            );
-                            current_state = ParserState::CollectingQuestion;
-                            question.push_str(string.as_str());
+                            current_state = ParserState::CollectingQuestion {
+                                question: string.clone(),
+                            };
+                            log::debug!("Changed parser state to '{:?}'", current_state);
                         }
                         if !string.trim().is_empty() {
                             log::trace!("{string}");
@@ -69,24 +66,20 @@ pub(crate) fn parse_raw_output(
                     }
                 },
                 Err(TryRecvError::Empty) => match current_state {
-                    ParserState::CollectingQuestion => {
-                        log::debug!(
-                            "Changing parser state to '{:?}'",
-                            ParserState::WaitingForMoreQuestionContent
-                        );
-                        current_state = ParserState::WaitingForMoreQuestionContent;
+                    ParserState::CollectingQuestion { question } => {
+                        current_state = ParserState::WaitingForMoreQuestionContent { question };
+                        log::debug!("Changed parser state to '{:?}'", current_state,);
                     }
-                    ParserState::WaitingForMoreQuestionContent => {
+                    ParserState::WaitingForMoreQuestionContent { question } => {
                         log::debug!("No new weidu output, sending question to user");
                         sender
                             .send(State::RequiresInput { question })
                             .expect("Failed to send question");
                         current_state = ParserState::LookingForInterestingOutput;
-                        question = String::new();
                     }
                     _ if wait_count.load(Ordering::Relaxed) >= timeout => {
                         sender
-                            .send(State::TimedOut)
+                            .send(State::TimedOut { timeout, weidu_log })
                             .expect("Could send timeout error");
                     }
                     _ => {}

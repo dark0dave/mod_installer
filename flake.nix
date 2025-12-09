@@ -11,9 +11,27 @@
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system);
       pkgsFor = nixpkgs.legacyPackages;
     in {
-      devShells = forAllSystems (system: {
-        default = pkgsFor.${system}.callPackage ./shell.nix { };
-      });
+      devShells = forAllSystems (system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+          overrides = (builtins.fromTOML (builtins.readFile ./rust-toolchain.toml));
+        in {
+          default = pkgs.mkShell {
+            name = "rust-env";
+            # Libs
+            buildInputs = with pkgs; [
+              openssl
+              rustup
+            ];
+            # Tools
+            nativeBuildInputs = with pkgs; [
+              git
+              pkg-config
+              pre-commit
+            ];
+            RUSTC_VERSION = overrides.toolchain.channel;
+          };
+        });
       packages = forAllSystems (system: {
         default = pkgsFor.${system}.callPackage ./default.nix { };
       });

@@ -1,8 +1,8 @@
 use std::{
     error::Error,
-    io::{BufRead, BufReader, ErrorKind, Write},
+    io::{BufReader, Read, Write},
     path::Path,
-    process::{Child, ChildStdout, Command, Stdio},
+    process::{Child, Command, Stdio},
     sync::{
         Arc, RwLock,
         atomic::{AtomicUsize, Ordering},
@@ -192,41 +192,147 @@ pub(crate) fn handle_io(
     Ok(WeiduExitStatus::Success)
 }
 
-fn create_output_reader(out: ChildStdout, log: Arc<RwLock<String>>) -> Receiver<String> {
+fn create_output_reader<R: Read + Send + 'static>(
+    out: R,
+    log: Arc<RwLock<String>>,
+) -> Receiver<String> {
     let (tx, rx) = mpsc::channel::<String>();
     let mut buffered_reader = BufReader::new(out);
     thread::spawn(move || {
+        use std::io::Read;
+
+        let mut byte_buffer_vec: Vec<u8> = Vec::new();
+        let mut single_byte = [0u8; 1];
+
         loop {
-            let mut lines = String::new();
-            match buffered_reader.read_line(&mut lines) {
+            match buffered_reader.read(&mut single_byte) {
                 Ok(0) => {
+                    process_complete_line(&mut byte_buffer_vec, &log, &tx);
                     log::debug!("Process ended");
                     break;
                 }
                 Ok(_) => {
-                    if let Ok(mut writer) = log.write() {
-                        writer.push_str(&lines);
+                    let byte = single_byte[0];
+                    byte_buffer_vec.push(byte);
+                    if byte == b'\n' || byte == 0x07 {
+                        process_complete_line(&mut byte_buffer_vec, &log, &tx);
                     }
-                    lines
-                        .split(LINE_ENDING)
-                        .filter(|line| !line.trim().is_empty())
-                        .for_each(|line| {
-                            log::trace!("Sending: `{line}`");
-                            tx.send(line.to_string())
-                                .expect("Failed to sent process output line");
-                        });
                 }
-                Err(ref e) if e.kind() == ErrorKind::InvalidData => {
-                    // sometimes there is a non-unicode gibberish in process output, it
-                    // does not seem to be an indicator of error or break anything, ignore it
-                    log::warn!("Failed to read weidu output");
-                }
-                Err(details) => {
-                    log::error!("Failed to read process output, error is '{details:?}'");
-                    panic!()
+                Err(e) => {
+                    log::error!("Failed to read process output: {e:?}");
+                    break;
                 }
             }
         }
     });
     rx
+}
+
+fn send_forward(tx: &mpsc::Sender<String>, line: &String) {
+    let trimmed = line.trim();
+    if !trimmed.is_empty() {
+        log::trace!("Sending: `{trimmed}`");
+        tx.send(trimmed.to_string()).expect("Failed to send process output line");
+    }
+}
+
+fn send_to_log(log: &Arc<RwLock<String>>, line: &str) {
+    if !line.is_empty() {
+        if let Ok(mut writer) = log.write() {
+            writer.push_str(line);
+        }
+    }
+}
+
+fn process_complete_line(buffer: &mut Vec<u8>, log: &Arc<RwLock<String>>, tx: &mpsc::Sender<String>) {
+    if buffer.is_empty() {
+        return;
+    }
+
+    let bytes = std::mem::take(buffer);
+    buffer.reserve(128);
+
+    match String::from_utf8(bytes) {
+        Ok(line) => {
+            send_to_log(log, &line);
+            send_forward(tx, &line);
+        }
+        Err(e) => {
+            log::warn!("Failed to convert byte buffer to UTF-8 string: {}", e);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use std::time::Duration;
+
+    fn test_output_reader(input: &[u8]) -> Vec<String> {
+        let (reader, mut writer) = os_pipe::pipe().unwrap();
+        let log = Arc::new(RwLock::new(String::new()));
+        
+        let rx = create_output_reader(reader, log.clone());
+        
+        writer.write_all(input).unwrap();
+        drop(writer);
+        
+        let mut results = Vec::new();
+        loop {
+            match rx.recv_timeout(Duration::from_secs(1)) {
+                Ok(line) => results.push(line),
+                Err(mpsc::RecvTimeoutError::Disconnected) => break,
+                Err(mpsc::RecvTimeoutError::Timeout) => panic!("Timed out waiting for output"),
+            }
+        }
+        results
+    }
+
+    #[test]
+    fn test_output_reader_with_newline_delimiter() {
+        let results = test_output_reader(b"Hello World\nSecond Line\n");
+        
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0], "Hello World");
+        assert_eq!(results[1], "Second Line");
+    }
+
+    #[test]
+    fn test_output_reader_with_bell_delimiter() {
+        let results = test_output_reader(b"Prompt text\x07More text\x07");
+        
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0], "Prompt text\x07");
+        assert_eq!(results[1], "More text\x07");
+    }
+
+    #[test]
+    fn test_output_reader_with_mixed_delimiters() {
+        let results = test_output_reader(b"Line with newline\nLine with bell\x07Another newline\n");
+        
+        assert_eq!(results.len(), 3);
+        assert_eq!(results[0], "Line with newline");
+        assert_eq!(results[1], "Line with bell\x07");
+        assert_eq!(results[2], "Another newline");
+    }
+
+    #[test]
+    fn test_output_reader_with_utf8() {
+        let results = test_output_reader("Hello 🎮 World\nCafé résumé\n".as_bytes());
+        
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0], "Hello 🎮 World");
+        assert_eq!(results[1], "Café résumé");
+    }
+
+    #[test]
+    fn test_output_reader_with_invalid_utf8() {
+        let input = b"Valid line\nInvalid \xFF sequence\nValid again\n";
+        let results = test_output_reader(input);
+        
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0], "Valid line");
+        assert_eq!(results[1], "Valid again");
+    }
 }

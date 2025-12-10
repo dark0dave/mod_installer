@@ -1,4 +1,4 @@
-use crate::{config::meta::Metadata, state::State};
+use crate::{config::meta::Metadata, state::State };
 
 use serde_derive::{Deserialize, Serialize};
 
@@ -58,6 +58,11 @@ impl Default for ParserConfig {
 }
 
 impl ParserConfig {
+
+    pub fn string_looks_like_weidu_requested_input_explicidly(&self, weidu_output: &str) -> bool {
+        return weidu_output.contains("\x07");
+    }
+
     pub fn string_looks_like_question(&self, weidu_output: &str) -> bool {
         let comparable_output = weidu_output.trim().to_ascii_lowercase();
         // installing|creating
@@ -86,7 +91,7 @@ impl ParserConfig {
             }
         }
 
-        false
+        return self.string_looks_like_weidu_requested_input_explicidly(&weidu_output)
     }
 
     pub fn detect_weidu_finished_state(&self, weidu_output: &str) -> State {
@@ -156,6 +161,7 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806",
             "[N]o, [Q]uit or choose one:",
             "Please enter the chance for items to randomly not be randomised as a integet number (e.g. 10 for 10%)",
             "Is this correct? [Y]es or [N]o",
+            "There is no question, only bell\x07",
         ];
         for test in tests {
             assert_eq!(

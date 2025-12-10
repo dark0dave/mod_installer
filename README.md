@@ -32,8 +32,7 @@ Let's break down what each part means:
 
 ## Born2BSalty Windows guide
 
-[![Watch the video](./docs/guide.webp)](https://raw.githubusercontent.com/dark0dave/mod_installer/main/docs/guide.webm)
-
+[![guide](./docs/guide.webp)](https://github.com/user-attachments/assets/7c775551-848a-40c9-8fab-67a86ee6ca53)
 
 ## Normal Install
 

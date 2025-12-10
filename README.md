@@ -13,16 +13,6 @@
 
 The Infinity Engine Mod Installer is a tool designed to automate the installation of mods for Infinity Engine games such as Baldur's Gate, Icewind Dale, and Planescape: Torment. It uses a file called "weidu.log" to determine which mods to install and how to install them.
 
-## Installation
-
-Grab it from the latest release, for you OS from github [releases](https://github.com/dark0dave/mod_installer/releases/latest).
-
-Alternatively `mod_installer` can installed via crates.io:
-
-```sh
-cargo install mod_installer
-```
-
 ## Usage
 
 To use the Infinity Engine Mod Installer, you need to run it from the command line. Here's the basic structure of the command:
@@ -39,6 +29,11 @@ Let's break down what each part means:
 
 * mod_installer(.exe): This is the name of the program you're running.
 [OPTIONS]: These are additional settings you can use to customize how the program works (we'll explain these in detail below).
+
+## Born2BSalty Windows guide
+
+[![Watch the video](./docs/guide.webp)](https://raw.githubusercontent.com/dark0dave/mod_installer/main/docs/guide.webm)
+
 
 ## Normal Install
 

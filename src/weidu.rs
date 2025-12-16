@@ -48,12 +48,21 @@ fn run(
                         log::debug!("Weidu process completed");
                         return Ok(WeiduExitStatus::Success);
                     }
+                    State::CompletedWithWarnings => {
+                        log::warn!("Weidu process seem to have completed with warnings");
+                        if let Ok(weidu_log) = log.read() {
+                            log::warn!("Dumping log: {weidu_log}");
+                        }
+                        return Ok(WeiduExitStatus::Warnings(
+                            "Weidu process exited with warnings".to_string(),
+                        ));
+                    }
                     State::CompletedWithErrors { error_details } => {
                         log::error!("Weidu process seem to have completed with errors");
                         if let Ok(weidu_log) = log.read() {
                             log::error!("Dumping log: {weidu_log}");
                         }
-                        return Ok(WeiduExitStatus::Warnings(error_details));
+                        return Err(error_details.into());
                     }
                     State::TimedOut => {
                         log::error!(
@@ -63,15 +72,6 @@ fn run(
                             log::error!("Dumping log: {weidu_log}");
                         }
                         return Err("Timed out".into());
-                    }
-                    State::CompletedWithWarnings => {
-                        log::warn!("Weidu process seem to have completed with warnings");
-                        if let Ok(weidu_log) = log.read() {
-                            log::warn!("Dumping log: {weidu_log}");
-                        }
-                        return Ok(WeiduExitStatus::Warnings(
-                            "Weidu process exited with warnings".to_string(),
-                        ));
                     }
                     State::InProgress => {
                         log::debug!("In progress...");

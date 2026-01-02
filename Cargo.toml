@@ -20,7 +20,7 @@ keywords = [
 
 [dependencies]
 anstyle = "1.0.10"
-clap = { version = "^4.5.49", features = ["derive", "env", "string"] }
+clap = { version = "^4.5.54", features = ["derive", "env", "string"] }
 confy = "^2.0.0"
 env_logger = "^0.11.8"
 log = "^0.4.22"

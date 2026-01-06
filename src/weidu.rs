@@ -11,10 +11,10 @@ use std::{
     thread,
 };
 
+use config::{args::Options, parser_config::ParserConfig, state::State};
+
 use crate::{
     component::Component,
-    config::{args::Options, parser_config::ParserConfig},
-    state::State,
     utils::{get_user_input, sleep},
     weidu_parser::parse_raw_output,
 };
@@ -178,7 +178,7 @@ pub(crate) fn handle_io(
         Ok(Some(exit)) => {
             log::debug!("Weidu exit status: {exit}");
         }
-        Ok(None) => {
+        Ok(_) => {
             log::debug!("Weidu exited, but could not get status.");
         }
         Err(err) => {

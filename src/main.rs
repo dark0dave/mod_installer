@@ -1,23 +1,22 @@
 use std::process::ExitCode;
 
-use config::parser_config::PARSER_CONFIG_LOCATION;
 use config::{Config, args::InstallType};
 use env_logger::Env;
 use installers::{eet_install, normal_install};
 
 mod component;
-mod config;
 mod installers;
 mod log_file;
-mod state;
 mod utils;
 mod weidu;
 mod weidu_parser;
 
+const NAME: &str = env!("CARGO_PKG_NAME");
+
 fn main() -> ExitCode {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
-    let config = Config::new();
+    let config = Config::new(NAME);
 
     log::debug!("{:?}", config.args);
 

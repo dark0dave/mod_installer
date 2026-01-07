@@ -28,7 +28,7 @@ reqwest = {version = "^0.12.24", features = ["blocking"]}
 serde = { version = "^1.0.217", features = ["derive"] }
 serde_derive = "^1.0.152"
 tempfile = "^3"
-url = "2.5.4"
+url = "2.5.8"
 walkdir = "^2.3.2"
 zip = "^6.0.0"
 

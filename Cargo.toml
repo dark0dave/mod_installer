@@ -30,7 +30,7 @@ serde_derive = "^1.0.152"
 tempfile = "^3"
 url = "2.5.4"
 walkdir = "^2.3.2"
-zip = "^6.0.0"
+zip = "^7.0.0"
 
 [dev-dependencies]
 pretty_assertions = "^1.4.1"

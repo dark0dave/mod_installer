@@ -1,19 +1,19 @@
-use crate::{config::meta::Metadata, state::State};
-
 use serde_derive::{Deserialize, Serialize};
 
-pub(crate) const PARSER_CONFIG_LOCATION: &str = "parser";
+use crate::{meta::Metadata, state::State};
+
+pub(crate) const LOCATION: &str = "parser";
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub(crate) struct ParserConfig {
-    pub(crate) in_progress_words: Vec<String>,
-    pub(crate) useful_status_words: Vec<String>,
-    pub(crate) choice_words: Vec<String>,
-    pub(crate) choice_phrase: Vec<String>,
-    pub(crate) completed_with_warnings: Vec<String>,
-    pub(crate) failed_with_error: Vec<String>,
-    pub(crate) finished: Vec<String>,
-    pub(crate) metadata: Metadata,
+pub struct ParserConfig {
+    pub in_progress_words: Vec<String>,
+    pub useful_status_words: Vec<String>,
+    pub choice_words: Vec<String>,
+    pub choice_phrase: Vec<String>,
+    pub completed_with_warnings: Vec<String>,
+    pub failed_with_error: Vec<String>,
+    pub finished: Vec<String>,
+    pub metadata: Metadata,
 }
 
 impl Default for ParserConfig {

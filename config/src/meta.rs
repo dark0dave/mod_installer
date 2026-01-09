@@ -3,9 +3,9 @@ use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub(crate) struct Metadata {
-    pub(crate) mod_installer_version: String,
-    pub(crate) created: SystemTime,
+pub struct Metadata {
+    pub mod_installer_version: String,
+    pub created: SystemTime,
 }
 
 impl Default for Metadata {

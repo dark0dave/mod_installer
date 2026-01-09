@@ -1,3 +1,4 @@
+use config::args::Options;
 use core::time;
 use std::{
     error::Error,
@@ -10,7 +11,7 @@ use tempfile::tempfile;
 use url::{Host, Url};
 use walkdir::WalkDir;
 
-use crate::{component::Component, config::args::Options, log_file::LogFile};
+use crate::{component::Component, log_file::LogFile};
 
 pub fn delete_folder(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
     if path.as_ref().exists() {
@@ -136,7 +137,7 @@ pub fn try_download_mod(weidu_mod: &Component) -> Result<PathBuf, Box<dyn Error>
         log::info!("Downloading: {url}");
         reqwest::blocking::get(url.as_str())?.copy_to(&mut zip_path)?;
         let mut zip = zip::ZipArchive::new(zip_path)?;
-        let dest = tempfile::tempdir()?.path().to_path_buf();
+        let dest: PathBuf = tempfile::tempdir()?.path().to_path_buf();
         zip.extract(dest.clone())?;
         search_mod_folders(&[dest], weidu_mod, 4)
     } else {

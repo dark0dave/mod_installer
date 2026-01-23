@@ -77,7 +77,7 @@ pub(crate) struct Normal {
     pub(crate) options: Options,
 }
 
-/// EET install for (eet) (ALPHA)
+/// EET install for (eet) (BETA)
 #[derive(Parser, Debug, PartialEq, Clone)]
 #[clap(short_flag = 'e')]
 pub(crate) struct Eet {
@@ -115,8 +115,12 @@ pub(crate) struct Eet {
 #[clap(short_flag = 's')]
 pub(crate) struct Scan {
     /// Absolute Path to game directory
-    #[clap(env, short, long, value_parser = parse_absolute_path, required = true)]
+    #[clap(env, short, long, value_parser = parse_absolute_path)]
     pub(crate) game_directory: PathBuf,
+
+    /// filter by selected language
+    #[clap(short, long, required = false, default_value = "")]
+    pub(crate) filter_by_selected_language: String,
 
     /// CommonOptions
     #[clap(flatten)]

@@ -70,7 +70,7 @@ With cargo:
 cargo run -- normal --log-file dark0dave_weidu.log --game-directory ~/.steam/steam/steamapps/common/Baldur\'s\ Gate\ Enhanced\ Edition/ --mod-directories ~/Downloads/my_mods/
 ```
 
-## ALPHA: EET Install
+## BETA: EET Install
 
 This automation exists purely to help install EET, as you end up juggling two directories and weidu mod lists.
 
@@ -105,7 +105,7 @@ Options:
 
 * --mod-directories <MOD_DIRECTORIES>: This is where you tell the program where to find the mod files. This defaults to the current workgin directory
 
-## ALPHA: Download feature
+## BETA: Download feature
 
 This automation exists purely to help the install process. Currently its very limited. Users can supply the flag `--download` followed by the associated github zip url.
 
@@ -130,6 +130,116 @@ If a mod is missing users will be presented with the following prompt:
 
 Users can then input the required github zip url, and the mod_installer will download extract and install the provided mod.
 
+## ALPHA: Scan feature
+
+The mod installer can scan and detect what mods are available to you. It will however need a game directory to detect what mods can actually be installed.
+
+```sh
+Usage: mod_installer {scan|-s} [OPTIONS] --game-directory <GAME_DIRECTORY>
+Options:
+  -g, --game-directory <GAME_DIRECTORY>
+          Absolute Path to game directory [env: GAME_DIRECTORY=]
+  -f, --filter-by-selected-language <FILTER_BY_SELECTED_LANGUAGE>
+          filter by selected language [default: ]
+  -w, --weidu-binary <WEIDU_BINARY>
+          Absolute Path to weidu binary [env: WEIDU_BINARY=] [default: /usr/bin/weidu]
+  -m, --mod-directories <MOD_DIRECTORIES>
+          Path to mod directories [env: MOD_DIRECTORIES=] [default: /home/x/projects/bg_mods/tools/mod_installer]
+  ...
+  -h, --help Print help
+```
+
+You can optionally supply a language to scan for, please note this is a fuzzy match. Something something I am doing my best here.
+
+```sh
+mod_installer(.exe) -s -m "." -g "." -f english
+```
+Example output:
+```sh
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8070 // Improved Unseeing Eye: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8080 // Improved Bodhi: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8085 // Ascension version of Bodhi uses Improved-Bodhi abilities: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8090 // Party's items are taken from them in Spellhold: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8100 // Improved battle with Irenicus in Spellhold: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8110 // Improved Sahuagin: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8120 // Improved Beholder hive: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8130 // Rebalanced troll regeneration: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8140 // Improved Drow: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8150 // Improved Watcher's Keep: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8160 // Improved Fire Giant temple: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8170 // Improved Sendai's Enclave: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8180 // Improved Abazigal's Lair: 35.21
+~STRATAGEMS/SETUP-STRATAGEMS.TP2~ #0 #8190 // Improved Minor Encounters: 35.21
+~AJANTISBG2/AJANTISBG2.TP2~ #1 #0 // Sir Ajantis NPC for BGII: 20
+~AJANTISBG2/AJANTISBG2.TP2~ #1 #1 // Install the unique BG(II):EE BAM for Ajantis' Family Shield: 20
+~AJANTISBG2/AJANTISBG2.TP2~ #1 #3 // Installation of adult romance content: 20
+~AJANTISBG2/AJANTISBG2.TP2~ #1 #5 // Ajantis kit choice: make Ajantis Cavalier: 20
+~AJANTISBG2/AJANTISBG2.TP2~ #1 #41 // Select Ajantis' Friendship Dialogues and Romance Speed: -> Speed: 45 minutes real time minimum between Dialogues: 20
+~AJANTISBG2/AJANTISBG2.TP2~ #1 #42 // Select Ajantis' Friendship Dialogues and Romance Speed: -> Speed: 30 minutes real time minimum between Dialogues: 20
+~AJANTISBG2/AJANTISBG2.TP2~ #1 #43 // Select Ajantis' Friendship Dialogues and Romance Speed: -> Speed: 15 minutes real time minimum between Dialogues: 20
+~AJANTISBG2/AJANTISBG2.TP2~ #1 #44 // Select Ajantis' Friendship Dialogues and Romance Speed: -> Speed: 1 hour 30 minutes (extended) real time minimum between Dialogues: 20
+~C#SOLAUFEIN/C#SOLAUFEIN.TP2~ #1 #0 // Solaufein's Rescue: Jastey's Solaufein NPC for BGII: 5.0
+~C#SOLAUFEIN/C#SOLAUFEIN.TP2~ #1 #1 // Give Solaufein in Ust Natha the Mod's Portrait: 5.0
+~C#SOLAUFEIN/C#SOLAUFEIN.TP2~ #1 #2 // Enable Drider Animations in this Mod: 5.0
+~C#SOLAUFEIN/C#SOLAUFEIN.TP2~ #1 #3 // Install alternative portrait #2 from Chinasky: 5.0
+~C#SOLAUFEIN/C#SOLAUFEIN.TP2~ #1 #4 // Install Detection for Drow PC: 5.0
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #10 // Install new spells -> Overwrite spells from other mods: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #11 // Install new spells -> Only add spells if not present from other mods: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #50 // Remove Cleric Kits -> Remove Only Mod Kits: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #51 // Remove Cleric Kits -> Remove All Kits: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #52 // Remove Druid Kits -> Remove Only Mod Kits: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #53 // Remove Druid Kits -> Remove All Kits: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #54 // Remove Paladin Kits -> Remove Only Mod Kits: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #55 // Remove Paladin Kits -> Remove All Kits: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #56 // Remove Ranger Kits -> Remove Only Mod Kits: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #57 // Remove Ranger Kits -> Remove All Kits: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #100 // Cleric Remix -> Use conventional format for cleric kits: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #101 // Cleric Remix -> Use new format for cleric kits: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #103 // Install Silverstar of Selune Cleric Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #106 // Install Nightcloak of Shar Cleric Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #107 // Install Holy Strategist of the Red Knight Cleric Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #109 // Install Battleguard of Tempus Cleric Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #112 // Install Painbearer of Ilmater Cleric Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #115 // Install Firewalker of Kossuth Cleric Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #118 // Install Authlim of Iyachtu Xvim Cleric Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #121 // Install Lorekeeper of Oghma Cleric Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #124 // Install Heartwarder of Sune Cleric Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #127 // Install Feywarden of Corellon Cleric Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #130 // Install Strifeleader of Cyric Cleric Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #133 // Install Holy Justice of Tyr Cleric Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #200 // Druid Remix: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #203 // Install Oozemaster Druid kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #403 // Install Bowslinger Ranger Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #406 // Install Feralan Ranger Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #409 // Install Forest Runner Ranger Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #412 // Install Justifier Ranger Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #415 // Install Wilderness Runner Ranger Kit: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #600 // Install Battleguard of Tempus Kit for Branwen: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #605 // Change Jaheira to Neutral Good: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #610 // Install Nightcloak of Shar Kit for Viconia: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #1000 // Implement sphere system for regular divine spells: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #1001 // Implement sphere system for High-Level Abilities: v9_Test_Build_2
+~DIVINE_REMIX/SETUP-DIVINE_REMIX.TP2~ #0 #3000 // Alternative Item Usability Scheme for Cleric Kits: v9_Test_Build_2
+~ASCENSION/ASCENSION.TP2~ #0 #0 // Rewritten Final Chapter of Throne of Bhaal: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #10 // Balthazar can be redeemed: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #20 // Improved Sarevok-Player Interactions: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #30 // Improved Imoen-Player Interactions in Throne of Bhaal: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #40 // Restored Bhaalspawn Powers: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #50 // Improved Slayer Transformation: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #60 // Expanded Epilogues for Bioware NPCs -> David Gaider's expanded epilogues for Bioware NPCs: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #61 // Expanded Epilogues for Bioware NPCs -> Alternate epilogues by Shawne: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #1000 // Tougher Abazigal: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #1100 // Tougher Balthazar: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #1200 // Tougher Demogorgon: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #1300 // Tougher Gromnir: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #1400 // Tougher Illasera: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #1500 // Tougher Yaga-Shura: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #2000 // Full-body portrait for Bodhi: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #2100 // Alternate Balthazar portrait, by Cuv: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #2200 // Extended Epilogues for additional Beamdog NPCs, by shawne: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #2300 // Sharper portraits of Abazigal and Gromnir for the Enhanced Edition, by DavidW: 2.1.0
+~ASCENSION/ASCENSION.TP2~ #0 #2400 // Slightly improved cutscenes, by DavidW: 2.1.0
+```
 
 #### Notes
 

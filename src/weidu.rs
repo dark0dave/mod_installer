@@ -21,8 +21,12 @@ use crate::{
 
 #[cfg(windows)]
 pub(crate) const LINE_ENDING: &str = "\r\n";
+#[cfg(windows)]
+pub(crate) const LINE_SEPERATOR: &str = "\\";
 #[cfg(not(windows))]
 pub(crate) const LINE_ENDING: &str = "\n";
+#[cfg(not(windows))]
+pub(crate) const LINE_SEPERATOR: &str = "/";
 
 pub(crate) enum WeiduExitStatus {
     Success,

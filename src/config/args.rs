@@ -42,16 +42,18 @@ pub(crate) const WEIDU_FILE_NAME: &str = "weidu.exe";
 pub(crate) struct Args {
     /// Install Type
     #[command(subcommand)]
-    pub(crate) command: InstallType,
+    pub(crate) command: CommandType,
 }
 
 /// Type of Install, Normal or EET
 #[derive(Subcommand, Debug, PartialEq, Clone)]
-pub(crate) enum InstallType {
+pub(crate) enum CommandType {
     #[command()]
     Normal(Normal),
     #[command()]
     Eet(Eet),
+    #[command()]
+    Scan(Scan),
 }
 
 /// Normal install for (BG1EE,BG2EE,IWDEE) (STABLE)
@@ -102,6 +104,19 @@ pub(crate) struct Eet {
     /// Generates a new eet directory.
     #[clap(env, short = 'n', long, value_parser = path_must_exist)]
     pub(crate) new_eet_dir: Option<PathBuf>,
+
+    /// CommonOptions
+    #[clap(flatten)]
+    pub(crate) options: Options,
+}
+
+/// Scan for (BG1EE,BG2EE,IWDEE) (ALPHA)
+#[derive(Parser, Debug, PartialEq, Clone)]
+#[clap(short_flag = 's')]
+pub(crate) struct Scan {
+    /// Absolute Path to game directory
+    #[clap(env, short, long, value_parser = parse_absolute_path, required = true)]
+    pub(crate) game_directory: PathBuf,
 
     /// CommonOptions
     #[clap(flatten)]
@@ -353,7 +368,7 @@ mod tests {
         ];
         for (flag_value, expected_flag_value) in tests {
             let expected = Args {
-                command: InstallType::Normal(Normal {
+                command: CommandType::Normal(Normal {
                     log_file: fake_log_file.clone(),
                     game_directory: fake_game_dir.clone(),
                     generate_directory: None,
@@ -401,7 +416,7 @@ mod tests {
         let expected_flag_value = true;
 
         let expected = Args {
-            command: InstallType::Eet(Eet {
+            command: CommandType::Eet(Eet {
                 bg1_game_directory: fake_game_dir.clone(),
                 bg1_log_file: fake_log_file.clone(),
                 bg2_game_directory: fake_game_dir.clone(),

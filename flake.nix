@@ -21,6 +21,7 @@
               git
               pkg-config
               pre-commit
+              rust-analyzer
               rustc
               rustfmt
             ];
@@ -28,6 +29,8 @@
               openssl
             ];
             env.RUSTC_VERSION = overrides.toolchain.channel;
+ #           env.CARGO_HOME = "";
+ #           env.RUSTUP_HOME = "";
           };
         });
       packages = forEachSystem (system: {

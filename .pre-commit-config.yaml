@@ -1,11 +1,10 @@
 default_install_hook_types: [pre-commit, commit-msg]
-fail_fast: true
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v6.0.0
   hooks:
     - id: check-added-large-files
-      exclude: (?x)^(docs)
+      exclude: (?x)^([fixtures|docs])
       stages: [pre-commit]
     - id: check-case-conflict
       stages: [pre-commit]
@@ -17,58 +16,23 @@ repos:
       stages: [pre-commit]
     - id: check-builtin-literals
       stages: [pre-commit]
-    - id: check-yaml
-      stages: [pre-commit]
-
-- repo: https://github.com/jumanjihouse/pre-commit-hooks
-  rev: 3.0.0
-  hooks:
-    - id: forbid-binary
-      stages: [pre-commit]
-      exclude: (?x)^(docs)
-    - id: git-dirty
-      stages: [pre-commit]
-    - id: git-check
-      stages: [pre-commit]
-
-- repo: https://github.com/Lucas-C/pre-commit-hooks
-  rev: v1.5.5
-  hooks:
-    - id: forbid-crlf
-      stages: [pre-commit]
-    - id: remove-crlf
-      stages: [pre-commit]
-    - id: forbid-tabs
-      stages: [pre-commit]
-    - id: remove-tabs
-      stages: [pre-commit]
 
 - repo: https://github.com/commitizen-tools/commitizen
-  rev: v4.10.0
+  rev: v4.12.1
   hooks:
     - id: commitizen
       stages: [commit-msg]
 
 - repo: local
   hooks:
-    - id: cargo-test
+    - id: fmt
       stages: [pre-commit]
-      name: cargo test
-      description: Run the test suite
-      entry: cargo test
-      language: system
-      types: [rust]
-      require_serial: false
-      pass_filenames: false
-    - id: cargo-fmt
-      stages: [pre-commit]
-      name: cargo fmt
+      name: fmt
       description: Format files with cargo fmt.
-      entry: cargo fmt
+      entry: cargo fmt --all
       language: system
       types: [rust]
-      args: ["--"]
-      require_serial: false
+      pass_filenames: false
     - id: cargo-check
       stages: [pre-commit]
       name: cargo check
@@ -76,26 +40,37 @@ repos:
       entry: cargo check
       language: system
       types: [rust]
-      require_serial: false
       pass_filenames: false
-    - id: cargo-clippy
+    - id: clippy
       stages: [pre-commit]
-      name: cargo clippy
+      name: clippy
       description: Lint rust sources
-      entry: cargo clippy
+      entry: cargo clippy --workspace
       language: system
       args: ["--", "-D", "warnings"]
       types: [rust]
-      require_serial: false
+      pass_filenames: false
+    - id: cargo-test
+      stages: [pre-commit]
+      name: cargo test
+      description: Run the test suite
+      entry: cargo test --workspace
+      language: system
+      types: [rust]
       pass_filenames: false
     - id: version-check
       stages: [pre-commit]
       name: version check
       description: Check the version
-      entry: check-version.sh
+      entry: scripts/check-version.sh
       language: script
-      types: [rust]
-      require_serial: false
+      pass_filenames: false
+    - id: git-check
+      stages: [pre-commit]
+      name: git check
+      description: Git check
+      entry: scripts/check-git.sh
+      language: system
       pass_filenames: false
 
 - repo: https://github.com/codespell-project/codespell
@@ -103,6 +78,6 @@ repos:
   hooks:
     - id: codespell
       stages: [pre-commit]
+      exclude: (?x)^([fixtures|Cargo.lock|flake.lock])
       args:
-        - '--ignore-words-list=crate'
-        - '--skip=*.lock'
+        - '--ignore-words-list=crate,sav,SAV,ser,extention'

@@ -22,7 +22,8 @@ Usage: mod_installer(.exe) <COMMAND> [OPTIONS]
 
 Commands:
   normal, -n  Normal install for (BG1EE,BG2EE,IWDEE) (STABLE)
-  eet, -e     EET install for (eet) (ALPHA)
+  eet, -e     EET install for (eet) (BETA)
+  scan, -s    Scan for (BG1EE,BG2EE,IWDEE) (ALPHA)
   help        Print this message or the help of the given subcommand(s)
 ```
 Let's break down what each part means:

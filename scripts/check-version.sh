@@ -6,7 +6,7 @@ function version_gt() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" 
 function main() {
   local tag_version=$(git describe --tags --abbrev=0);
   echo "Git tag version: ${tag_version}"
-  local current_version=$(head -3 Cargo.toml | tail -1 |  sed -E "s/^version \= \"(.*)\"/\1/")
+  local current_version=$(cargo pkgid | awk -F '#' '{print $2}')
   echo "Cargo.toml version: v${current_version}"
   if [ "${tag_version}" == "v${current_version}" ]; then
     echo "Versions are the same"

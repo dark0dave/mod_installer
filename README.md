@@ -131,6 +131,11 @@ If a mod is missing users will be presented with the following prompt:
 
 Users can then input the required github zip url, and the mod_installer will download extract and install the provided mod.
 
+#### Notes
+
+- Only github is supported (more to come I promise!)
+- No version check is performed, ie it downloads what ever is passed and that must be a zip file
+
 ## ALPHA: Scan feature
 
 The mod installer can scan and detect what mods are available to you. It will however need a game directory to detect what mods can actually be installed.
@@ -241,12 +246,6 @@ Example output:
 ~ASCENSION/ASCENSION.TP2~ #0 #2300 // Sharper portraits of Abazigal and Gromnir for the Enhanced Edition, by DavidW: 2.1.0
 ~ASCENSION/ASCENSION.TP2~ #0 #2400 // Slightly improved cutscenes, by DavidW: 2.1.0
 ```
-
-#### Notes
-
-- Only github is supported (more to come I promise!)
-- No version check is performed, ie it downloads what ever is passed and that must be a zip file
-
 
 ## FAQ
 

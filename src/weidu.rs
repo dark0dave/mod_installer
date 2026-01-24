@@ -11,10 +11,10 @@ use std::{
     thread,
 };
 
+use config::{args::Options, parser_config::ParserConfig, state::State};
+
 use crate::{
     component::Component,
-    config::{args::Options, parser_config::ParserConfig},
-    state::State,
     utils::{get_user_input, sleep},
     weidu_parser::parse_raw_output,
 };

@@ -2,9 +2,9 @@ use std::collections::HashSet;
 use std::io::{BufReader, Read};
 use std::{error::Error, path::PathBuf, process::ChildStdout, process::Command, process::Stdio};
 
+use config::args::Scan;
 use walkdir::WalkDir;
 
-use crate::config::args::Scan;
 use crate::weidu::LINE_SEPERATOR;
 
 fn generate_args_for_list_components_with_game_dir(

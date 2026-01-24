@@ -1,3 +1,4 @@
+use config::args::Options;
 use core::time;
 use std::{
     error::Error,
@@ -10,7 +11,7 @@ use tempfile::tempfile;
 use url::{Host, Url};
 use walkdir::WalkDir;
 
-use crate::{component::Component, config::args::Options, log_file::LogFile};
+use crate::{component::Component, log_file::LogFile};
 
 pub fn delete_folder(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
     if path.as_ref().exists() {

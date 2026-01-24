@@ -12,4 +12,5 @@ pub(crate) enum Message {
     BG1WeiduLogPath(String),
     BG2GameDirectory(String),
     BG2WeiduLogPath(String),
+    RunPressed,
 }

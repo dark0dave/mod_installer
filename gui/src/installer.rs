@@ -1,13 +1,14 @@
 use iced::{
     Alignment::Center,
-    Element,
+    Color, Element,
     Length::Fill,
-    widget::{center_x, column, scrollable, text, text_input},
+    widget::{button, center_x, column, scrollable, text, text_input},
 };
 
 use crate::{
     installer_type::InstallerType,
     message::Message,
+    runner,
     state::{eet::Eet, normal::Normal, shared::SharedState},
 };
 
@@ -55,6 +56,9 @@ impl Installer {
                 Message::WeiduLogPath(input) => {
                     state.weidu_log = input;
                     state.generate_installer_cmd();
+                }
+                Message::RunPressed => {
+                    runner::runner("").unwrap();
                 }
                 _ => {}
             },
@@ -150,6 +154,21 @@ impl Installer {
                     .align_x(Center)
                     .size(30);
 
+                let run = center_x(
+                    button(
+                        text!("RUN")
+                            .size(26)
+                            .align_x(Center)
+                            .align_y(Center)
+                            .color(Color::BLACK),
+                    )
+                    .padding(15)
+                    .width(Fill)
+                    .width(100)
+                    .on_press(Message::RunPressed),
+                )
+                .align_x(Center);
+
                 let content = column![
                     title,
                     installer_path,
@@ -158,7 +177,8 @@ impl Installer {
                     radio_install_type,
                     game_path_input,
                     weidu_log_input,
-                    cmd
+                    cmd,
+                    run
                 ]
                 .spacing(20);
                 scrollable(center_x(content)).into()
@@ -228,6 +248,21 @@ impl Installer {
                     .align_x(Center)
                     .size(30);
 
+                let run = center_x(
+                    button(
+                        text!("RUN")
+                            .size(26)
+                            .align_x(Center)
+                            .align_y(Center)
+                            .color(Color::BLACK),
+                    )
+                    .padding(15)
+                    .width(Fill)
+                    .width(100)
+                    .on_press(Message::RunPressed),
+                )
+                .align_x(Center);
+
                 let content = column![
                     title,
                     installer_path,
@@ -238,7 +273,8 @@ impl Installer {
                     bg1_weidu_log_input,
                     bg2_game_path_input,
                     bg2_weidu_log_input,
-                    cmd
+                    cmd,
+                    run
                 ]
                 .spacing(20);
                 scrollable(center_x(content)).into()

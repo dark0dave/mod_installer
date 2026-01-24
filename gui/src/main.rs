@@ -5,6 +5,7 @@ use crate::installer::Installer;
 mod installer;
 mod installer_type;
 mod message;
+mod runner;
 mod state;
 
 fn main() -> iced::Result {

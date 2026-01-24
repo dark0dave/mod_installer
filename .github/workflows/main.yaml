@@ -50,7 +50,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: build
         run: |
-          cargo build --release
+          cargo build --workspace --release
       - name: Archive release artifacts
         uses: actions/upload-artifact@main
         with:

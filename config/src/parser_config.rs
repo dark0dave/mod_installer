@@ -1,19 +1,17 @@
-use crate::{config::meta::Metadata, state::State};
-
 use serde_derive::{Deserialize, Serialize};
 
-pub(crate) const PARSER_CONFIG_LOCATION: &str = "parser";
+use crate::{meta::Metadata, state::State};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub(crate) struct ParserConfig {
-    pub(crate) in_progress_words: Vec<String>,
-    pub(crate) useful_status_words: Vec<String>,
-    pub(crate) choice_words: Vec<String>,
-    pub(crate) choice_phrase: Vec<String>,
-    pub(crate) completed_with_warnings: Vec<String>,
-    pub(crate) failed_with_error: Vec<String>,
-    pub(crate) finished: Vec<String>,
-    pub(crate) metadata: Metadata,
+pub struct ParserConfig {
+    pub in_progress_words: Vec<String>,
+    pub useful_status_words: Vec<String>,
+    pub choice_words: Vec<String>,
+    pub choice_phrase: Vec<String>,
+    pub completed_with_warnings: Vec<String>,
+    pub failed_with_error: Vec<String>,
+    pub finished: Vec<String>,
+    pub metadata: Metadata,
 }
 
 impl Default for ParserConfig {
@@ -197,7 +195,8 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806",
 
     #[test]
     fn load_config() -> Result<(), Box<dyn Error>> {
-        let root = std::env::current_dir()?;
+        let config_root = std::env::current_dir()?;
+        let root = config_root.parent().ok_or("Could not get workspace root")?;
         let config_path = Path::join(&root, Path::new("example_config.toml"));
         let config: ParserConfig = confy::load_path(config_path)?;
         let mut expected = ParserConfig::default();

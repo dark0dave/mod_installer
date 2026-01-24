@@ -1,13 +1,11 @@
 use std::{collections::HashMap, error::Error, path::Path, sync::Arc};
 
-use crate::config::args::Normal;
+use config::args::{Eet, Normal, Options};
+use config::parser_config::ParserConfig;
+
+use crate::utils::{copy_folder, find_mods, mod_folder_present_in_game_directory};
 use crate::utils::{delete_folder, get_last_installed, search_or_download};
 use crate::weidu::{self, WeiduExitStatus};
-use crate::{
-    config::args::{Eet, Options},
-    config::parser_config::ParserConfig,
-    utils::{copy_folder, find_mods, mod_folder_present_in_game_directory},
-};
 
 pub(crate) fn normal_install(
     command: &Normal,

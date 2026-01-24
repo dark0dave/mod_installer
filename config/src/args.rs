@@ -8,9 +8,9 @@ use clap::{Parser, builder::BoolishValueParser, builder::OsStr};
 
 use super::colors::styles;
 
-pub(crate) const CARGO_PKG_NAME: &str = env!("CARGO_PKG_NAME");
+pub const CARGO_PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
-pub(crate) const LONG: &str = r"
+pub const LONG: &str = r"
 
   /\/\   ___   __| | (_)_ __  ___| |_ __ _| | | ___ _ __
  /    \ / _ \ / _` | | | '_ \/ __| __/ _` | | |/ _ \ '__|
@@ -18,7 +18,7 @@ pub(crate) const LONG: &str = r"
 \/    \/\___/ \__,_| |_|_| |_|___/\__\__,_|_|_|\___|_|
 ";
 
-pub(crate) const WEIDU_LOG_MODE_ERROR: &str = r"
+pub const WEIDU_LOG_MODE_ERROR: &str = r"
 Please provide a valid weidu logging setting, options are:
 --weidu-log-mode log X       log output and details to X
 --weidu-log-mode autolog     log output and details to WSETUP.DEBUG
@@ -27,9 +27,9 @@ Please provide a valid weidu logging setting, options are:
 ";
 
 #[cfg(not(target_os = "windows"))]
-pub(crate) const WEIDU_FILE_NAME: &str = "weidu";
+pub const WEIDU_FILE_NAME: &str = "weidu";
 #[cfg(target_os = "windows")]
-pub(crate) const WEIDU_FILE_NAME: &str = "weidu.exe";
+pub const WEIDU_FILE_NAME: &str = "weidu.exe";
 
 // https://docs.rs/clap/latest/clap/_derive/index.html#arg-attributes
 #[derive(Parser, Debug, PartialEq)]
@@ -39,15 +39,15 @@ pub(crate) const WEIDU_FILE_NAME: &str = "weidu.exe";
     styles = styles(),
     about = format!("{}\n{}", LONG, std::env::var("CARGO_PKG_DESCRIPTION").unwrap_or_default())
 )]
-pub(crate) struct Args {
+pub struct Args {
     /// Install Type
     #[command(subcommand)]
-    pub(crate) command: CommandType,
+    pub command: CommandType,
 }
 
 /// Type of Install, Normal or EET
 #[derive(Subcommand, Debug, PartialEq, Clone)]
-pub(crate) enum CommandType {
+pub enum CommandType {
     #[command()]
     Normal(Normal),
     #[command()]
@@ -59,76 +59,76 @@ pub(crate) enum CommandType {
 /// Normal install for (BG1EE,BG2EE,IWDEE) (STABLE)
 #[derive(Parser, Debug, PartialEq, Clone)]
 #[clap(short_flag = 'n')]
-pub(crate) struct Normal {
+pub struct Normal {
     /// Path to target log
     #[clap(env, long, short = 'f', value_parser = path_must_exist, required = true)]
-    pub(crate) log_file: PathBuf,
+    pub log_file: PathBuf,
 
     /// Absolute Path to game directory
     #[clap(env, short, long, value_parser = parse_absolute_path, required = true)]
-    pub(crate) game_directory: PathBuf,
+    pub game_directory: PathBuf,
 
     /// Instead of operating on an existing directory, create a new one with this flag as its name and then copy the original contents into it.
     #[clap(env, long, short = 'n', required = false)]
-    pub(crate) generate_directory: Option<PathBuf>,
+    pub generate_directory: Option<PathBuf>,
 
     /// CommonOptions
     #[clap(flatten)]
-    pub(crate) options: Options,
+    pub options: Options,
 }
 
 /// EET install for (eet) (BETA)
 #[derive(Parser, Debug, PartialEq, Clone)]
 #[clap(short_flag = 'e')]
-pub(crate) struct Eet {
+pub struct Eet {
     /// Absolute Path to bg1ee game directory
     #[clap(env, short='1', long, value_parser = parse_absolute_path, required = true)]
-    pub(crate) bg1_game_directory: PathBuf,
+    pub bg1_game_directory: PathBuf,
 
     /// Path to bg1ee weidu.log file
     #[clap(env, short='y', long, value_parser = path_must_exist, required = true)]
-    pub(crate) bg1_log_file: PathBuf,
+    pub bg1_log_file: PathBuf,
 
     /// Absolute Path to bg2ee game directory
     #[clap(env, short='2', long, value_parser = parse_absolute_path, required = true)]
-    pub(crate) bg2_game_directory: PathBuf,
+    pub bg2_game_directory: PathBuf,
 
     /// Path to bg2ee weidu.log file
     #[clap(env, short='z', long, value_parser = path_must_exist, required = true)]
-    pub(crate) bg2_log_file: PathBuf,
+    pub bg2_log_file: PathBuf,
 
     /// Generates a new pre-eet directory.
     #[clap(env, short = 'p', long, value_parser = path_must_exist)]
-    pub(crate) new_pre_eet_dir: Option<PathBuf>,
+    pub new_pre_eet_dir: Option<PathBuf>,
 
     /// Generates a new eet directory.
     #[clap(env, short = 'n', long, value_parser = path_must_exist)]
-    pub(crate) new_eet_dir: Option<PathBuf>,
+    pub new_eet_dir: Option<PathBuf>,
 
     /// CommonOptions
     #[clap(flatten)]
-    pub(crate) options: Options,
+    pub options: Options,
 }
 
 /// Scan for (BG1EE,BG2EE,IWDEE) (ALPHA)
 #[derive(Parser, Debug, PartialEq, Clone)]
 #[clap(short_flag = 's')]
-pub(crate) struct Scan {
+pub struct Scan {
     /// Absolute Path to game directory
     #[clap(env, short, long, value_parser = parse_absolute_path)]
-    pub(crate) game_directory: PathBuf,
+    pub game_directory: PathBuf,
 
     /// filter by selected language
     #[clap(short, long, required = false, default_value = "")]
-    pub(crate) filter_by_selected_language: String,
+    pub filter_by_selected_language: String,
 
     /// CommonOptions
     #[clap(flatten)]
-    pub(crate) options: Options,
+    pub options: Options,
 }
 
 #[derive(Parser, Debug, PartialEq, Clone, Default)]
-pub(crate) struct Options {
+pub struct Options {
     /// Absolute Path to weidu binary
     #[clap(
         env,
@@ -139,7 +139,7 @@ pub(crate) struct Options {
         default_missing_value = find_weidu_bin_on_path(),
         required = false
     )]
-    pub(crate) weidu_binary: PathBuf,
+    pub weidu_binary: PathBuf,
 
     /// Path to mod directories
     #[clap(
@@ -153,15 +153,15 @@ pub(crate) struct Options {
         default_missing_value = working_dir(),
         required = false
     )]
-    pub(crate) mod_directories: Vec<PathBuf>,
+    pub mod_directories: Vec<PathBuf>,
 
     /// Game Language
     #[clap(short, long, default_value = "en_US")]
-    pub(crate) language: String,
+    pub language: String,
 
     /// Depth to walk folder structure
     #[clap(env, long, short, default_value = "5")]
-    pub(crate) depth: usize,
+    pub depth: usize,
 
     /// Compare against installed weidu log, note this is best effort
     #[clap(
@@ -173,7 +173,7 @@ pub(crate) struct Options {
         default_value_t = true,
         value_parser = BoolishValueParser::new(),
     )]
-    pub(crate) skip_installed: bool,
+    pub skip_installed: bool,
 
     /// If a warning occurs in the weidu child process exit
     #[clap(
@@ -185,11 +185,11 @@ pub(crate) struct Options {
         default_value_t = false,
         value_parser = BoolishValueParser::new(),
     )]
-    pub(crate) abort_on_warnings: bool,
+    pub abort_on_warnings: bool,
 
     /// Timeout time per mod in seconds, default is 1 hour
     #[clap(env, long, short, default_value = "3600")]
-    pub(crate) timeout: usize,
+    pub timeout: usize,
 
     /// Weidu log setting "--autolog" is default
     #[clap(
@@ -200,7 +200,7 @@ pub(crate) struct Options {
         value_parser = parse_weidu_log_mode,
         required = false
     )]
-    pub(crate) weidu_log_mode: String,
+    pub weidu_log_mode: String,
 
     /// Strict Version and Component/SubComponent matching
     #[clap(
@@ -212,7 +212,7 @@ pub(crate) struct Options {
         default_value_t = false,
         value_parser = BoolishValueParser::new(),
     )]
-    pub(crate) strict_matching: bool,
+    pub strict_matching: bool,
 
     /// When a missing log is discovered ask the user for the download uri, download the mod and install it
     #[clap(
@@ -223,7 +223,7 @@ pub(crate) struct Options {
         default_value_t = true,
         value_parser = BoolishValueParser::new(),
     )]
-    pub(crate) download: bool,
+    pub download: bool,
 
     /// Force copy mod folder, even if the mod folder was found in the game directory
     #[clap(
@@ -235,7 +235,7 @@ pub(crate) struct Options {
         default_value_t = false,
         value_parser = BoolishValueParser::new(),
     )]
-    pub(crate) overwrite: bool,
+    pub overwrite: bool,
 
     /// Strict weidu log checking
     #[clap(
@@ -247,11 +247,11 @@ pub(crate) struct Options {
         default_value_t = true,
         value_parser = BoolishValueParser::new(),
     )]
-    pub(crate) check_last_installed: bool,
+    pub check_last_installed: bool,
 
     /// Tick
     #[clap(env, short = 'i', long, default_value_t = 500)]
-    pub(crate) tick: u64,
+    pub tick: u64,
 }
 
 fn parse_weidu_log_mode(arg: &str) -> Result<String, String> {
@@ -316,7 +316,7 @@ mod tests {
 
     use super::*;
     use pretty_assertions::assert_eq;
-    use std::error::Error;
+    use std::{error::Error, path::PathBuf};
 
     #[test]
     fn test_parse_weidu_log_mode() -> Result<(), Box<dyn Error>> {
@@ -354,7 +354,11 @@ mod tests {
 
     #[test]
     fn test_bool_flags() -> Result<(), Box<dyn Error>> {
-        let fake_game_dir = std::env::current_dir().unwrap().join("fixtures");
+        let workspace_root: PathBuf = std::env::current_dir()?;
+        let fake_game_dir: PathBuf = workspace_root
+            .parent()
+            .ok_or("Could not get workspace root")?
+            .join("fixtures");
         let fake_weidu_bin = fake_game_dir.clone().join("weidu");
         let fake_log_file = fake_game_dir.clone().join("weidu.log");
         let fake_mod_dirs = fake_game_dir.clone().join("mods");
@@ -413,7 +417,11 @@ mod tests {
 
     #[test]
     fn test_eet_flags() -> Result<(), Box<dyn Error>> {
-        let fake_game_dir = std::env::current_dir().unwrap().join("fixtures");
+        let workspace_root: PathBuf = std::env::current_dir()?;
+        let fake_game_dir: PathBuf = workspace_root
+            .parent()
+            .ok_or("Could not get workspace root")?
+            .join("fixtures");
         let fake_weidu_bin = fake_game_dir.clone().join("weidu");
         let fake_log_file = fake_game_dir.clone().join("weidu.log");
         let new_dir = PathBuf::new().join("test");

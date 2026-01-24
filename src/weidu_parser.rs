@@ -7,7 +7,7 @@ use std::{
     thread,
 };
 
-use crate::{config::parser_config::ParserConfig, state::State};
+use config::{parser_config::ParserConfig, state::State};
 
 #[derive(Debug)]
 enum ParserState {

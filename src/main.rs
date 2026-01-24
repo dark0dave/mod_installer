@@ -1,25 +1,24 @@
 use std::process::ExitCode;
 
-use config::parser_config::PARSER_CONFIG_LOCATION;
 use config::{Config, args::CommandType};
 use env_logger::Env;
 use installers::{eet_install, normal_install};
 use scan::scan;
 
 mod component;
-mod config;
 mod installers;
 mod log_file;
 mod scan;
-mod state;
 mod utils;
 mod weidu;
 mod weidu_parser;
 
+const PARSER_CONFIG_LOCATION: &str = "parser";
+
 fn main() -> ExitCode {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
-    let config = Config::new();
+    let config = Config::new(PARSER_CONFIG_LOCATION);
 
     log::debug!("{:?}", config.args);
 

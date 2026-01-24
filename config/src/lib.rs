@@ -4,22 +4,21 @@ use args::{Args, CARGO_PKG_NAME};
 use clap::Parser;
 use parser_config::ParserConfig;
 
-use crate::PARSER_CONFIG_LOCATION;
-
-pub(crate) mod args;
+pub mod args;
 mod colors;
 mod meta;
-pub(crate) mod parser_config;
+pub mod parser_config;
+pub mod state;
 
-pub(crate) struct Config {
-    pub(crate) args: Args,
-    pub(crate) parser: Arc<ParserConfig>,
+pub struct Config {
+    pub args: Args,
+    pub parser: Arc<ParserConfig>,
 }
 
 impl Config {
-    pub(crate) fn new() -> Self {
+    pub fn new(parser_config_location: &str) -> Self {
         let parser_config: Arc<ParserConfig> = if let Ok(config) =
-            confy::load::<ParserConfig>(CARGO_PKG_NAME, PARSER_CONFIG_LOCATION)
+            confy::load::<ParserConfig>(CARGO_PKG_NAME, parser_config_location)
             && config.metadata.mod_installer_version == env!("CARGO_PKG_VERSION")
         {
             Arc::new(config)

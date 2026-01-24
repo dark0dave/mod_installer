@@ -1,0 +1,19 @@
+*rs text eol=lf
+*md text eol=lf
+*txt text eol=lf
+*yaml text eol=lf
+*yml text eol=lf
+*toml text eol=lf
+*are binary
+*bam binary
+*bcs binary
+*cre binary
+*itm binary
+*png binary
+*pro binary
+*spl binary
+*sto binary
+*vvc binary
+*wav binary
+*wbm binary
+*wed binary

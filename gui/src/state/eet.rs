@@ -1,7 +1,7 @@
 use crate::state::shared::SharedState;
 
 #[derive(Debug, Default, Clone)]
-pub(crate) struct EET {
+pub(crate) struct Eet {
     pub(crate) shared: SharedState,
     pub(crate) bg1_game_directory: String,
     pub(crate) bg1_weidu_log: String,
@@ -9,7 +9,7 @@ pub(crate) struct EET {
     pub(crate) bg2_weidu_log: String,
 }
 
-impl EET {
+impl Eet {
     pub(crate) fn new(shared: &SharedState) -> Self {
         Self {
             shared: shared.clone(),

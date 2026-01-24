@@ -19,6 +19,7 @@ keywords = [
 ]
 
 [workspace]
+members = ["config", "gui"]
 
 [dependencies]
 anstyle = "1.0.10"

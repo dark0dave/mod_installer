@@ -1,5 +1,5 @@
 [package]
-name = "mod_installer_helper"
+name = "mod_installer_gui"
 version = "0.1.0"
 edition = "2024"
 

@@ -8,7 +8,7 @@ use iced::{
 pub(crate) enum InstallerType {
     #[default]
     Normal,
-    EET,
+    Eet,
 }
 
 impl InstallerType {
@@ -23,17 +23,16 @@ impl InstallerType {
         .text_size(30);
         let eet = radio(
             "EET",
-            InstallerType::EET,
+            InstallerType::Eet,
             installer_type,
             Message::RadioSelected,
         )
         .size(30)
         .text_size(30);
-        let radio_options = container(row![normal, eet].spacing(30))
+        container(row![normal, eet].spacing(30))
             .padding(30)
             .align_x(Center)
             .align_y(Center)
-            .style(container::rounded_box);
-        radio_options
+            .style(container::rounded_box)
     }
 }

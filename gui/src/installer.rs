@@ -8,13 +8,13 @@ use iced::{
 use crate::{
     installer_type::InstallerType,
     message::Message,
-    state::{eet::EET, normal::Normal, shared::SharedState},
+    state::{eet::Eet, normal::Normal, shared::SharedState},
 };
 
 #[derive(Debug)]
 pub(crate) enum Installer {
     Normal(Normal),
-    EET(EET),
+    Eet(Eet),
 }
 
 impl Installer {
@@ -42,13 +42,12 @@ impl Installer {
                     state.shared.mod_directory = input;
                     state.generate_installer_cmd();
                 }
-                Message::RadioSelected(installer_type) => match installer_type {
-                    InstallerType::EET => {
+                Message::RadioSelected(installer_type) => {
+                    if InstallerType::Eet == installer_type {
                         state.shared.installer_type = Some(installer_type);
-                        *self = Installer::EET(EET::new(&state.shared));
+                        *self = Installer::Eet(Eet::new(&state.shared));
                     }
-                    _ => {}
-                },
+                }
                 Message::GameDirectory(input) => {
                     state.game_directory = input;
                     state.generate_installer_cmd();
@@ -59,7 +58,7 @@ impl Installer {
                 }
                 _ => {}
             },
-            Installer::EET(state) => match message {
+            Installer::Eet(state) => match message {
                 Message::InstallerPath(input) => {
                     state.shared.installer_bin = input;
                     state.generate_installer_cmd();
@@ -72,13 +71,12 @@ impl Installer {
                     state.shared.mod_directory = input;
                     state.generate_installer_cmd();
                 }
-                Message::RadioSelected(installer_type) => match installer_type {
-                    InstallerType::Normal => {
+                Message::RadioSelected(installer_type) => {
+                    if InstallerType::Normal == installer_type {
                         state.shared.installer_type = Some(installer_type);
                         *self = Installer::Normal(Normal::new(&state.shared));
                     }
-                    _ => {}
-                },
+                }
                 Message::BG1GameDirectory(input) => {
                     state.bg1_game_directory = input;
                     state.generate_installer_cmd();
@@ -165,7 +163,7 @@ impl Installer {
                 .spacing(20);
                 scrollable(center_x(content)).into()
             }
-            Installer::EET(EET {
+            Installer::Eet(Eet {
                 shared:
                     SharedState {
                         installer_bin,

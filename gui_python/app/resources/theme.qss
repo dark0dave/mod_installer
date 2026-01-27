@@ -1,0 +1,79 @@
+/* Dark, flat, subtle borders. Intentionally simple. */
+
+QWidget {
+  background: #1f1f1f;
+  color: #e6e6e6;
+  font-size: 13px;
+}
+
+QLabel#PageTitle {
+  font-size: 28px;
+  font-weight: 600;
+  padding: 6px 0;
+}
+
+QLabel#PageSubtitle {
+  color: #bdbdbd;
+  padding-bottom: 10px;
+}
+
+QLineEdit, QPlainTextEdit, QTextEdit, QComboBox, QSpinBox {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 3px;
+  padding: 6px;
+  selection-background-color: #0e639c;
+}
+
+QComboBox::drop-down {
+  border-left: 1px solid #3a3a3a;
+  width: 28px;
+}
+
+QPushButton {
+  background: #2c2c2c;
+  border: 1px solid #3a3a3a;
+  border-radius: 3px;
+  padding: 8px 14px;
+}
+
+QPushButton:hover { background: #333333; }
+QPushButton:pressed { background: #262626; }
+QPushButton:disabled { color: #888888; background: #242424; }
+
+QFrame#Panel {
+  background: #242424;
+  border: 1px solid #343434;
+  border-radius: 3px;
+}
+
+QTreeView, QListView, QTableView {
+  background: #242424;
+  border: 1px solid #343434;
+  alternate-background-color: #262626;
+}
+
+QHeaderView::section {
+  background: #2a2a2a;
+  border: 1px solid #343434;
+  padding: 6px 8px;
+}
+
+QTreeView::item:selected,
+QListView::item:selected,
+QTableView::item:selected {
+  background: #0e639c;
+  color: #ffffff;
+}
+
+QScrollBar:vertical {
+  background: #1f1f1f;
+  width: 14px;
+  margin: 0;
+}
+QScrollBar::handle:vertical {
+  background: #3a3a3a;
+  min-height: 25px;
+  border-radius: 3px;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }

@@ -37,32 +37,30 @@ impl TryFrom<String> for Component {
     fn try_from(line: String) -> Result<Self, Self::Error> {
         let mut parts = line.split('~');
 
-        let install_path = parts
-            .nth(1)
-            .ok_or(format!(
-                "Could not get full name of mod, from provided string: {line}"
-            ))?
-            .to_string();
+        let install_path = parts.nth(1).ok_or(format!(
+            "Could not get full name of mod, from provided string: {line}"
+        ))?;
 
-        // This allows for both linux, macos and windows parsing
-        let (tp_file, name) = if let Some(windows_path) = install_path.split('\\').nth(1) {
-            let name = install_path
+        let (tp_file, name) = if install_path.split('\\').nth(1).is_some() {
+            let mut component_path_string = install_path
                 .split('\\')
-                .next()
-                .ok_or(format!(
-                    "Could not split {line} into mod into name and component"
-                ))?
-                .to_ascii_lowercase();
-            (windows_path.to_string(), name)
-        } else if let Some(linux_path) = install_path.split('/').nth(1) {
-            let name = install_path
+                .collect::<Vec<&str>>()
+                .into_iter()
+                .rev();
+            (
+                component_path_string.next().unwrap_or_default(),
+                component_path_string.next().unwrap_or_default(),
+            )
+        } else if install_path.split('/').nth(1).is_some() {
+            let mut component_path_string = install_path
                 .split('/')
-                .next()
-                .ok_or(format!(
-                    "Could not split {line} into mod into name and component"
-                ))?
-                .to_ascii_lowercase();
-            (linux_path.to_string(), name)
+                .collect::<Vec<&str>>()
+                .into_iter()
+                .rev();
+            (
+                component_path_string.next().unwrap_or_default(),
+                component_path_string.next().unwrap_or_default(),
+            )
         } else {
             return Err(
                 format!("Could not find tp2 file name, from provided string: {line}").into(),
@@ -116,8 +114,8 @@ impl TryFrom<String> for Component {
             .to_string();
 
         Ok(Self {
-            tp_file,
-            name,
+            tp_file: tp_file.to_string(),
+            name: name.to_string(),
             lang,
             component,
             component_name,

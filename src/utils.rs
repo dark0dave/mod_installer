@@ -1,6 +1,7 @@
 use config::args::Options;
 use core::time;
 use std::{
+    collections::HashSet,
     error::Error,
     fs::{self, File},
     io::{BufRead, BufReader},
@@ -79,6 +80,54 @@ fn find_mod_folder(mod_component: &Component, mod_dir: &Path, depth: usize) -> O
             }
             _ => None,
         })
+}
+
+fn find_similar_parrents(path: PathBuf, tp2_files: Vec<PathBuf>) -> Vec<PathBuf> {
+    let mut out = vec![];
+    let mut possible_parrent = path.parent();
+    while let Some(parent) = possible_parrent {
+        for tp2_file in tp2_files.iter() {
+            if tp2_file.to_path_buf() == path {
+                continue;
+            }
+            if tp2_file.parent() == Some(parent) {
+                out.push(tp2_file.to_path_buf());
+            }
+        }
+        possible_parrent = parent.parent();
+    }
+    out
+}
+
+pub(crate) fn find_all_mods(mod_dirs: &[PathBuf], depth: usize) -> HashSet<PathBuf> {
+    let tp2_files: Vec<PathBuf> = mod_dirs
+        .iter()
+        .flat_map(|mod_dir| {
+            WalkDir::new(mod_dir)
+                .follow_links(true)
+                .max_depth(depth)
+                .into_iter()
+                .flatten()
+                .flat_map(move |entry| {
+                    if entry
+                        .file_name()
+                        .to_str()
+                        .unwrap_or_default()
+                        .ends_with(".tp2")
+                    {
+                        return Some(entry.path().to_path_buf());
+                    }
+                    None
+                })
+        })
+        .collect();
+    let mut out = HashSet::new();
+    for tp2_file in tp2_files.iter() {
+        if find_similar_parrents(tp2_file.clone(), tp2_files.clone()).is_empty() {
+            out.insert(tp2_file.to_path_buf());
+        }
+    }
+    out
 }
 
 pub(crate) fn find_mods(
@@ -207,6 +256,25 @@ mod tests {
         let result = find_mods(&log_file, true, &game_directory, false)?;
         let expected = LogFile::try_from(PathBuf::from("./fixtures/expected.log"))?;
         assert_eq!(expected, result);
+        Ok(())
+    }
+
+    #[test]
+    fn test_find_similar_parents() -> Result<(), Box<dyn Error>> {
+        let tp2s: Vec<PathBuf> = vec![
+            Path::new("/Steam/steamapps/common/bg2/questpack/setup-questpack.tp2").into(),
+            Path::new("/Steam/steamapps/common/bg2/questpack/simwork/goldreq.tp2").into(),
+            Path::new("/Steam/steamapps/common/bg2/chickens/chicken.tp2").into(),
+        ];
+        let similars: Vec<Vec<PathBuf>> = vec![
+            vec![],
+            vec![Path::new("/Steam/steamapps/common/bg2/questpack/setup-questpack.tp2").into()],
+            vec![],
+        ];
+        for (i, tp2) in tp2s.iter().enumerate() {
+            let similar = find_similar_parrents(tp2.to_path_buf(), tp2s.clone());
+            assert_eq!(similar, similars[i]);
+        }
         Ok(())
     }
 }

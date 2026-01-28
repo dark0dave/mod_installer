@@ -52,7 +52,7 @@ pub enum CommandType {
     Normal(Normal),
     #[command()]
     Eet(Eet),
-    #[command()]
+    #[command(subcommand)]
     Scan(Scan),
 }
 
@@ -111,9 +111,30 @@ pub struct Eet {
 }
 
 /// Scan for (BG1EE,BG2EE,IWDEE) (ALPHA)
-#[derive(Parser, Debug, PartialEq, Clone)]
+#[derive(Subcommand, Debug, PartialEq, Clone)]
 #[clap(short_flag = 's')]
-pub struct Scan {
+pub enum Scan {
+    #[command()]
+    Langauges(ScanLangauges),
+    #[command()]
+    Components(ScanComponents),
+}
+
+#[derive(Parser, Debug, PartialEq, Clone)]
+#[clap(short_flag = 'l')]
+pub struct ScanLangauges {
+    /// filter by selected language
+    #[clap(short, long, required = false, default_value = "")]
+    pub filter_by_selected_language: String,
+
+    /// CommonOptions
+    #[clap(flatten)]
+    pub options: Options,
+}
+
+#[derive(Parser, Debug, PartialEq, Clone)]
+#[clap(short_flag = 'c')]
+pub struct ScanComponents {
     /// Absolute Path to game directory
     #[clap(env, short, long, value_parser = parse_absolute_path)]
     pub game_directory: PathBuf,

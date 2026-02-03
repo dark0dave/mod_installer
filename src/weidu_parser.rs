@@ -1,4 +1,5 @@
 use std::{
+    cmp::max,
     sync::{
         Arc,
         atomic::{AtomicUsize, Ordering},
@@ -24,7 +25,8 @@ pub(crate) fn parse_raw_output(
     timeout: usize,
 ) {
     let mut current_state = ParserState::LookingForInterestingOutput;
-    let mut question = String::new();
+    let mut buffer = vec![];
+    let mut question = vec![];
     sender
         .send(State::InProgress)
         .expect("Failed to send process start event");
@@ -42,7 +44,7 @@ pub(crate) fn parse_raw_output(
                             question.clear();
                         } else {
                             log::debug!("Appending line '{string}' to user question");
-                            question.push_str(&string);
+                            question.push(string);
                             current_state = ParserState::CollectingQuestion;
                         }
                     }
@@ -61,10 +63,11 @@ pub(crate) fn parse_raw_output(
                                 string
                             );
                             current_state = ParserState::CollectingQuestion;
-                            question.push_str(string.as_str());
+                            question.push(string.clone());
                         }
                         if !string.trim().is_empty() {
                             log::trace!("{string}");
+                            buffer.push(string);
                         }
                     }
                 },
@@ -78,11 +81,20 @@ pub(crate) fn parse_raw_output(
                     }
                     ParserState::WaitingForMoreQuestionContent => {
                         log::debug!("No new weidu output, sending question to user");
+                        let question_start = buffer
+                            .iter()
+                            .position(|n| n == question.first().unwrap_or(&"".to_string()))
+                            .unwrap_or(0);
+                        let out = buffer
+                            .get(max(question_start - 5, 0_usize)..)
+                            .unwrap_or(&question)
+                            .iter()
+                            .fold("".to_string(), |a, b| format!("{}\n{}", a, b));
                         sender
-                            .send(State::RequiresInput { question })
+                            .send(State::RequiresInput { question: out })
                             .expect("Failed to send question");
                         current_state = ParserState::LookingForInterestingOutput;
-                        question = String::new();
+                        question.clear();
                     }
                     _ if wait_count.load(Ordering::Relaxed) >= timeout => {
                         sender

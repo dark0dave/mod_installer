@@ -16,7 +16,7 @@ impl Normal {
     }
     pub(crate) fn generate_installer_cmd(&mut self) {
         self.shared.install_cmd = format!(
-            "{} -n -w {} -m {} -g {} -l {}",
+            "{} -n -w {} -m {} -g {} -f {}",
             self.shared.installer_bin,
             self.shared.weidu_bin,
             self.shared.mod_directory,

@@ -177,23 +177,29 @@ pub(crate) fn handle_io(
     match child.try_wait() {
         Ok(Some(exit)) => {
             log::debug!("Weidu exit status: {exit}");
+            if !exit.success() {
+                return InstallationResult::Err(
+                    format!("Weidu command failed with exit status: {exit}").into(),
+                );
+            }
+            result
         }
         Ok(None) => {
-            log::debug!("Weidu exited, but could not get status.");
+            log::warn!("Weidu exited, but could not get status.");
+            result
         }
         Err(err) => {
             log::error!("Failed to close weidu process: {err}");
+            InstallationResult::Err(err.into())
         }
-    };
-    result
+    }
 }
 
 fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) -> Vec<String> {
     let mod_name = &weidu_mod.name;
     let mod_tp_file = &weidu_mod.tp_file;
-    vec![
-        format!("{mod_name}/{mod_tp_file}"),
-        weidu_log_mode.to_string(),
+    let mut args = vec![
+        format!("{mod_name}/{mod_tp_file}").to_lowercase(),
         "--force-install".to_string(),
         weidu_mod.component.to_string(),
         "--use-lang".to_string(),
@@ -201,7 +207,11 @@ fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) ->
         "--language".to_string(),
         weidu_mod.lang.to_string(),
         "--no-exit-pause".to_string(),
-    ]
+    ];
+    weidu_log_mode
+        .split_ascii_whitespace()
+        .for_each(|log_option| args.push(log_option.to_string()));
+    args
 }
 
 pub(crate) fn install(
@@ -213,6 +223,17 @@ pub(crate) fn install(
     let weidu_args = generate_args(weidu_mod, &options.weidu_log_mode, &options.language);
     let mut command = Command::new(options.weidu_binary.clone());
     let weidu_process = command.current_dir(game_directory).args(weidu_args);
+    log::debug!(
+        "cmd: {:?} {:?}",
+        weidu_process.get_program(),
+        weidu_process
+            .get_args()
+            .fold("".to_string(), |a, b| format!(
+                "{} {:?}",
+                a,
+                b.to_os_string()
+            ))
+    );
 
     let child = weidu_process
         .stdin(Stdio::piped())

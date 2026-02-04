@@ -66,7 +66,7 @@ pub(crate) fn parse_raw_output(
                             question.push(string.clone());
                         }
                         if !string.trim().is_empty() {
-                            log::trace!("{string}");
+                            log::info!("{string}");
                             buffer.push(string);
                         }
                     }

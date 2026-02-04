@@ -1,4 +1,5 @@
 use std::env::{split_paths, var_os};
+use std::error::Error;
 use std::fmt::Debug;
 use std::fs;
 use std::path::PathBuf;
@@ -217,7 +218,7 @@ pub struct Options {
         env,
         long,
         short='u',
-        default_value = "autolog",
+        default_value = "autolog logapp log-extern",
         value_parser = parse_weidu_log_mode,
         required = false
     )]
@@ -280,9 +281,18 @@ fn parse_weidu_log_mode(arg: &str) -> Result<String, String> {
     let mut output = vec![];
     while let Some(arg) = args.next() {
         match arg {
-            "log" if path_must_exist(arg).is_ok() => {
-                let path = args.next().unwrap();
-                output.push(format!("--{arg} {path}"));
+            "log" => {
+                if let Ok(path) = path_must_exist_opt(args.next())
+                    && path.is_file()
+                {
+                    let log_path = path.as_os_str().to_str().unwrap();
+                    output.push(format!("--{arg} {log_path}"));
+                    continue;
+                }
+                return Err(format!(
+                    "Path provided {:?} is not a file, weidu requires a file",
+                    arg
+                ));
             }
             "autolog" => output.push(format!("--{arg}")),
             "logapp" => output.push(format!("--{arg}")),
@@ -291,6 +301,13 @@ fn parse_weidu_log_mode(arg: &str) -> Result<String, String> {
         };
     }
     Ok(output.join(" "))
+}
+
+fn path_must_exist_opt(arg: Option<&str>) -> Result<PathBuf, Box<dyn Error>> {
+    if let Some(arg) = arg {
+        return Ok(path_must_exist(arg)?);
+    }
+    Err("Empty arg aborting".into())
 }
 
 fn path_must_exist(arg: &str) -> Result<PathBuf, std::io::Error> {
@@ -343,22 +360,18 @@ mod tests {
     fn test_parse_weidu_log_mode() -> Result<(), Box<dyn Error>> {
         let tests = vec![
             ("autolog", Ok("--autolog".to_string())),
-            ("log /home", Ok("--log /home".to_string())),
+            (
+                "log log",
+                Err("Path provided \"log\" is not a file, weidu requires a file".into()),
+            ),
             ("autolog logapp", Ok("--autolog --logapp".to_string())),
             (
                 "autolog logapp log-extern",
                 Ok("--autolog --logapp --log-extern".to_string()),
             ),
-            (
-                "log /home logapp log-extern",
-                Ok("--log /home --logapp --log-extern".to_string()),
-            ),
+            ("logapp log-extern", Ok("--logapp --log-extern".to_string())),
             (
                 "fish",
-                Err(format!("{}, Provided {}", WEIDU_LOG_MODE_ERROR, "fish")),
-            ),
-            (
-                "log /home fish",
                 Err(format!("{}, Provided {}", WEIDU_LOG_MODE_ERROR, "fish")),
             ),
         ];
@@ -409,7 +422,7 @@ mod tests {
                         skip_installed: expected_flag_value,
                         abort_on_warnings: expected_flag_value,
                         timeout: 3600,
-                        weidu_log_mode: "--autolog".to_string(),
+                        weidu_log_mode: "--autolog --logapp --log-extern".to_string(),
                         strict_matching: true,
                         download: true,
                         overwrite: false,
@@ -462,7 +475,7 @@ mod tests {
                     skip_installed: expected_flag_value,
                     abort_on_warnings: !expected_flag_value,
                     timeout: 3600,
-                    weidu_log_mode: "--autolog".to_string(),
+                    weidu_log_mode: "--autolog --logapp --log-extern".to_string(),
                     strict_matching: !expected_flag_value,
                     download: expected_flag_value,
                     overwrite: !expected_flag_value,

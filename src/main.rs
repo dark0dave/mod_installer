@@ -12,6 +12,7 @@ use scan_langauges::scan_langauges;
 mod component;
 mod installers;
 mod log_file;
+mod raw_reciever;
 mod scan;
 mod scan_langauges;
 mod utils;

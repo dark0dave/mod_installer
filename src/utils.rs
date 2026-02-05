@@ -1,5 +1,5 @@
 use config::args::Options;
-use core::time;
+use core::time::{self, Duration};
 use std::{
     collections::HashSet,
     error::Error,
@@ -32,7 +32,7 @@ pub fn copy_folder(
     }
     for entry in fs::read_dir(src.as_ref().canonicalize()?)? {
         let entry = entry?;
-        let full_path = entry.path().canonicalize()?;
+        let full_path = entry.path();
         if entry.file_type()?.is_dir() {
             copy_folder(full_path, destination.join(entry.file_name()))?;
         } else {
@@ -210,8 +210,18 @@ pub fn sleep(millis: u64) {
 pub fn get_user_input() -> String {
     let stdin = std::io::stdin();
     let mut input = String::new();
-    stdin.read_line(&mut input).unwrap_or_default();
-    input.to_string()
+    loop {
+        input.clear();
+        match stdin.read_line(&mut input) {
+            Ok(0) => {
+                // No stdin available yet (EOF); wait and retry.
+                thread::sleep(Duration::from_millis(100));
+                continue;
+            }
+            Ok(_) => return input.to_string(),
+            Err(_) => return String::new(),
+        }
+    }
 }
 
 #[cfg(test)]

@@ -171,15 +171,15 @@ pub fn search_or_download(
     }
     log::info!("Missing mod: {weidu_mod:#?}");
     if options.download {
-        try_download_mod(weidu_mod)
+        try_download_mod(weidu_mod, options.tick)
     } else {
         Err("Failed to find mod".into())
     }
 }
 
-pub fn try_download_mod(weidu_mod: &Component) -> Result<PathBuf, Box<dyn Error>> {
+pub fn try_download_mod(weidu_mod: &Component, tick: u64) -> Result<PathBuf, Box<dyn Error>> {
     log::info!("Please provide mod url, or exit");
-    let user_input = get_user_input();
+    let user_input = get_user_input(tick)?;
     let url = Url::parse(&user_input)?;
     if url.host() == Some(Host::Domain("github.com")) {
         let mut zip_path = tempfile()?;
@@ -207,11 +207,21 @@ pub fn sleep(millis: u64) {
     thread::sleep(duration);
 }
 
-pub fn get_user_input() -> String {
+pub fn get_user_input(tick: u64) -> Result<String, Box<dyn Error>> {
     let stdin = std::io::stdin();
     let mut input = String::new();
-    stdin.read_line(&mut input).unwrap_or_default();
-    input.to_string()
+    loop {
+        input.clear();
+        match stdin.read_line(&mut input) {
+            Err(err) => return Err(err.into()),
+            Ok(0) => {
+                // No stdin available yet (EOF); wait and retry.
+                sleep(tick);
+            }
+            Ok(_) => break,
+        }
+    }
+    Ok(input.to_string())
 }
 
 #[cfg(test)]

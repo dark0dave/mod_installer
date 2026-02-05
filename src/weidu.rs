@@ -80,7 +80,7 @@ fn run(
                         log::info!("User Input required");
                         log::info!("Question is");
                         log::info!("{question}\n");
-                        let user_input = get_user_input();
+                        let user_input = get_user_input(tick)?;
                         log::debug!("Read user input {user_input}, sending it to process ");
                         weidu_stdin.write_all(user_input.as_bytes())?;
                         log::debug!("Input sent");

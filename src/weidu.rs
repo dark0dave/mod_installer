@@ -5,7 +5,7 @@ use std::{
     process::{Child, Command, Stdio},
     sync::{
         Arc, RwLock,
-        atomic::{AtomicUsize, Ordering},
+        atomic::AtomicUsize,
         mpsc::{self, Receiver, TryRecvError},
     },
 };
@@ -88,14 +88,9 @@ fn run(
                 }
             }
             Err(TryRecvError::Empty) => {
-                log::info!("{}", ".".repeat(wait_count.load(Ordering::Relaxed) % 10));
-                std::io::stdout().flush().expect("Failed to flush stdout");
-
                 wait_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 log::trace!("Receiver is sleeping");
                 sleep(tick);
-
-                std::io::stdout().flush().expect("Failed to flush stdout");
             }
             Err(TryRecvError::Disconnected) => return Ok(WeiduExitStatus::Success),
         }

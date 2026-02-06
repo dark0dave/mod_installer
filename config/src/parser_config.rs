@@ -39,7 +39,12 @@ impl Default for ParserConfig {
                 "do you want".to_string(),
                 "would you like".to_string(),
                 "answer [y]es or [n]o.".to_string(),
-                "is this correct? [y]es or [n]o".to_string(),
+                "is this correct?".to_string(),
+                "[y]es or [n]o".to_string(),
+                "please select".to_string(),
+                "please enter".to_string(),
+                "enter a new".to_string(),
+                "leave blank".to_string(),
             ],
             completed_with_warnings: vec!["installed with warnings".to_string()],
             failed_with_error: vec![

@@ -36,46 +36,48 @@ pub(crate) fn parse_raw_output(
     thread::spawn(move || {
         loop {
             match receiver.try_recv() {
-                Ok(string) => match current_state {
-                    ParserState::CollectingQuestion
-                    | ParserState::WaitingForMoreQuestionContent => {
-                        if parser_config.useful_status_words.contains(&string) {
-                            log::debug!(
-                                "Weidu seems to know an answer for the last question, ignoring it"
-                            );
-                            current_state = ParserState::LookingForInterestingOutput;
-                            question.clear();
-                        } else {
-                            log::debug!("Appending line '{string}' to user question");
-                            question.push(string);
-                            current_state = ParserState::CollectingQuestion;
-                        }
+                Ok(string) => {
+                    log::info!("{string}");
+                    let installer_state = parser_config.detect_weidu_finished_state(&string);
+                    if installer_state != State::InProgress {
+                        sender
+                            .send(installer_state)
+                            .expect("Failed to send process error event");
+                        break;
                     }
-                    ParserState::LookingForInterestingOutput => {
-                        log::info!("{string}");
-                        let installer_state = parser_config.detect_weidu_finished_state(&string);
-                        if installer_state != State::InProgress {
-                            sender
-                                .send(installer_state)
-                                .expect("Failed to send process error event");
-                            break;
+                    buffer.push(string.clone());
+                    match current_state {
+                        ParserState::CollectingQuestion
+                        | ParserState::WaitingForMoreQuestionContent => {
+                            if parser_config.useful_status_words.contains(&string) {
+                                log::debug!(
+                                    "Weidu seems to know an answer for the last question, ignoring it"
+                                );
+                                current_state = ParserState::LookingForInterestingOutput;
+                                question.clear();
+                            } else {
+                                log::debug!("Appending line '{string}' to user question");
+                                question.push(string);
+                                current_state = ParserState::CollectingQuestion;
+                            }
                         }
-                        if parser_config.string_looks_like_question(&string) {
-                            log::debug!(
-                                "Changing parser state to '{:?}' due to line {}",
-                                ParserState::CollectingQuestion,
-                                string
-                            );
-                            current_state = ParserState::CollectingQuestion;
-                            buffer.push(string);
-                            let min_index: usize =
-                                ((buffer.len() as i32) - 5).try_into().unwrap_or(0_usize);
-                            for history in buffer.get(min_index..).unwrap_or_default() {
-                                question.push(history.clone());
+                        ParserState::LookingForInterestingOutput => {
+                            if parser_config.string_looks_like_question(&string) {
+                                log::debug!(
+                                    "Changing parser state to '{:?}' due to line {}",
+                                    ParserState::CollectingQuestion,
+                                    string
+                                );
+                                current_state = ParserState::CollectingQuestion;
+                                let min_index: usize =
+                                    ((buffer.len() as i32) - 5).try_into().unwrap_or(0_usize);
+                                for history in buffer.get(min_index..).unwrap_or_default() {
+                                    question.push(history.clone());
+                                }
                             }
                         }
                     }
-                },
+                }
                 Err(TryRecvError::Empty) => match current_state {
                     ParserState::CollectingQuestion if grace_ticks > 0 => {
                         log::debug!("Collecting question, with grace of {grace_ticks} remaining");

@@ -23,7 +23,12 @@ choice_phrase = [
     "do you want",
     "would you like",
     "answer [y]es or [n]o.",
-    "is this correct? [y]es or [n]o",
+    "is this correct?",
+    "[y]es or [n]o",
+    "please select",
+    "please enter",
+    "enter a new",
+    "leave blank",
 ]
 completed_with_warnings = [
     "installed with warnings",

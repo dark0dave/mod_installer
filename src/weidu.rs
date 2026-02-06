@@ -1,20 +1,20 @@
 use std::{
     error::Error,
-    io::{BufRead, BufReader, ErrorKind, Write},
+    io::Write,
     path::Path,
-    process::{Child, ChildStdout, Command, Stdio},
+    process::{Child, Command, Stdio},
     sync::{
         Arc, RwLock,
-        atomic::{AtomicUsize, Ordering},
+        atomic::AtomicUsize,
         mpsc::{self, Receiver, TryRecvError},
     },
-    thread,
 };
 
 use config::{args::Options, parser_config::ParserConfig, state::State};
 
 use crate::{
     component::Component,
+    raw_reciever::create_raw_reciever,
     utils::{get_user_input, sleep},
     weidu_parser::parse_raw_output,
 };
@@ -80,7 +80,7 @@ fn run(
                         log::info!("User Input required");
                         log::info!("Question is");
                         log::info!("{question}\n");
-                        let user_input = get_user_input();
+                        let user_input = get_user_input(tick)?;
                         log::debug!("Read user input {user_input}, sending it to process ");
                         weidu_stdin.write_all(user_input.as_bytes())?;
                         log::debug!("Input sent");
@@ -88,55 +88,13 @@ fn run(
                 }
             }
             Err(TryRecvError::Empty) => {
-                log::info!("{}", ".".repeat(wait_count.load(Ordering::Relaxed) % 10));
-                std::io::stdout().flush().expect("Failed to flush stdout");
-
                 wait_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 log::trace!("Receiver is sleeping");
                 sleep(tick);
-
-                std::io::stdout().flush().expect("Failed to flush stdout");
             }
             Err(TryRecvError::Disconnected) => return Ok(WeiduExitStatus::Success),
         }
     }
-}
-
-fn create_output_reader(out: ChildStdout, log: Arc<RwLock<String>>) -> Receiver<String> {
-    let (tx, rx) = mpsc::channel::<String>();
-    let mut buffered_reader = BufReader::new(out);
-    thread::spawn(move || {
-        loop {
-            let mut lines = String::new();
-            match buffered_reader.read_line(&mut lines) {
-                Ok(0) => {
-                    log::debug!("Process ended");
-                    break;
-                }
-                Ok(_) => {
-                    if let Ok(mut writer) = log.write() {
-                        writer.push_str(&lines);
-                    }
-                    lines
-                        .split(LINE_ENDING)
-                        .filter(|line| !line.trim().is_empty())
-                        .for_each(|line| {
-                            tx.send(line.to_string())
-                                .expect("Failed to sent process output line");
-                        });
-                }
-                Err(ref e) if e.kind() == ErrorKind::InvalidData => {
-                    // sometimes there is a non-unicode gibberish in process output, it
-                    // does not seem to be an indicator of error or break anything, ignore it
-                    log::warn!("Failed to read weidu output");
-                }
-                Err(details) => {
-                    panic!("Failed to read process output, error is '{details:?}'");
-                }
-            }
-        }
-    });
-    rx
 }
 
 pub(crate) fn handle_io(
@@ -153,12 +111,17 @@ pub(crate) fn handle_io(
         .stdout
         .take()
         .ok_or("Failed to get weidu standard out")?;
+    let weidu_stderr = child
+        .stderr
+        .take()
+        .ok_or("Failed to get weidu standard error")?;
     let log = Arc::new(RwLock::new(String::new()));
-    let raw_output_receiver = create_output_reader(weidu_stdout, log.clone());
+    let raw_output_receiver = create_raw_reciever(weidu_stdout, weidu_stderr, log.clone());
     let (sender, parsed_output_receiver) = mpsc::channel::<State>();
 
     let wait_count = Arc::new(AtomicUsize::new(0));
     parse_raw_output(
+        tick,
         sender,
         raw_output_receiver,
         parser_config,
@@ -177,7 +140,7 @@ pub(crate) fn handle_io(
     match child.try_wait() {
         Ok(Some(exit)) => {
             log::debug!("Weidu exit status: {exit}");
-            if !exit.success() {
+            if !exit.success() && exit.code() != Some(3) {
                 return InstallationResult::Err(
                     format!("Weidu command failed with exit status: {exit}").into(),
                 );

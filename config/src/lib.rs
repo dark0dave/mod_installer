@@ -6,6 +6,7 @@ use parser_config::ParserConfig;
 
 pub mod args;
 mod colors;
+pub mod log_options;
 mod meta;
 pub mod parser_config;
 pub mod state;

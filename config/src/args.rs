@@ -1,11 +1,12 @@
 use std::env::{split_paths, var_os};
-use std::error::Error;
 use std::fmt::Debug;
 use std::fs;
 use std::path::PathBuf;
 
 use clap::Subcommand;
 use clap::{Parser, builder::BoolishValueParser, builder::OsStr};
+
+use crate::log_options::LogOptions;
 
 use super::colors::styles;
 
@@ -17,14 +18,6 @@ pub const LONG: &str = r"
  /    \ / _ \ / _` | | | '_ \/ __| __/ _` | | |/ _ \ '__|
 / /\/\ \ (_) | (_| | | | | | \__ \ || (_| | | |  __/ |
 \/    \/\___/ \__,_| |_|_| |_|___/\__\__,_|_|_|\___|_|
-";
-
-pub const WEIDU_LOG_MODE_ERROR: &str = r"
-Please provide a valid weidu logging setting, options are:
---weidu-log-mode log X       log output and details to X
---weidu-log-mode autolog     log output and details to WSETUP.DEBUG
---weidu-log-mode logapp      append to log instead of overwriting
---weidu-log-mode log-extern  also log output from commands invoked by WeiDU
 ";
 
 #[cfg(not(target_os = "windows"))]
@@ -213,16 +206,18 @@ pub struct Options {
     #[clap(env, long, short, default_value = "3600")]
     pub timeout: usize,
 
-    /// Weidu log setting "--autolog" is default
+    /// Weidu log setting "autolog,logapp,log-extern" is default
     #[clap(
         env,
         long,
         short='u',
-        default_value = "autolog logapp log-extern",
-        value_parser = parse_weidu_log_mode,
+        use_value_delimiter = true,
+        value_delimiter = ',',
+        default_value = "autolog,logapp,log-extern",
+        value_parser = LogOptions::value_parser,
         required = false
     )]
-    pub weidu_log_mode: String,
+    pub weidu_log_mode: Vec<LogOptions>,
 
     /// Strict Version and Component/SubComponent matching
     #[clap(
@@ -276,41 +271,7 @@ pub struct Options {
     pub tick: u64,
 }
 
-fn parse_weidu_log_mode(arg: &str) -> Result<String, String> {
-    let mut args = arg.split(' ');
-    let mut output = vec![];
-    while let Some(arg) = args.next() {
-        match arg {
-            "log" => {
-                if let Ok(path) = path_must_exist_opt(args.next())
-                    && path.is_file()
-                {
-                    let log_path = path.as_os_str().to_str().unwrap();
-                    output.push(format!("--{arg} {log_path}"));
-                    continue;
-                }
-                return Err(format!(
-                    "Path provided {:?} is not a file, weidu requires a file",
-                    arg
-                ));
-            }
-            "autolog" => output.push(format!("--{arg}")),
-            "logapp" => output.push(format!("--{arg}")),
-            "log-extern" => output.push(format!("--{arg}")),
-            _ => return Err(format!("{WEIDU_LOG_MODE_ERROR}, Provided {arg}")),
-        };
-    }
-    Ok(output.join(" "))
-}
-
-fn path_must_exist_opt(arg: Option<&str>) -> Result<PathBuf, Box<dyn Error>> {
-    if let Some(arg) = arg {
-        return Ok(path_must_exist(arg)?);
-    }
-    Err("Empty arg aborting".into())
-}
-
-fn path_must_exist(arg: &str) -> Result<PathBuf, std::io::Error> {
+pub fn path_must_exist(arg: &str) -> Result<PathBuf, std::io::Error> {
     let path = PathBuf::from(arg);
     path.try_exists()?;
     Ok(path)
@@ -357,36 +318,6 @@ mod tests {
     use std::{error::Error, path::PathBuf};
 
     #[test]
-    fn test_parse_weidu_log_mode() -> Result<(), Box<dyn Error>> {
-        let tests = vec![
-            ("autolog", Ok("--autolog".to_string())),
-            (
-                "log log",
-                Err("Path provided \"log\" is not a file, weidu requires a file".into()),
-            ),
-            ("autolog logapp", Ok("--autolog --logapp".to_string())),
-            (
-                "autolog logapp log-extern",
-                Ok("--autolog --logapp --log-extern".to_string()),
-            ),
-            ("logapp log-extern", Ok("--logapp --log-extern".to_string())),
-            (
-                "fish",
-                Err(format!("{}, Provided {}", WEIDU_LOG_MODE_ERROR, "fish")),
-            ),
-        ];
-        for (test, expected) in tests {
-            println!("{test:#?}");
-            let result = parse_weidu_log_mode(test);
-            assert_eq!(
-                result, expected,
-                "Result {result:?} didn't match Expected {expected:?}",
-            );
-        }
-        Ok(())
-    }
-
-    #[test]
     fn test_bool_flags() -> Result<(), Box<dyn Error>> {
         let workspace_root: PathBuf = std::env::current_dir()?;
         let fake_game_dir: PathBuf = workspace_root
@@ -422,7 +353,11 @@ mod tests {
                         skip_installed: expected_flag_value,
                         abort_on_warnings: expected_flag_value,
                         timeout: 3600,
-                        weidu_log_mode: "--autolog --logapp --log-extern".to_string(),
+                        weidu_log_mode: vec![
+                            LogOptions::AutoLog,
+                            LogOptions::LogAppend,
+                            LogOptions::LogExternal,
+                        ],
                         strict_matching: true,
                         download: true,
                         overwrite: false,
@@ -475,7 +410,11 @@ mod tests {
                     skip_installed: expected_flag_value,
                     abort_on_warnings: !expected_flag_value,
                     timeout: 3600,
-                    weidu_log_mode: "--autolog --logapp --log-extern".to_string(),
+                    weidu_log_mode: vec![
+                        LogOptions::AutoLog,
+                        LogOptions::LogAppend,
+                        LogOptions::LogExternal,
+                    ],
                     strict_matching: !expected_flag_value,
                     download: expected_flag_value,
                     overwrite: !expected_flag_value,

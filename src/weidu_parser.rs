@@ -49,6 +49,7 @@ pub(crate) fn parse_raw_output(
                         }
                     }
                     ParserState::LookingForInterestingOutput => {
+                        log::info!("{string}");
                         let installer_state = parser_config.detect_weidu_finished_state(&string);
                         if installer_state != State::InProgress {
                             sender
@@ -63,11 +64,10 @@ pub(crate) fn parse_raw_output(
                                 string
                             );
                             current_state = ParserState::CollectingQuestion;
-                            question.push(string.clone());
-                        }
-                        if !string.trim().is_empty() {
-                            log::info!("{string}");
                             buffer.push(string);
+                            for history in buffer.get(max(0, buffer.len()-5)..).unwrap_or_default() {
+                                question.push(history.clone());
+                            }
                         }
                     }
                 },
@@ -81,17 +81,8 @@ pub(crate) fn parse_raw_output(
                     }
                     ParserState::WaitingForMoreQuestionContent => {
                         log::debug!("No new weidu output, sending question to user");
-                        let question_start = buffer
-                            .iter()
-                            .position(|n| n == question.first().unwrap_or(&"".to_string()))
-                            .unwrap_or(0);
-                        let out = buffer
-                            .get(max(question_start - 5, 0_usize)..)
-                            .unwrap_or(&question)
-                            .iter()
-                            .fold("".to_string(), |a, b| format!("{}\n{}", a, b));
                         sender
-                            .send(State::RequiresInput { question: out })
+                            .send(State::RequiresInput { question: question.join("") })
                             .expect("Failed to send question");
                         current_state = ParserState::LookingForInterestingOutput;
                         question.clear();

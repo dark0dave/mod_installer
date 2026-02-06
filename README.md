@@ -455,9 +455,17 @@ These flags work for either of the above commands
 
   > How to use it: Replace <WEIDU_LOG_MODE> with a WeiDU log mode.
 
-  > Default: --autolog
+  > Default: "autolog,logapp,log-extern"
 
-  > Example: --weidu-log-mode --log
+  > Example: --weidu-log-mode "log <PATH TO FILE>,logapp"
+
+  > *ALPHA FEATURE*
+
+  > If a directory is passed with `log`, the mod_installer will log out per component.
+
+  > Example: --weidu-log-mode "log <PATH TO DIR>,logapp"
+
+  > Result: Path passed will contain a number of log files per installed component
 
 * -o, --overwrite
 

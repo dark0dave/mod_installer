@@ -10,7 +10,7 @@ use std::{
     },
 };
 
-use config::{args::Options, parser_config::ParserConfig, state::State};
+use config::{args::Options, log_options::LogOptions, parser_config::ParserConfig, state::State};
 
 use crate::{
     component::Component,
@@ -158,11 +158,17 @@ pub(crate) fn handle_io(
     }
 }
 
-fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) -> Vec<String> {
+fn generate_args(
+    weidu_mod: &Component,
+    weidu_log_mode: Vec<LogOptions>,
+    language: &str,
+) -> Vec<String> {
     let mod_name = &weidu_mod.name;
     let mod_tp_file = &weidu_mod.tp_file;
+    let component_name =
+        format!("{mod_name}{}{mod_tp_file}", std::path::MAIN_SEPARATOR).to_lowercase();
     let mut args = vec![
-        format!("{mod_name}/{mod_tp_file}").to_lowercase(),
+        component_name.clone(),
         "--force-install".to_string(),
         weidu_mod.component.to_string(),
         "--use-lang".to_string(),
@@ -171,9 +177,14 @@ fn generate_args(weidu_mod: &Component, weidu_log_mode: &str, language: &str) ->
         weidu_mod.lang.to_string(),
         "--no-exit-pause".to_string(),
     ];
-    weidu_log_mode
-        .split_ascii_whitespace()
-        .for_each(|log_option| args.push(log_option.to_string()));
+    let component_log = format!("{}-{}.log", mod_name, weidu_mod.component).to_lowercase();
+    println!("{}", component_log);
+    weidu_log_mode.into_iter().for_each(|log_option| {
+        log_option
+            .to_string(&component_log)
+            .split(' ')
+            .for_each(|option| args.push(option.to_string()))
+    });
     args
 }
 
@@ -183,7 +194,7 @@ pub(crate) fn install(
     weidu_mod: &Component,
     options: &Options,
 ) -> InstallationResult {
-    let weidu_args = generate_args(weidu_mod, &options.weidu_log_mode, &options.language);
+    let weidu_args = generate_args(weidu_mod, options.weidu_log_mode.clone(), &options.language);
     let mut command = Command::new(options.weidu_binary.clone());
     let weidu_process = command.current_dir(game_directory).args(weidu_args);
     log::debug!(

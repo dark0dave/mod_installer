@@ -159,6 +159,8 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806",
             "[N]o, [Q]uit or choose one:",
             "Please enter the chance for items to randomly not be randomised as a integet number (e.g. 10 for 10%)",
             "Is this correct? [Y]es or [N]o",
+            "Please enter number of the kit to select (leave blank to proceed with the installation):",
+            "Please enter a new title for the selected kit (leave blank to keep current):",
         ];
         for test in tests {
             assert_eq!(

@@ -1,5 +1,4 @@
 use std::{
-    cmp::max,
     sync::{
         Arc,
         atomic::{AtomicUsize, Ordering},
@@ -10,6 +9,8 @@ use std::{
 
 use config::{parser_config::ParserConfig, state::State};
 
+use crate::utils::sleep;
+
 #[derive(Debug)]
 enum ParserState {
     CollectingQuestion,
@@ -18,6 +19,7 @@ enum ParserState {
 }
 
 pub(crate) fn parse_raw_output(
+    tick: u64,
     sender: Sender<State>,
     receiver: Receiver<String>,
     parser_config: Arc<ParserConfig>,
@@ -27,6 +29,7 @@ pub(crate) fn parse_raw_output(
     let mut current_state = ParserState::LookingForInterestingOutput;
     let mut buffer = vec![];
     let mut question = vec![];
+    let mut grace_ticks: usize = 3;
     sender
         .send(State::InProgress)
         .expect("Failed to send process start event");
@@ -65,24 +68,34 @@ pub(crate) fn parse_raw_output(
                             );
                             current_state = ParserState::CollectingQuestion;
                             buffer.push(string);
-                            for history in buffer.get(max(0, buffer.len()-5)..).unwrap_or_default() {
+                            let min_index: usize =
+                                ((buffer.len() as i32) - 5).try_into().unwrap_or(0_usize);
+                            for history in buffer.get(min_index..).unwrap_or_default() {
                                 question.push(history.clone());
                             }
                         }
                     }
                 },
                 Err(TryRecvError::Empty) => match current_state {
+                    ParserState::CollectingQuestion if grace_ticks > 0 => {
+                        log::debug!("Collecting question, with grace of {grace_ticks} remaining");
+                        sleep(tick);
+                        grace_ticks -= 1;
+                    }
                     ParserState::CollectingQuestion => {
                         log::debug!(
                             "Changing parser state to '{:?}'",
                             ParserState::WaitingForMoreQuestionContent
                         );
                         current_state = ParserState::WaitingForMoreQuestionContent;
+                        grace_ticks = 3;
                     }
                     ParserState::WaitingForMoreQuestionContent => {
                         log::debug!("No new weidu output, sending question to user");
                         sender
-                            .send(State::RequiresInput { question: question.join("") })
+                            .send(State::RequiresInput {
+                                question: question.join(""),
+                            })
                             .expect("Failed to send question");
                         current_state = ParserState::LookingForInterestingOutput;
                         question.clear();

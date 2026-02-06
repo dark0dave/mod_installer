@@ -126,6 +126,7 @@ pub(crate) fn handle_io(
 
     let wait_count = Arc::new(AtomicUsize::new(0));
     parse_raw_output(
+        tick,
         sender,
         raw_output_receiver,
         parser_config,

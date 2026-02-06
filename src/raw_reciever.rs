@@ -2,7 +2,8 @@ use std::{
     io::{BufRead, BufReader, ErrorKind},
     process::{ChildStderr, ChildStdout},
     sync::{
-        mpsc::{self, Receiver, Sender}, Arc, RwLock
+        Arc, RwLock,
+        mpsc::{self, Receiver, Sender},
     },
     thread,
 };

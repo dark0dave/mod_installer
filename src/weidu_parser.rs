@@ -45,6 +45,21 @@ pub(crate) fn parse_raw_output(
                             .expect("Failed to send process error event");
                         break;
                     }
+                    let lower = string.to_ascii_lowercase();
+                    if lower.contains("[a]ccept")
+                        || lower.contains("[r]etry")
+                        || lower.contains("[c]ancel")
+                    {
+                        question.push(string.clone());
+                        sender
+                            .send(State::RequiresInput {
+                                question: question.join(""),
+                            })
+                            .expect("Failed to send question");
+                        current_state = ParserState::LookingForInterestingOutput;
+                        question.clear();
+                        continue;
+                    }
                     buffer.push(string.clone());
                     match current_state {
                         ParserState::CollectingQuestion
@@ -63,21 +78,6 @@ pub(crate) fn parse_raw_output(
                         }
                         ParserState::LookingForInterestingOutput => {
                             if parser_config.string_looks_like_question(&string) {
-                                let lower = string.to_ascii_lowercase();
-                                if lower.contains("[a]ccept")
-                                    || lower.contains("[r]etry")
-                                    || lower.contains("[c]ancel")
-                                {
-                                    question.push(string.clone());
-                                    sender
-                                        .send(State::RequiresInput {
-                                            question: question.join(""),
-                                        })
-                                        .expect("Failed to send question");
-                                    current_state = ParserState::LookingForInterestingOutput;
-                                    question.clear();
-                                    continue;
-                                }
                                 log::debug!(
                                     "Changing parser state to '{:?}' due to line {}",
                                     ParserState::CollectingQuestion,

@@ -63,15 +63,30 @@ pub(crate) fn parse_raw_output(
                         }
                         ParserState::LookingForInterestingOutput => {
                             if parser_config.string_looks_like_question(&string) {
+                                let lower = string.to_ascii_lowercase();
+                                if lower.contains("[a]ccept")
+                                    || lower.contains("[r]etry")
+                                    || lower.contains("[c]ancel")
+                                {
+                                    question.push(string.clone());
+                                    sender
+                                        .send(State::RequiresInput {
+                                            question: question.join(""),
+                                        })
+                                        .expect("Failed to send question");
+                                    current_state = ParserState::LookingForInterestingOutput;
+                                    question.clear();
+                                    continue;
+                                }
                                 log::debug!(
                                     "Changing parser state to '{:?}' due to line {}",
                                     ParserState::CollectingQuestion,
                                     string
                                 );
                                 current_state = ParserState::CollectingQuestion;
-                                let min_index: usize =
-                                    ((buffer.len() as i32) - 5).try_into().unwrap_or(0_usize);
-                                for history in buffer.get(min_index..).unwrap_or_default() {
+                                let keep = 2000usize;
+                                let start = buffer.len().saturating_sub(keep);
+                                for history in buffer.iter().skip(start) {
                                     question.push(history.clone());
                                 }
                             }

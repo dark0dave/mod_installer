@@ -29,6 +29,7 @@ choice_phrase = [
     "please enter",
     "enter a new",
     "leave blank",
+    "([a]ccept, [r]etry, [c]ancel)",
 ]
 completed_with_warnings = [
     "installed with warnings",

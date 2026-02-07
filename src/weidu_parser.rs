@@ -45,6 +45,21 @@ pub(crate) fn parse_raw_output(
                             .expect("Failed to send process error event");
                         break;
                     }
+                    let lower = string.to_ascii_lowercase();
+                    if lower.contains("[a]ccept")
+                        || lower.contains("[r]etry")
+                        || lower.contains("[c]ancel")
+                    {
+                        question.push(string.clone());
+                        sender
+                            .send(State::RequiresInput {
+                                question: question.join(""),
+                            })
+                            .expect("Failed to send question");
+                        current_state = ParserState::LookingForInterestingOutput;
+                        question.clear();
+                        continue;
+                    }
                     buffer.push(string.clone());
                     match current_state {
                         ParserState::CollectingQuestion
@@ -69,9 +84,9 @@ pub(crate) fn parse_raw_output(
                                     string
                                 );
                                 current_state = ParserState::CollectingQuestion;
-                                let min_index: usize =
-                                    ((buffer.len() as i32) - 5).try_into().unwrap_or(0_usize);
-                                for history in buffer.get(min_index..).unwrap_or_default() {
+                                let keep = 2000usize;
+                                let start = buffer.len().saturating_sub(keep);
+                                for history in buffer.iter().skip(start) {
                                     question.push(history.clone());
                                 }
                             }

@@ -45,6 +45,7 @@ impl Default for ParserConfig {
                 "please enter".to_string(),
                 "enter a new".to_string(),
                 "leave blank".to_string(),
+                "([a]ccept, [r]etry, [c]ancel)".to_string(),
             ],
             completed_with_warnings: vec!["installed with warnings".to_string()],
             failed_with_error: vec![

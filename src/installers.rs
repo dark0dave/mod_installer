@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::{collections::HashMap, error::Error, path::Path, sync::Arc};
 
 use config::args::{Eet, Normal, Options};
@@ -24,6 +25,7 @@ pub(crate) fn normal_install(
         &game_directory,
         &command.options,
         parser_config.clone(),
+        None,
     )
 }
 
@@ -32,7 +34,7 @@ pub(crate) fn eet_install(
     parser_config: Arc<ParserConfig>,
 ) -> Result<(), Box<dyn Error>> {
     log::info!("Beginning pre eet install process");
-    let game_directory = if let Some(new_directory) = &command.new_pre_eet_dir {
+    let pre_eet_game_directory = if let Some(new_directory) = &command.new_pre_eet_dir {
         copy_folder(&command.bg1_game_directory, new_directory)?;
         new_directory.clone()
     } else {
@@ -41,9 +43,10 @@ pub(crate) fn eet_install(
 
     install(
         &command.bg1_log_file,
-        &game_directory,
+        &pre_eet_game_directory,
         &command.options,
         parser_config.clone(),
+        None,
     )?;
 
     log::info!("Beginning eet install process");
@@ -58,6 +61,7 @@ pub(crate) fn eet_install(
         &game_directory,
         &command.options,
         parser_config.clone(),
+        Some(&pre_eet_game_directory),
     )
 }
 
@@ -66,6 +70,7 @@ fn install(
     game_directory: &Path,
     options: &Options,
     parser_config: Arc<ParserConfig>,
+    pre_eet_game_directory: Option<&PathBuf>,
 ) -> Result<(), Box<dyn Error>> {
     let mods_to_be_installed = match find_mods(
         log_file,
@@ -102,7 +107,22 @@ fn install(
             copy_folder(mod_folder, game_directory.join(&weidu_mod.name))?;
         }
         log::info!("Installing mod {:?}", &weidu_mod);
-        match weidu::install(game_directory, parser_config.clone(), weidu_mod, options)? {
+        let bg1_game_direcotry = if weidu_mod
+            .component_name
+            .to_lowercase()
+            .eq("eet core (resource importation)")
+        {
+            pre_eet_game_directory
+        } else {
+            None
+        };
+        match weidu::install(
+            game_directory,
+            parser_config.clone(),
+            weidu_mod,
+            options,
+            bg1_game_direcotry,
+        )? {
             WeiduExitStatus::Success => {
                 let last_installed = get_last_installed(game_directory)?;
                 if options.check_last_installed && last_installed.ne(weidu_mod) {

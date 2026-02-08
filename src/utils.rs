@@ -6,6 +6,7 @@ use std::{
     fs::{self, File},
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
+    process::Command,
     thread,
 };
 use tempfile::tempfile;
@@ -22,19 +23,31 @@ pub fn delete_folder(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn copy_folder(
+pub fn copy_folder(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
+    copy_folder_at_depth(src, dst, 0)
+}
+
+fn copy_folder_at_depth(
     src: impl AsRef<Path>,
-    dst: impl AsRef<Path> + std::fmt::Debug,
+    dst: impl AsRef<Path>,
+    depth: u64,
 ) -> Result<(), Box<dyn Error>> {
     let destination = dst.as_ref();
     if !destination.exists() {
         fs::create_dir(destination)?;
+        #[cfg(target_os = "linux")]
+        if depth == 0 {
+            Command::new("chattr")
+                .arg("+F")
+                .arg(destination.to_str().unwrap_or_default())
+                .output()?;
+        }
     }
     for entry in fs::read_dir(src.as_ref().canonicalize()?)? {
         let entry = entry?;
         let full_path = entry.path().canonicalize()?;
         if entry.file_type()?.is_dir() {
-            copy_folder(full_path, destination.join(entry.file_name()))?;
+            copy_folder_at_depth(full_path, destination.join(entry.file_name()), depth + 1)?;
         } else {
             fs::copy(full_path, destination.join(entry.file_name()))?;
         }

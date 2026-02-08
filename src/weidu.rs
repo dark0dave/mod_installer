@@ -102,6 +102,7 @@ pub(crate) fn handle_io(
     parser_config: Arc<ParserConfig>,
     timeout: usize,
     tick: u64,
+    lookback: usize,
 ) -> InstallationResult {
     let weidu_stdin = child
         .stdin
@@ -127,6 +128,7 @@ pub(crate) fn handle_io(
         parser_config,
         wait_count.clone(),
         timeout,
+        lookback,
     );
 
     let result = run(
@@ -178,7 +180,6 @@ fn generate_args(
         "--no-exit-pause".to_string(),
     ];
     let component_log = format!("{}-{}.log", mod_name, weidu_mod.component).to_lowercase();
-    println!("{}", component_log);
     weidu_log_mode.into_iter().for_each(|log_option| {
         log_option
             .to_string(&component_log)
@@ -216,5 +217,11 @@ pub(crate) fn install(
         .spawn()
         .expect("Failed to spawn weidu process");
 
-    handle_io(child, parser_config, options.timeout, options.tick)
+    handle_io(
+        child,
+        parser_config,
+        options.timeout,
+        options.tick,
+        options.lookback,
+    )
 }

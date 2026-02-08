@@ -45,7 +45,7 @@ impl Default for ParserConfig {
                 "please enter".to_string(),
                 "enter a new".to_string(),
                 "leave blank".to_string(),
-                "([a]ccept, [r]etry, [c]ancel)".to_string(),
+                "[a]ccept, [r]etry, [c]ancel".to_string(),
             ],
             completed_with_warnings: vec!["installed with warnings".to_string()],
             failed_with_error: vec![
@@ -70,7 +70,6 @@ impl ParserConfig {
                 return false;
             }
         }
-
         for question in self.choice_phrase.iter() {
             if comparable_output.contains(question) {
                 return true;
@@ -83,7 +82,7 @@ impl ParserConfig {
                     .chars()
                     .filter(|c| c.is_alphabetic())
                     .collect::<String>()
-                    == *question
+                    .eq(question)
                 {
                     return true;
                 }
@@ -162,6 +161,7 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806",
             "Is this correct? [Y]es or [N]o",
             "Please enter number of the kit to select (leave blank to proceed with the installation):",
             "Please enter a new title for the selected kit (leave blank to keep current):",
+            r#"accept kit title "354" ([a]ccept, [r]etry, [c]ancel)?"#,
         ];
         for test in tests {
             assert_eq!(

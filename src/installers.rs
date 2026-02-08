@@ -14,7 +14,11 @@ pub(crate) fn normal_install(
 ) -> Result<(), Box<dyn Error>> {
     log::info!("Beginning normal install process");
     let game_directory = if let Some(new_directory) = &command.generate_directory {
-        copy_folder(&command.game_directory, new_directory)?;
+        copy_folder(
+            &command.game_directory,
+            new_directory,
+            command.options.casefold,
+        )?;
         new_directory.clone()
     } else {
         command.game_directory.clone()
@@ -35,7 +39,11 @@ pub(crate) fn eet_install(
 ) -> Result<(), Box<dyn Error>> {
     log::info!("Beginning pre eet install process");
     let pre_eet_game_directory = if let Some(new_directory) = &command.new_pre_eet_dir {
-        copy_folder(&command.bg1_game_directory, new_directory)?;
+        copy_folder(
+            &command.bg1_game_directory,
+            new_directory,
+            command.options.casefold,
+        )?;
         new_directory.clone()
     } else {
         command.bg1_game_directory.clone()
@@ -51,7 +59,11 @@ pub(crate) fn eet_install(
 
     log::info!("Beginning eet install process");
     let game_directory = if let Some(new_directory) = &command.new_eet_dir {
-        copy_folder(&command.bg2_game_directory, new_directory)?;
+        copy_folder(
+            &command.bg2_game_directory,
+            new_directory,
+            command.options.casefold,
+        )?;
         new_directory.clone()
     } else {
         command.bg2_game_directory.clone()
@@ -104,7 +116,7 @@ fn install(
                 mod_folder,
                 game_directory.join(&weidu_mod.name)
             );
-            copy_folder(mod_folder, game_directory.join(&weidu_mod.name))?;
+            copy_folder(mod_folder, game_directory.join(&weidu_mod.name), false)?;
         }
         log::info!("Installing mod {:?}", &weidu_mod);
         let bg1_game_direcotry = if weidu_mod

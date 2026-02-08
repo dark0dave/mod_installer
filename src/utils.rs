@@ -23,20 +23,25 @@ pub fn delete_folder(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn copy_folder(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
-    copy_folder_at_depth(src, dst, 0)
+pub fn copy_folder(
+    src: impl AsRef<Path>,
+    dst: impl AsRef<Path>,
+    casefold: bool,
+) -> Result<(), Box<dyn Error>> {
+    copy_folder_at_depth(src, dst, 0, casefold)
 }
 
 fn copy_folder_at_depth(
     src: impl AsRef<Path>,
     dst: impl AsRef<Path>,
     depth: u64,
+    casefold: bool,
 ) -> Result<(), Box<dyn Error>> {
     let destination = dst.as_ref();
     if !destination.exists() {
         fs::create_dir(destination)?;
         #[cfg(target_os = "linux")]
-        if depth == 0 {
+        if depth == 0 && casefold {
             Command::new("chattr")
                 .arg("+F")
                 .arg(destination.to_str().unwrap_or_default())
@@ -47,7 +52,12 @@ fn copy_folder_at_depth(
         let entry = entry?;
         let full_path = entry.path().canonicalize()?;
         if entry.file_type()?.is_dir() {
-            copy_folder_at_depth(full_path, destination.join(entry.file_name()), depth + 1)?;
+            copy_folder_at_depth(
+                full_path,
+                destination.join(entry.file_name()),
+                depth + 1,
+                false,
+            )?;
         } else {
             fs::copy(full_path, destination.join(entry.file_name()))?;
         }

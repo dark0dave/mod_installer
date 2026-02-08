@@ -10,7 +10,7 @@ use crate::log_options::LogOptions;
 
 use super::colors::styles;
 
-pub const CARGO_PKG_NAME: &str = env!("CARGO_PKG_NAME");
+pub const CARGO_PKG_NAME: &str = "mod_installer";
 
 pub const LONG: &str = r"
 
@@ -269,6 +269,10 @@ pub struct Options {
     /// Tick
     #[clap(env, short = 'i', long, default_value_t = 500)]
     pub tick: u64,
+
+    /// Lookback
+    #[clap(env, short = '0', long, default_value_t = 10)]
+    pub lookback: usize,
 }
 
 pub fn path_must_exist(arg: &str) -> Result<PathBuf, std::io::Error> {
@@ -363,6 +367,7 @@ mod tests {
                         overwrite: false,
                         check_last_installed: true,
                         tick: 500,
+                        lookback: 10,
                     },
                 }),
             };
@@ -420,6 +425,7 @@ mod tests {
                     overwrite: !expected_flag_value,
                     check_last_installed: expected_flag_value,
                     tick: 500,
+                    lookback: 10,
                 },
                 new_pre_eet_dir: None,
                 new_eet_dir: Some("test".into()),

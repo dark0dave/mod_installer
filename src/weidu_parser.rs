@@ -25,6 +25,7 @@ pub(crate) fn parse_raw_output(
     parser_config: Arc<ParserConfig>,
     wait_count: Arc<AtomicUsize>,
     timeout: usize,
+    lookback: usize,
 ) {
     let mut current_state = ParserState::LookingForInterestingOutput;
     let mut buffer = vec![];
@@ -69,8 +70,7 @@ pub(crate) fn parse_raw_output(
                                     string
                                 );
                                 current_state = ParserState::CollectingQuestion;
-                                let min_index: usize =
-                                    ((buffer.len() as i32) - 5).try_into().unwrap_or(0_usize);
+                                let min_index = buffer.len().saturating_sub(lookback);
                                 for history in buffer.get(min_index..).unwrap_or_default() {
                                     question.push(history.clone());
                                 }
@@ -101,6 +101,7 @@ pub(crate) fn parse_raw_output(
                             .expect("Failed to send question");
                         current_state = ParserState::LookingForInterestingOutput;
                         question.clear();
+                        continue;
                     }
                     _ if wait_count.load(Ordering::Relaxed) >= timeout => {
                         sender

@@ -273,6 +273,17 @@ pub struct Options {
     /// Lookback
     #[clap(env, short = '0', long, default_value_t = 10)]
     pub lookback: usize,
+
+    /// Casefold only available for linux ext4
+    #[clap(
+        env,
+        long,
+        num_args=0..=1,
+        action = clap::ArgAction::SetTrue,
+        default_value_t = false,
+        value_parser = BoolishValueParser::new(),
+    )]
+    pub casefold: bool,
 }
 
 pub fn path_must_exist(arg: &str) -> Result<PathBuf, std::io::Error> {
@@ -368,6 +379,7 @@ mod tests {
                         check_last_installed: true,
                         tick: 500,
                         lookback: 10,
+                        casefold: false,
                     },
                 }),
             };
@@ -426,6 +438,7 @@ mod tests {
                     check_last_installed: expected_flag_value,
                     tick: 500,
                     lookback: 10,
+                    casefold: false,
                 },
                 new_pre_eet_dir: None,
                 new_eet_dir: Some("test".into()),

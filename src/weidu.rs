@@ -1,7 +1,7 @@
 use std::{
     error::Error,
     io::Write,
-    path::Path,
+    path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::{
         Arc, RwLock,
@@ -18,6 +18,8 @@ use crate::{
     utils::{get_user_input, sleep},
     weidu_parser::parse_raw_output,
 };
+
+const EET_CHECK: &str = "Enter the full path to your BG:EE+SoD installation then press Enter.";
 
 #[cfg(windows)]
 pub(crate) const LINE_ENDING: &str = "\r\n";
@@ -38,7 +40,9 @@ fn run(
     log: Arc<RwLock<String>>,
     parsed_output_receiver: Receiver<State>,
     wait_count: Arc<AtomicUsize>,
+    bg1_game_directory: Option<&PathBuf>,
 ) -> Result<WeiduExitStatus, Box<dyn Error + 'static>> {
+    let mut eet_check_completed = false;
     loop {
         match parsed_output_receiver.try_recv() {
             Ok(state) => {
@@ -76,6 +80,21 @@ fn run(
                     State::InProgress => {
                         log::debug!("In progress...");
                     }
+                    State::RequiresInput { question }
+                        if bg1_game_directory.is_some()
+                            && !eet_check_completed
+                            && question.contains(EET_CHECK) =>
+                    {
+                        log::info!("🚨🚨🚨DECTECTED EET INSTALL, AUTO FILL ENABLED🚨🚨🚨");
+                        let pre_eet_directory = &format!(
+                            "{}\n",
+                            bg1_game_directory.as_ref().unwrap().to_string_lossy()
+                        );
+                        log::info!("Sending {}", pre_eet_directory);
+                        weidu_stdin.write_all(pre_eet_directory.as_bytes())?;
+                        eet_check_completed = true;
+                        log::debug!("Input sent");
+                    }
                     State::RequiresInput { question } => {
                         log::info!("User Input required");
                         log::info!("Question is");
@@ -103,6 +122,7 @@ pub(crate) fn handle_io(
     timeout: usize,
     tick: u64,
     lookback: usize,
+    bg1_game_directory: Option<&PathBuf>,
 ) -> InstallationResult {
     let weidu_stdin = child
         .stdin
@@ -138,6 +158,7 @@ pub(crate) fn handle_io(
         log,
         parsed_output_receiver,
         wait_count,
+        bg1_game_directory,
     );
     match child.try_wait() {
         Ok(Some(exit)) => {
@@ -194,6 +215,7 @@ pub(crate) fn install(
     parser_config: Arc<ParserConfig>,
     weidu_mod: &Component,
     options: &Options,
+    bg1_game_directory: Option<&PathBuf>,
 ) -> InstallationResult {
     let weidu_args = generate_args(weidu_mod, options.weidu_log_mode.clone(), &options.language);
     let mut command = Command::new(options.weidu_binary.clone());
@@ -223,5 +245,6 @@ pub(crate) fn install(
         options.timeout,
         options.tick,
         options.lookback,
+        bg1_game_directory,
     )
 }

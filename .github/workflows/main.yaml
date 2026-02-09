@@ -21,23 +21,33 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: true
       matrix:
         include:
           - os: macos-15-intel
             target: x86_64-apple-darwin
             suffix: ''
+            build: ''
           - os: macos-latest
             target: aarch64-apple-darwin
             suffix: ''
+            build: ''
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             suffix: ''
+            build: 'sudo apt-get install -yqqq musl-tools'
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            suffix: ''
+            build: ''
           - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             suffix: ''
+            build: ''
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             suffix: .exe
+            build: ''
     steps:
       - uses: actions/checkout@main
       - name: Cache
@@ -47,21 +57,23 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ matrix.os }}-${{ matrix.target }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: build
         run: |
-          cargo build --workspace --release
+          ${{ matrix.build }}
+          rustup target add ${{ matrix.target }}
+          cargo build --target ${{ matrix.target }} --release --workspace
       - name: Archive release artifacts bin
         uses: actions/upload-artifact@main
         with:
           name: mod_installer-${{ matrix.target }}${{ matrix.suffix }}
-          path: ./target/release/mod_installer${{ matrix.suffix }}
+          path: ./target/${{ matrix.target }}/release/mod_installer${{ matrix.suffix }}
           if-no-files-found: error
       - name: Archive release artifacts gui
         uses: actions/upload-artifact@main
         with:
           name: mod_installer_gui-${{ matrix.target }}${{ matrix.suffix }}
-          path: ./target/release/mod_installer_gui${{ matrix.suffix }}
+          path: ./target/${{ matrix.target }}/release/mod_installer_gui${{ matrix.suffix }}
           if-no-files-found: error
   build-nix:
    runs-on: ubuntu-latest
@@ -71,6 +83,12 @@ jobs:
       with:
         nix_path: nixpkgs=channel:nixos-25.05
     - run: nix build
+    - name: Archive release artifacts
+      uses: actions/upload-artifact@main
+      with:
+          name: mod_installer-nix
+          path: ./result/bin/mod_installer
+          if-no-files-found: error
   release:
     needs: [build, build-nix, pre-commit]
     runs-on: ubuntu-latest
@@ -96,6 +114,7 @@ jobs:
     needs: [release]
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: true
       matrix:
         include:
           - os: macos-15-intel
@@ -107,8 +126,14 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             suffix: ''
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            suffix: ''
           - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
+            suffix: ''
+          - os: ''
+            target: nix
             suffix: ''
           - os: windows-latest
             target: x86_64-pc-windows-msvc

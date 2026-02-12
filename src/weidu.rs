@@ -2,7 +2,7 @@ use std::{
     error::Error,
     io::Write,
     path::{Path, PathBuf},
-    process::{Child, Command, Stdio},
+    process::{Child, ChildStdin, Command, Stdio},
     sync::{
         Arc, RwLock,
         atomic::AtomicUsize,
@@ -19,8 +19,6 @@ use crate::{
     weidu_parser::parse_raw_output,
 };
 
-const EET_CHECK: &str = "Enter the full path to your BG:EE+SoD installation then press Enter.";
-
 #[cfg(windows)]
 pub(crate) const LINE_ENDING: &str = "\r\n";
 #[cfg(not(windows))]
@@ -34,10 +32,10 @@ pub(crate) enum WeiduExitStatus {
 pub(crate) type InstallationResult = Result<WeiduExitStatus, Box<dyn Error>>;
 
 fn run(
-    timeout: usize,
-    tick: u64,
-    mut weidu_stdin: std::process::ChildStdin,
+    options: &Options,
+    mut weidu_stdin: ChildStdin,
     log: Arc<RwLock<String>>,
+    eet_auto_fill: &str,
     parsed_output_receiver: Receiver<State>,
     wait_count: Arc<AtomicUsize>,
     bg1_game_directory: Option<&PathBuf>,
@@ -69,8 +67,9 @@ fn run(
                         return Err(error_details.into());
                     }
                     State::TimedOut => {
+                        let max_time = options.timeout;
                         log::error!(
-                            "Weidu process seem to have been running for {timeout} seconds, exiting"
+                            "Weidu process seem to have been running for {max_time} seconds, exiting"
                         );
                         if let Ok(weidu_log) = log.read() {
                             log::error!("Dumping log: {weidu_log}");
@@ -80,10 +79,11 @@ fn run(
                     State::InProgress => {
                         log::debug!("In progress...");
                     }
+                    #[cfg(target_os = "linux")]
                     State::RequiresInput { question }
                         if bg1_game_directory.is_some()
                             && !eet_check_completed
-                            && question.contains(EET_CHECK) =>
+                            && question.contains(eet_auto_fill) =>
                     {
                         log::info!("🚨🚨🚨DECTECTED EET INSTALL, AUTO FILL ENABLED🚨🚨🚨");
                         let pre_eet_directory = &format!(
@@ -99,7 +99,7 @@ fn run(
                         log::info!("User Input required");
                         log::info!("Question is");
                         log::info!("{question}\n");
-                        let user_input = get_user_input(tick)?;
+                        let user_input = get_user_input(options.tick)?;
                         log::debug!("Read user input {user_input}, sending it to process ");
                         weidu_stdin.write_all(user_input.as_bytes())?;
                         log::debug!("Input sent");
@@ -109,7 +109,7 @@ fn run(
             Err(TryRecvError::Empty) => {
                 wait_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                 log::trace!("Receiver is sleeping");
-                sleep(tick);
+                sleep(options.tick);
             }
             Err(TryRecvError::Disconnected) => return Ok(WeiduExitStatus::Success),
         }
@@ -119,9 +119,7 @@ fn run(
 pub(crate) fn handle_io(
     mut child: Child,
     parser_config: Arc<ParserConfig>,
-    timeout: usize,
-    tick: u64,
-    lookback: usize,
+    options: &Options,
     bg1_game_directory: Option<&PathBuf>,
 ) -> InstallationResult {
     let weidu_stdin = child
@@ -142,20 +140,18 @@ pub(crate) fn handle_io(
 
     let wait_count = Arc::new(AtomicUsize::new(0));
     parse_raw_output(
-        tick,
+        options,
         sender,
         raw_output_receiver,
-        parser_config,
+        parser_config.clone(),
         wait_count.clone(),
-        timeout,
-        lookback,
     );
 
     let result = run(
-        timeout,
-        tick,
+        options,
         weidu_stdin,
         log,
+        &parser_config.eet_auto_fill,
         parsed_output_receiver,
         wait_count,
         bg1_game_directory,
@@ -239,12 +235,5 @@ pub(crate) fn install(
         .spawn()
         .expect("Failed to spawn weidu process");
 
-    handle_io(
-        child,
-        parser_config,
-        options.timeout,
-        options.tick,
-        options.lookback,
-        bg1_game_directory,
-    )
+    handle_io(child, parser_config, options, bg1_game_directory)
 }

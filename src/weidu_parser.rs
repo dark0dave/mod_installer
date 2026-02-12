@@ -7,7 +7,7 @@ use std::{
     thread,
 };
 
-use config::{parser_config::ParserConfig, state::State};
+use config::{args::Options, parser_config::ParserConfig, state::State};
 
 use crate::utils::sleep;
 
@@ -19,13 +19,11 @@ enum ParserState {
 }
 
 pub(crate) fn parse_raw_output(
-    tick: u64,
+    options: &Options,
     sender: Sender<State>,
     receiver: Receiver<String>,
     parser_config: Arc<ParserConfig>,
     wait_count: Arc<AtomicUsize>,
-    timeout: usize,
-    lookback: usize,
 ) {
     let mut current_state = ParserState::LookingForInterestingOutput;
     let mut buffer = vec![];
@@ -34,6 +32,7 @@ pub(crate) fn parse_raw_output(
     sender
         .send(State::InProgress)
         .expect("Failed to send process start event");
+    let options = options.clone();
     thread::spawn(move || {
         loop {
             match receiver.try_recv() {
@@ -70,7 +69,7 @@ pub(crate) fn parse_raw_output(
                                     string
                                 );
                                 current_state = ParserState::CollectingQuestion;
-                                let min_index = buffer.len().saturating_sub(lookback);
+                                let min_index = buffer.len().saturating_sub(options.lookback);
                                 for history in buffer.get(min_index..).unwrap_or_default() {
                                     question.push(history.clone());
                                 }
@@ -81,7 +80,7 @@ pub(crate) fn parse_raw_output(
                 Err(TryRecvError::Empty) => match current_state {
                     ParserState::CollectingQuestion if grace_ticks > 0 => {
                         log::debug!("Collecting question, with grace of {grace_ticks} remaining");
-                        sleep(tick);
+                        sleep(options.tick);
                         grace_ticks -= 1;
                     }
                     ParserState::CollectingQuestion => {
@@ -103,7 +102,7 @@ pub(crate) fn parse_raw_output(
                         question.clear();
                         continue;
                     }
-                    _ if wait_count.load(Ordering::Relaxed) >= timeout => {
+                    _ if wait_count.load(Ordering::Relaxed) >= options.timeout => {
                         sender
                             .send(State::TimedOut)
                             .expect("Could send timeout error");

@@ -11,6 +11,7 @@ pub struct ParserConfig {
     pub completed_with_warnings: Vec<String>,
     pub failed_with_error: Vec<String>,
     pub finished: Vec<String>,
+    pub eet_auto_fill: String,
     pub metadata: Metadata,
 }
 
@@ -56,6 +57,8 @@ impl Default for ParserConfig {
                 "successfully installed".to_string(),
                 "process ended".to_string(),
             ],
+            eet_auto_fill: "Enter the full path to your BG:EE+SoD installation then press Enter."
+                .to_string(),
             metadata: Metadata::default(),
         }
     }

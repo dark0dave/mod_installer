@@ -27,7 +27,10 @@ fn read_stream<R: std::io::Read>(
                 if let Ok(mut writer) = log.write() {
                     writer.push_str(line);
                 }
-                sender.send(line.to_string()).expect("Failed to send line");
+
+                if let Err(err) = sender.send(line.to_string()) {
+                    log::warn!("Failed to send line: {}, with error {}", line, err);
+                }
             }
             Err(ref e) if e.kind() == ErrorKind::InvalidData => {
                 log::warn!("Failed to read weidu {label}");

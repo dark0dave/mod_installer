@@ -88,7 +88,11 @@ fn run(
                         log::info!("🚨🚨🚨DECTECTED EET INSTALL, AUTO FILL ENABLED🚨🚨🚨");
                         let pre_eet_directory = &format!(
                             "{}\n",
-                            bg1_game_directory.as_ref().unwrap().to_string_lossy()
+                            bg1_game_directory
+                                .unwrap()
+                                .as_os_str()
+                                .to_str()
+                                .unwrap_or_default()
                         );
                         log::info!("Sending {}", pre_eet_directory);
                         weidu_stdin.write_all(pre_eet_directory.as_bytes())?;

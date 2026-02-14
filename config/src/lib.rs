@@ -22,9 +22,17 @@ impl Config {
             confy::load::<ParserConfig>(CARGO_PKG_NAME, parser_config_location)
             && config.metadata.mod_installer_version == env!("CARGO_PKG_VERSION")
         {
+            log::debug!("Using existing config: {:?}", config);
             Arc::new(config)
         } else {
-            Arc::new(ParserConfig::default())
+            log::debug!("Creating new config");
+            let config = Arc::new(ParserConfig::default());
+            let _ = confy::store(
+                CARGO_PKG_NAME,
+                parser_config_location,
+                config.clone().as_ref(),
+            );
+            config
         };
         Self {
             args: Args::parse(),

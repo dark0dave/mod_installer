@@ -111,7 +111,7 @@ fn install(
         }
 
         if !mod_folder_present_in_game_directory(game_directory, &weidu_mod.name) {
-            log::debug!(
+            log::info!(
                 "Copying mod directory, from {:?} to, {:?}",
                 mod_folder,
                 game_directory.join(&weidu_mod.name)

@@ -30,6 +30,7 @@ fn read_stream<R: std::io::Read>(
 
                 if let Err(err) = sender.send(line.to_string()) {
                     log::warn!("Failed to send line: {}, with error {}", line, err);
+                    break;
                 }
             }
             Err(ref e) if e.kind() == ErrorKind::InvalidData => {

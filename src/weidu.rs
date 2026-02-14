@@ -164,17 +164,17 @@ pub(crate) fn handle_io(
                     format!("Weidu command failed with exit status: {exit}").into(),
                 );
             }
-            result
         }
         Ok(None) => {
-            log::warn!("Weidu exited, but could not get status.");
-            result
+            log::warn!("Weidu not finished, sleeping then exiting");
+            sleep(options.tick * 3);
         }
         Err(err) => {
             log::error!("Failed to close weidu process: {err}");
-            InstallationResult::Err(err.into())
+            return InstallationResult::Err(err.into());
         }
     }
+    result
 }
 
 fn generate_args(

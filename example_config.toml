@@ -16,20 +16,21 @@ useful_status_words = [
 choice_words = [
     "choice",
     "choose",
-    "select",
     "enter",
+    "select",
 ]
 choice_phrase = [
-    "do you want",
-    "would you like",
-    "answer [y]es or [n]o.",
-    "is this correct?",
-    "[y]es or [n]o",
-    "please select",
-    "please enter",
-    "enter a new",
-    "leave blank",
     "[a]ccept, [r]etry, [c]ancel",
+    "[y]es or [n]o",
+    "[y]es, [n]o, [c]ancel",
+    "answer [y]es or [n]o.",
+    "do you want",
+    "enter a new",
+    "is this correct?",
+    "leave blank",
+    "please enter",
+    "please select",
+    "would you like",
 ]
 completed_with_warnings = [
     "installed with warnings",
@@ -39,8 +40,8 @@ failed_with_error = [
     "installation aborted",
 ]
 finished = [
-    "successfully installed",
     "process ended",
+    "successfully installed      ",
 ]
 eet_auto_fill = "Enter the full path to your BG:EE+SoD installation then press Enter."
 

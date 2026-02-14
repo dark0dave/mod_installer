@@ -1,16 +1,18 @@
+use std::collections::BTreeSet;
+
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{meta::Metadata, state::State};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ParserConfig {
-    pub in_progress_words: Vec<String>,
-    pub useful_status_words: Vec<String>,
-    pub choice_words: Vec<String>,
-    pub choice_phrase: Vec<String>,
-    pub completed_with_warnings: Vec<String>,
-    pub failed_with_error: Vec<String>,
-    pub finished: Vec<String>,
+    pub in_progress_words: BTreeSet<String>,
+    pub useful_status_words: BTreeSet<String>,
+    pub choice_words: BTreeSet<String>,
+    pub choice_phrase: BTreeSet<String>,
+    pub completed_with_warnings: BTreeSet<String>,
+    pub failed_with_error: BTreeSet<String>,
+    pub finished: BTreeSet<String>,
     pub eet_auto_fill: String,
     pub metadata: Metadata,
 }
@@ -18,7 +20,9 @@ pub struct ParserConfig {
 impl Default for ParserConfig {
     fn default() -> Self {
         Self {
-            in_progress_words: vec!["installing".to_string(), "creating".to_string()],
+            in_progress_words: vec!["installing".to_string(), "creating".to_string()]
+                .into_iter()
+                .collect(),
             useful_status_words: vec![
                 "copied".to_string(),
                 "copying".to_string(),
@@ -29,13 +33,17 @@ impl Default for ParserConfig {
                 "patching".to_string(),
                 "processed".to_string(),
                 "processing".to_string(),
-            ],
+            ]
+            .into_iter()
+            .collect(),
             choice_words: vec![
                 "choice".to_string(),
                 "choose".to_string(),
                 "select".to_string(),
                 "enter".to_string(),
-            ],
+            ]
+            .into_iter()
+            .collect(),
             choice_phrase: vec![
                 "do you want".to_string(),
                 "would you like".to_string(),
@@ -47,16 +55,25 @@ impl Default for ParserConfig {
                 "enter a new".to_string(),
                 "leave blank".to_string(),
                 "[a]ccept, [r]etry, [c]ancel".to_string(),
-            ],
-            completed_with_warnings: vec!["installed with warnings".to_string()],
+                "[y]es, [n]o, [c]ancel".to_string(),
+            ]
+            .into_iter()
+            .collect(),
+            completed_with_warnings: vec!["installed with warnings".to_string()]
+                .into_iter()
+                .collect(),
             failed_with_error: vec![
                 "not installed due to errors".to_string(),
                 "installation aborted".to_string(),
-            ],
+            ]
+            .into_iter()
+            .collect(),
             finished: vec![
-                "successfully installed".to_string(),
+                "successfully installed      ".to_string(),
                 "process ended".to_string(),
-            ],
+            ]
+            .into_iter()
+            .collect(),
             eet_auto_fill: "Enter the full path to your BG:EE+SoD installation then press Enter."
                 .to_string(),
             metadata: Metadata::default(),

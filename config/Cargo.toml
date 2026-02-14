@@ -1,12 +1,14 @@
 [package]
 name = "config"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2024"
 
 [dependencies]
 anstyle = "1.0.10"
 clap = { version = "^4.5.49", features = ["derive", "env", "string"] }
 confy = "^2.0.0"
+env_logger = "^0.11.8"
+log = "^0.4.22"
 serde = { version = "^1.0.217", features = ["derive"] }
 serde_derive = "^1.0.152"
 

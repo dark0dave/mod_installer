@@ -687,11 +687,13 @@ dependencies = [
 
 [[package]]
 name = "config"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "anstyle",
  "clap",
  "confy",
+ "env_logger",
+ "log",
  "pretty_assertions",
  "serde",
  "serde_derive",

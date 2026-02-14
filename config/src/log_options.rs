@@ -55,10 +55,16 @@ impl LogOptions {
     pub fn to_string(&self, path: &str) -> String {
         match self {
             LogOptions::Log(path_buf) if path_buf.is_file() => {
-                format!("--log {}", path_buf.to_string_lossy())
+                format!(
+                    "--log {}",
+                    path_buf.as_os_str().to_str().unwrap_or_default()
+                )
             }
             LogOptions::Log(path_buf) => {
-                format!("--log {}", path_buf.join(path).to_string_lossy())
+                format!(
+                    "--log {}",
+                    path_buf.join(path).as_os_str().to_str().unwrap_or_default()
+                )
             }
             LogOptions::AutoLog => "--autolog".to_string(),
             LogOptions::LogAppend => "--logapp".to_string(),

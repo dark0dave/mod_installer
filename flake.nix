@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/2cd3cac16691a933e94276f0a810453f17775c28";
+    nixpkgs.url = "github:nixos/nixpkgs/aaf43e7c58bb8093a6325ef1d7b4af616779abc5";
   };
 
   outputs = { self, nixpkgs }:
@@ -26,11 +26,11 @@
                     rust-analyzer
                     rustc
                     rustfmt
-                    xorg.libX11
-                    xorg.libXcursor
-                    xorg.libXrandr
-                    xorg.libXi
-                    xorg.libxcb
+                    libx11
+                    libxcursor
+                    libxrandr
+                    libxi
+                    libxcb
                     libxkbcommon
                     vulkan-loader
                     wayland

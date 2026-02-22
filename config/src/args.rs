@@ -199,8 +199,22 @@ pub struct Options {
         action = clap::ArgAction::SetTrue,
         default_value_t = false,
         value_parser = BoolishValueParser::new(),
+        conflicts_with = "never_abort",
     )]
     pub abort_on_warnings: bool,
+
+    /// If an error occurs in the weidu child process continue
+    #[clap(
+        env,
+        short = 'v',
+        long,
+        num_args=0..=1,
+        action = clap::ArgAction::SetTrue,
+        default_value_t = false,
+        value_parser = BoolishValueParser::new(),
+        conflicts_with = "abort_on_warnings",
+    )]
+    pub never_abort: bool,
 
     /// Timeout time per mod in seconds, default is 1 hour
     #[clap(env, long, short, default_value = "3600")]
@@ -380,6 +394,7 @@ mod tests {
                         tick: 500,
                         lookback: 10,
                         casefold: false,
+                        never_abort: false,
                     },
                 }),
             };
@@ -439,6 +454,7 @@ mod tests {
                     tick: 500,
                     lookback: 10,
                     casefold: false,
+                    never_abort: false,
                 },
                 new_pre_eet_dir: None,
                 new_eet_dir: Some("test".into()),

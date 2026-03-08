@@ -69,12 +69,6 @@ jobs:
           name: mod_installer-${{ matrix.target }}${{ matrix.suffix }}
           path: ./target/${{ matrix.target }}/release/mod_installer${{ matrix.suffix }}
           if-no-files-found: error
-      - name: Archive release artifacts gui
-        uses: actions/upload-artifact@main
-        with:
-          name: mod_installer_gui-${{ matrix.target }}${{ matrix.suffix }}
-          path: ./target/${{ matrix.target }}/release/mod_installer_gui${{ matrix.suffix }}
-          if-no-files-found: error
   build-nix:
    runs-on: ubuntu-latest
    steps:
@@ -148,16 +142,4 @@ jobs:
           upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ./mod_installer${{ matrix.suffix }}
           asset_name: mod_installer-${{ matrix.target }}${{ matrix.suffix }}
-          asset_content_type: application/octet-stream
-      - uses: actions/download-artifact@main
-        with:
-          name: mod_installer_gui-${{ matrix.target }}${{ matrix.suffix }}
-      - name: Upload Release Asset - ${{ matrix.os }} gui
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
-          asset_path: ./mod_installer_gui${{ matrix.suffix }}
-          asset_name: mod_installer_gui-${{ matrix.target }}${{ matrix.suffix }}
           asset_content_type: application/octet-stream

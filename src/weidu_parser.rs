@@ -29,9 +29,10 @@ pub(crate) fn parse_raw_output(
     let mut buffer = vec![];
     let mut question = vec![];
     let mut grace_ticks: usize = 3;
-    sender
-        .send(State::InProgress)
-        .expect("Failed to send process start event");
+    if let Err(err) = sender.send(State::InProgress) {
+        log::error!("Failed to send process start event, {err}");
+        return;
+    }
     let options = options.clone();
     thread::spawn(move || {
         loop {
@@ -39,11 +40,11 @@ pub(crate) fn parse_raw_output(
                 Ok(string) => {
                     log::info!("{string}");
                     let installer_state = parser_config.detect_weidu_finished_state(&string);
-                    if installer_state != State::InProgress {
-                        sender
-                            .send(installer_state)
-                            .expect("Failed to send process error event");
-                        break;
+                    if installer_state != State::InProgress
+                        && let Err(err) = sender.send(installer_state)
+                    {
+                        log::error!("Failed to send process error event. {err}");
+                        return;
                     }
                     buffer.push(string.clone());
                     match current_state {
@@ -93,27 +94,29 @@ pub(crate) fn parse_raw_output(
                     }
                     ParserState::WaitingForMoreQuestionContent => {
                         log::debug!("No new weidu output, sending question to user");
-                        sender
-                            .send(State::RequiresInput {
-                                question: question.join(""),
-                            })
-                            .expect("Failed to send question");
+                        if let Err(err) = sender.send(State::RequiresInput {
+                            question: question.join(""),
+                        }) {
+                            log::error!("Failed to send question: {err}");
+                            return;
+                        }
                         current_state = ParserState::LookingForInterestingOutput;
                         question.clear();
                         continue;
                     }
                     _ if wait_count.load(Ordering::Relaxed) >= options.timeout => {
-                        sender
-                            .send(State::TimedOut)
-                            .expect("Could send timeout error");
+                        if let Err(err) = sender.send(State::TimedOut) {
+                            log::error!("Could send timeout error: {}", err);
+                            return;
+                        }
                     }
                     _ => {}
                 },
                 Err(TryRecvError::Disconnected) => {
-                    sender
-                        .send(State::Completed)
-                        .expect("Failed to send process end event");
-                    break;
+                    if let Err(err) = sender.send(State::Completed) {
+                        log::error!("Failed to send process end event {err}");
+                    }
+                    return;
                 }
             }
         }

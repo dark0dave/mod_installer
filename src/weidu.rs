@@ -236,8 +236,7 @@ pub(crate) fn install(
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()
-        .expect("Failed to spawn weidu process");
+        .spawn()?;
 
     handle_io(child, parser_config, options, bg1_game_directory)
 }

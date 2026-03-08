@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/aaf43e7c58bb8093a6325ef1d7b4af616779abc5";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable-small";
   };
 
   outputs = { self, nixpkgs }:
@@ -39,6 +39,7 @@
                     openssl
                 ];
                 env.RUSTC_VERSION = overrides.toolchain.channel;
+                env.RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
                 shellHook = ''
                     export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${builtins.toString (pkgs.lib.makeLibraryPath nativeBuildInputs)}";
                 '';

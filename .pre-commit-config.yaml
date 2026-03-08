@@ -18,7 +18,7 @@ repos:
       stages: [pre-commit]
 
 - repo: https://github.com/commitizen-tools/commitizen
-  rev: v4.13.8
+  rev: v4.13.9
   hooks:
     - id: commitizen
       stages: [commit-msg]
@@ -74,7 +74,7 @@ repos:
       pass_filenames: false
 
 - repo: https://github.com/codespell-project/codespell
-  rev: v2.4.1
+  rev: v2.4.2
   hooks:
     - id: codespell
       stages: [pre-commit]

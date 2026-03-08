@@ -26,23 +26,12 @@
                     rust-analyzer
                     rustc
                     rustfmt
-                    libx11
-                    libxcursor
-                    libxrandr
-                    libxi
-                    libxcb
-                    libxkbcommon
-                    vulkan-loader
-                    wayland
                 ];
                 buildInputs = [
                     openssl
                 ];
                 env.RUSTC_VERSION = overrides.toolchain.channel;
                 env.RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
-                shellHook = ''
-                    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${builtins.toString (pkgs.lib.makeLibraryPath nativeBuildInputs)}";
-                '';
             };
         });
       packages = forEachSystem (system: {

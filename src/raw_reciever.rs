@@ -20,7 +20,7 @@ fn read_stream<R: std::io::Read>(
         match buffered_reader.read_until(b'\n', &mut buf) {
             Ok(0) => {
                 log::debug!("{label} ended");
-                break;
+                return;
             }
             Ok(_) => {
                 let line = std::str::from_utf8(&buf).unwrap_or_default();
@@ -30,14 +30,15 @@ fn read_stream<R: std::io::Read>(
 
                 if let Err(err) = sender.send(line.to_string()) {
                     log::warn!("Failed to send line: {}, with error {}", line, err);
-                    break;
+                    return;
                 }
             }
             Err(ref e) if e.kind() == ErrorKind::InvalidData => {
                 log::warn!("Failed to read weidu {label}");
             }
             Err(details) => {
-                panic!("Failed to read process output, error is '{details:?}'");
+                log::error!("Failed to read process output, error is '{details:?}'");
+                return;
             }
         }
     }

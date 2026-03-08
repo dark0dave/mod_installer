@@ -96,13 +96,23 @@ fn install(
         }
     };
 
-    let mut mod_folder_cache = HashMap::new();
+    let mut mod_folder_cache: HashMap<String, PathBuf> = HashMap::new();
     for weidu_mod in &mods_to_be_installed {
-        let mod_folder = mod_folder_cache
-            .entry(weidu_mod.tp_file.clone())
-            .or_insert_with(|| {
-                search_or_download(options, weidu_mod).expect("Couldn't find mod exiting")
-            });
+        let mod_folder = if let Some(entry) = mod_folder_cache.get(&weidu_mod.tp_file) {
+            entry.to_path_buf()
+        } else {
+            let entry = match search_or_download(options, weidu_mod) {
+                Ok(value) => value,
+                Err(err) if options.never_abort => {
+                    log::error!("{:?}", err);
+                    log::info!("failed but never abort set, so continuing");
+                    continue;
+                }
+                Err(err) => return Err(err),
+            };
+            mod_folder_cache.insert(weidu_mod.tp_file.clone(), entry.clone());
+            entry
+        };
 
         log::debug!("Found mod folder {mod_folder:?}, for mod {weidu_mod:?}");
 

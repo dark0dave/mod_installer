@@ -69,11 +69,8 @@ mod tests {
         drop(writer);
 
         let mut results: Vec<_> = Vec::new();
-        loop {
-            match receiver.recv_timeout(Duration::from_secs(1)) {
-                Ok(line) => results.push(line),
-                Err(_) => break,
-            }
+        while let Ok(line) = receiver.recv_timeout(Duration::from_secs(1)) {
+            results.push(line)
         }
 
         Ok(results)

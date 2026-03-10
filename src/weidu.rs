@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Stdio},
     sync::{
-        Arc, RwLock,
+        Arc,
         atomic::AtomicUsize,
         mpsc::{self, Receiver, TryRecvError},
     },
@@ -14,6 +14,7 @@ use config::{args::Options, log_options::LogOptions, parser_config::ParserConfig
 
 use crate::{
     component::Component,
+    internal_log::InternalLog,
     raw_reciever::create_raw_reciever,
     utils::{get_user_input, sleep},
     weidu_parser::parse_raw_output,
@@ -34,7 +35,7 @@ pub(crate) type InstallationResult = Result<WeiduExitStatus, Box<dyn Error>>;
 fn run(
     options: &Options,
     mut weidu_stdin: ChildStdin,
-    log: Arc<RwLock<String>>,
+    log: InternalLog,
     eet_auto_fill: &str,
     parsed_output_receiver: Receiver<State>,
     wait_count: Arc<AtomicUsize>,
@@ -52,18 +53,16 @@ fn run(
                     }
                     State::CompletedWithWarnings => {
                         log::warn!("Weidu process seem to have completed with warnings");
-                        if let Ok(weidu_log) = log.read() {
-                            log::warn!("Dumping log: {weidu_log}");
-                        }
+                        let weidu_log = log.read();
+                        log::warn!("Dumping log: {weidu_log}");
                         return Ok(WeiduExitStatus::Warnings(
                             "Weidu process exited with warnings".to_string(),
                         ));
                     }
                     State::CompletedWithErrors { error_details } => {
                         log::error!("Weidu process seem to have completed with errors");
-                        if let Ok(weidu_log) = log.read() {
-                            log::error!("Dumping log: {weidu_log}");
-                        }
+                        let weidu_log = log.read();
+                        log::error!("Dumping log: {weidu_log}");
                         return Err(error_details.into());
                     }
                     State::TimedOut => {
@@ -71,9 +70,8 @@ fn run(
                         log::error!(
                             "Weidu process seem to have been running for {max_time} seconds, exiting"
                         );
-                        if let Ok(weidu_log) = log.read() {
-                            log::error!("Dumping log: {weidu_log}");
-                        }
+                        let weidu_log = log.read();
+                        log::error!("Dumping log: {weidu_log}");
                         return Err("Timed out".into());
                     }
                     State::InProgress => {
@@ -138,7 +136,7 @@ pub(crate) fn handle_io(
         .stderr
         .take()
         .ok_or("Failed to get weidu standard error")?;
-    let log = Arc::new(RwLock::new(String::new()));
+    let log = InternalLog::new();
     let raw_output_receiver = create_raw_reciever(weidu_stdout, weidu_stderr, log.clone());
     let (sender, parsed_output_receiver) = mpsc::channel::<State>();
 

@@ -37,4 +37,5 @@ walkdir = "^2.3.2"
 zip = "^8.0.0"
 
 [dev-dependencies]
+os_pipe = "^1.2.1"
 pretty_assertions = "^1.4.1"

@@ -1,19 +1,13 @@
 use std::{
     io::{BufRead, BufReader, ErrorKind},
     process::{ChildStderr, ChildStdout},
-    sync::{
-        Arc, RwLock,
-        mpsc::{self, Receiver, Sender},
-    },
+    sync::mpsc::{self, Receiver, Sender},
     thread,
 };
 
-fn read_stream<R: std::io::Read>(
-    label: &str,
-    stream: R,
-    log: Arc<RwLock<String>>,
-    sender: Sender<String>,
-) {
+use crate::internal_log::InternalLog;
+
+fn read_stream<R: std::io::Read>(label: &str, stream: R, log: InternalLog, sender: Sender<String>) {
     let mut buffered_reader = BufReader::new(stream);
     loop {
         let mut buf = vec![];
@@ -24,9 +18,7 @@ fn read_stream<R: std::io::Read>(
             }
             Ok(_) => {
                 let line = std::str::from_utf8(&buf).unwrap_or_default();
-                if let Ok(mut writer) = log.write() {
-                    writer.push_str(line);
-                }
+                log.write(line);
 
                 if let Err(err) = sender.send(line.to_string()) {
                     log::warn!("Failed to send line: {}, with error {}", line, err);
@@ -47,7 +39,7 @@ fn read_stream<R: std::io::Read>(
 pub(crate) fn create_raw_reciever(
     stdout: ChildStdout,
     stderr: ChildStderr,
-    log: Arc<RwLock<String>>,
+    log: InternalLog,
 ) -> Receiver<String> {
     let (sender, reciever) = mpsc::channel::<String>();
     let sender_stdout = sender.clone();

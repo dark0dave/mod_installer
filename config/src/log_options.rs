@@ -12,6 +12,26 @@ Please provide a valid weidu logging setting, options are:
 --weidu-log-mode log-extern  also log output from commands invoked by WeiDU
 ";
 
+pub struct WeiduLogOptions(Vec<LogOptions>);
+
+impl WeiduLogOptions {
+    pub fn new(options: Vec<LogOptions>) -> Self {
+        Self(options)
+    }
+    pub fn to_string(&self, path: &str) -> String {
+        let mut out = String::new();
+        if self.0.contains(&LogOptions::LogAppend) {
+            out.push_str("--logapp");
+        }
+        for log in self.0.clone() {
+            if log != LogOptions::LogAppend {
+                out.push_str(&log.to_string(path));
+            }
+        }
+        out
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum LogOptions {
     Log(PathBuf),
@@ -54,6 +74,7 @@ impl LogOptions {
     }
     pub fn to_string(&self, path: &str) -> String {
         match self {
+            LogOptions::LogAppend => "--logapp".to_string(),
             LogOptions::Log(path_buf) if path_buf.is_file() => {
                 format!(
                     "--log {}",
@@ -67,7 +88,6 @@ impl LogOptions {
                 )
             }
             LogOptions::AutoLog => "--autolog".to_string(),
-            LogOptions::LogAppend => "--logapp".to_string(),
             LogOptions::LogExternal => "--log-extern".to_string(),
         }
     }

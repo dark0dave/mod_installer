@@ -188,6 +188,7 @@ fn generate_args(
     weidu_mod: &Component,
     weidu_log_mode: Vec<LogOptions>,
     language: &str,
+    generic_weidu_args: &str,
 ) -> Vec<String> {
     let mod_name = &weidu_mod.name;
     let mod_tp_file = &weidu_mod.tp_file;
@@ -205,6 +206,7 @@ fn generate_args(
     ];
     let component_log = format!("{}-{}.log", mod_name, weidu_mod.component).to_lowercase();
     args.push(WeiduLogOptions::new(weidu_log_mode).to_string(&component_log));
+    args.push(generic_weidu_args.to_string());
     args
 }
 
@@ -215,7 +217,12 @@ pub(crate) fn install(
     options: &Options,
     bg1_game_directory: Option<&PathBuf>,
 ) -> InstallationResult {
-    let weidu_args = generate_args(weidu_mod, options.weidu_log_mode.clone(), &options.language);
+    let weidu_args = generate_args(
+        weidu_mod,
+        options.weidu_log_mode.clone(),
+        &options.language,
+        &options.generic_weidu_args,
+    );
     let mut command = Command::new(options.weidu_binary.clone());
     let weidu_process = command.current_dir(game_directory).args(weidu_args);
     log::debug!(

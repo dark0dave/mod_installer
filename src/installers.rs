@@ -145,15 +145,25 @@ fn install(
             options,
             bg1_game_direcotry,
         ) {
-            Ok(WeiduExitStatus::Success) => {
-                let last_installed = get_last_installed(game_directory)?;
-                if options.check_last_installed && last_installed.ne(weidu_mod) {
-                    return Err(format!(
-                                "Last installed {last_installed:?} does not match component installed: {weidu_mod:?}"
-                            )
-                            .into());
+            Ok(WeiduExitStatus::Success)
+                if options.check_last_installed && !options.never_abort =>
+            {
+                if let Ok(last_installed) = get_last_installed(game_directory) {
+                    if last_installed.ne(weidu_mod) {
+                        return Err(format!(
+                            "Last installed {last_installed:?} does not match component installed: {weidu_mod:?}"
+                        )
+                        .into());
+                    }
+                    log::info!("Installed mod {:?}", &last_installed);
+                } else {
+                    log::warn!(
+                        "Could not open weidu log, to validate if last component was installed"
+                    );
                 }
-                log::info!("Installed mod {:?}", &last_installed);
+            }
+            Ok(WeiduExitStatus::Success) => {
+                log::info!("Installed mod {:?}", weidu_mod);
             }
             Ok(WeiduExitStatus::Warnings(msg)) if options.abort_on_warnings => {
                 return Err(format!(

@@ -298,6 +298,10 @@ pub struct Options {
         value_parser = BoolishValueParser::new(),
     )]
     pub casefold: bool,
+
+    /// Generic weidu args
+    #[clap(short = 'k', long, default_value = "")]
+    pub generic_weidu_args: String,
 }
 
 pub fn path_must_exist(arg: &str) -> Result<PathBuf, std::io::Error> {
@@ -395,6 +399,7 @@ mod tests {
                         lookback: 10,
                         casefold: false,
                         never_abort: false,
+                        generic_weidu_args: "".to_string(),
                     },
                 }),
             };
@@ -455,6 +460,7 @@ mod tests {
                     lookback: 10,
                     casefold: false,
                     never_abort: false,
+                    generic_weidu_args: "".to_string(),
                 },
                 new_pre_eet_dir: None,
                 new_eet_dir: Some("test".into()),

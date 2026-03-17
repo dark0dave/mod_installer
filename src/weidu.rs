@@ -205,8 +205,10 @@ fn generate_args(
         "--no-exit-pause".to_string(),
     ];
     let component_log = format!("{}-{}.log", mod_name, weidu_mod.component).to_lowercase();
-    args.push(WeiduLogOptions::new(weidu_log_mode).to_string(&component_log));
-    args.push(generic_weidu_args.to_string());
+    args.extend(WeiduLogOptions::new(weidu_log_mode).to_string(&component_log));
+    if !generic_weidu_args.is_empty() {
+        args.push(generic_weidu_args.to_string());
+    }
     args
 }
 
@@ -223,6 +225,7 @@ pub(crate) fn install(
         &options.language,
         &options.generic_weidu_args,
     );
+    log::trace!("{:?}", weidu_args);
     let mut command = Command::new(options.weidu_binary.clone());
     let weidu_process = command.current_dir(game_directory).args(weidu_args);
     log::debug!(

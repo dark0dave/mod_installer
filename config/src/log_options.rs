@@ -18,14 +18,14 @@ impl WeiduLogOptions {
     pub fn new(options: Vec<LogOptions>) -> Self {
         Self(options)
     }
-    pub fn to_string(&self, path: &str) -> String {
-        let mut out = String::new();
+    pub fn to_string(&self, path: &str) -> Vec<String> {
+        let mut out = vec![];
         if self.0.contains(&LogOptions::LogAppend) {
-            out.push_str("--logapp");
+            out.push("--logapp".to_string());
         }
         for log in self.0.clone() {
             if log != LogOptions::LogAppend {
-                out.push_str(&log.to_string(path));
+                out.push(log.to_string(path));
             }
         }
         out

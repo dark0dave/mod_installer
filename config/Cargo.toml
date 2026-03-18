@@ -14,3 +14,4 @@ serde_derive = "^1.0.152"
 
 [dev-dependencies]
 pretty_assertions = "^1.4.1"
+tempfile = "3"

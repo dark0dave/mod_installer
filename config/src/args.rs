@@ -483,4 +483,69 @@ mod tests {
 
         Ok(())
     }
+    #[test]
+    fn test_log_flags() -> Result<(), Box<dyn Error>> {
+        let workspace_root: PathBuf = std::env::current_dir()?;
+        let fake_game_dir: PathBuf = workspace_root
+            .parent()
+            .ok_or("Could not get workspace root")?
+            .join("fixtures");
+        let fake_weidu_bin = fake_game_dir.clone().join("weidu");
+        let fake_log_file = fake_game_dir.clone().join("weidu.log");
+        let fake_mod_dirs = fake_game_dir.clone().join("mods");
+        let log_file = tempfile::NamedTempFile::new()?;
+        let log_file_path = log_file.path().as_os_str().to_str().unwrap_or_default();
+        let expected = Args {
+            command: CommandType::Normal(Normal {
+                log_file: fake_log_file.clone(),
+                game_directory: fake_game_dir.clone(),
+                generate_directory: None,
+                options: Options {
+                    weidu_binary: fake_weidu_bin.clone(),
+                    mod_directories: vec![fake_mod_dirs.clone()],
+                    language: "en_US".to_string(),
+                    depth: 5,
+                    skip_installed: true,
+                    abort_on_warnings: false,
+                    timeout: 3600,
+                    weidu_log_mode: vec![
+                        LogOptions::AutoLog,
+                        LogOptions::LogAppend,
+                        LogOptions::LogExternal,
+                        LogOptions::Log(log_file_path.into()),
+                    ],
+                    strict_matching: false,
+                    download: true,
+                    overwrite: false,
+                    check_last_installed: true,
+                    tick: 500,
+                    lookback: 10,
+                    casefold: false,
+                    never_abort: false,
+                    generic_weidu_args: "".to_string(),
+                },
+            }),
+        };
+        let log_arg = format!("autolog,logapp,log-extern,log {log_file_path}");
+        let test_arg_string = vec![
+            "mod_installer",
+            "-n",
+            "-w",
+            fake_weidu_bin.to_str().unwrap_or_default(),
+            "-m",
+            fake_mod_dirs.to_str().unwrap_or_default(),
+            "--log-file",
+            fake_log_file.to_str().unwrap_or_default(),
+            "--game-directory",
+            fake_game_dir.to_str().unwrap_or_default(),
+            "--weidu-log-mode",
+            &log_arg,
+        ];
+        let result = Args::parse_from(test_arg_string);
+        assert_eq!(
+            result, expected,
+            "Result {result:?} didn't match Expected {expected:?}",
+        );
+        Ok(())
+    }
 }

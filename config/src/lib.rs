@@ -10,6 +10,7 @@ pub mod log_options;
 mod meta;
 pub mod parser_config;
 pub mod state;
+pub mod weidu_log_options;
 
 pub struct Config {
     pub args: Args,

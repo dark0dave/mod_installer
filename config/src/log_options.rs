@@ -48,7 +48,10 @@ impl TryFrom<&str> for LogOptions {
             x if x.starts_with("log ") => {
                 if let Some((_, tail)) = value.split_once(' ') {
                     if let Ok(path) = path_must_exist(tail) {
+                        #[cfg(not(target_os = "windows"))]
                         return Ok(LogOptions::Log(path.canonicalize()?));
+                        #[cfg(windows)]
+                        return Ok(LogOptions::Log(path));
                     }
                     return Err(format!("{} {:?}", PATH_PROVIDED_ERROR, tail).into());
                 }

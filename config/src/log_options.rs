@@ -12,26 +12,6 @@ Please provide a valid weidu logging setting, options are:
 --weidu-log-mode log-extern  also log output from commands invoked by WeiDU
 ";
 
-pub struct WeiduLogOptions(Vec<LogOptions>);
-
-impl WeiduLogOptions {
-    pub fn new(options: Vec<LogOptions>) -> Self {
-        Self(options)
-    }
-    pub fn to_string(&self, path: &str) -> Vec<String> {
-        let mut out = vec![];
-        if self.0.contains(&LogOptions::LogAppend) {
-            out.push("--logapp".to_string());
-        }
-        for log in self.0.clone() {
-            if log != LogOptions::LogAppend {
-                out.push(log.to_string(path));
-            }
-        }
-        out
-    }
-}
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum LogOptions {
     Log(PathBuf),
@@ -65,12 +45,6 @@ impl TryFrom<&str> for LogOptions {
     }
 }
 
-impl From<String> for LogOptions {
-    fn from(value: String) -> Self {
-        LogOptions::try_from(value.as_str()).unwrap()
-    }
-}
-
 impl LogOptions {
     pub fn value_parser(arg: &str) -> Result<LogOptions, String> {
         LogOptions::try_from(arg).map_err(|err| err.to_string())
@@ -78,18 +52,17 @@ impl LogOptions {
     pub fn to_string(&self, path: &str) -> String {
         match self {
             LogOptions::LogAppend => "--logapp".to_string(),
-            LogOptions::Log(path_buf) if path_buf.is_file() => {
-                format!(
-                    "--log {}",
-                    path_buf.as_os_str().to_str().unwrap_or_default()
-                )
-            }
-            LogOptions::Log(path_buf) => {
-                format!(
-                    "--log {}",
-                    path_buf.join(path).as_os_str().to_str().unwrap_or_default()
-                )
-            }
+            LogOptions::Log(path_buf) if path_buf.is_file() => path_buf
+                .as_os_str()
+                .to_str()
+                .unwrap_or_default()
+                .to_string(),
+            LogOptions::Log(path_buf) => path_buf
+                .join(path)
+                .as_os_str()
+                .to_str()
+                .unwrap_or_default()
+                .to_string(),
             LogOptions::AutoLog => "--autolog".to_string(),
             LogOptions::LogExternal => "--log-extern".to_string(),
         }

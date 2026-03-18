@@ -11,10 +11,8 @@ use std::{
 };
 
 use config::{
-    args::Options,
-    log_options::{LogOptions, WeiduLogOptions},
-    parser_config::ParserConfig,
-    state::State,
+    args::Options, log_options::LogOptions, parser_config::ParserConfig, state::State,
+    weidu_log_options::WeiduLogOptions,
 };
 
 use crate::{
@@ -205,7 +203,7 @@ fn generate_args(
         "--no-exit-pause".to_string(),
     ];
     let component_log = format!("{}-{}.log", mod_name, weidu_mod.component).to_lowercase();
-    args.extend(WeiduLogOptions::new(weidu_log_mode).to_string(&component_log));
+    args.extend(WeiduLogOptions::new(weidu_log_mode).to_args(&component_log));
     if !generic_weidu_args.is_empty() {
         args.push(generic_weidu_args.to_string());
     }

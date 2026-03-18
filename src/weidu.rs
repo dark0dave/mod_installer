@@ -186,7 +186,7 @@ fn generate_args(
     weidu_mod: &Component,
     weidu_log_mode: Vec<LogOptions>,
     language: &str,
-    generic_weidu_args: &str,
+    generic_weidu_args: &[String],
 ) -> Vec<String> {
     let mod_name = &weidu_mod.name;
     let mod_tp_file = &weidu_mod.tp_file;
@@ -204,9 +204,7 @@ fn generate_args(
     ];
     let component_log = format!("{}-{}.log", mod_name, weidu_mod.component).to_lowercase();
     args.extend(WeiduLogOptions::new(weidu_log_mode).to_args(&component_log));
-    if !generic_weidu_args.is_empty() {
-        args.push(generic_weidu_args.to_string());
-    }
+    args.extend_from_slice(generic_weidu_args);
     args
 }
 

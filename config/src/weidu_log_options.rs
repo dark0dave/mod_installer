@@ -14,11 +14,7 @@ impl WeiduLogOptions {
         for log in self.0.iter() {
             match log {
                 LogOptions::LogAppend => {}
-                LogOptions::Log(_) => {
-                    out.push("--log".to_string());
-                    out.push(log.to_string(path));
-                }
-                _ => out.push(log.to_string(path)),
+                _ => out.extend(log.to_args(path)),
             }
         }
         out

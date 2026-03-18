@@ -49,22 +49,28 @@ impl LogOptions {
     pub fn value_parser(arg: &str) -> Result<LogOptions, String> {
         LogOptions::try_from(arg).map_err(|err| err.to_string())
     }
-    pub fn to_string(&self, path: &str) -> String {
+    pub fn to_args(&self, path: &str) -> Vec<String> {
         match self {
-            LogOptions::LogAppend => "--logapp".to_string(),
-            LogOptions::Log(path_buf) if path_buf.is_file() => path_buf
-                .as_os_str()
-                .to_str()
-                .unwrap_or_default()
-                .to_string(),
-            LogOptions::Log(path_buf) => path_buf
-                .join(path)
-                .as_os_str()
-                .to_str()
-                .unwrap_or_default()
-                .to_string(),
-            LogOptions::AutoLog => "--autolog".to_string(),
-            LogOptions::LogExternal => "--log-extern".to_string(),
+            LogOptions::LogAppend => vec!["--logapp".to_string()],
+            LogOptions::Log(path_buf) if path_buf.is_file() => vec![
+                "--log".to_string(),
+                path_buf
+                    .as_os_str()
+                    .to_str()
+                    .unwrap_or_default()
+                    .to_string(),
+            ],
+            LogOptions::Log(path_buf) => vec![
+                "--log".to_string(),
+                path_buf
+                    .join(path)
+                    .as_os_str()
+                    .to_str()
+                    .unwrap_or_default()
+                    .to_string(),
+            ],
+            LogOptions::AutoLog => vec!["--autolog".to_string()],
+            LogOptions::LogExternal => vec!["--log-extern".to_string()],
         }
     }
 }

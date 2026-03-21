@@ -14,6 +14,7 @@ pub struct ParserConfig {
     pub failed_with_error: BTreeSet<String>,
     pub finished: BTreeSet<String>,
     pub eet_auto_fill: String,
+    pub bell_character: Option<char>,
     pub metadata: Metadata,
 }
 
@@ -76,6 +77,7 @@ impl Default for ParserConfig {
             .collect(),
             eet_auto_fill: "Enter the full path to your BG:EE+SoD installation then press Enter."
                 .to_string(),
+            bell_character: Some('\x07'),
             metadata: Metadata::default(),
         }
     }
@@ -84,6 +86,11 @@ impl Default for ParserConfig {
 impl ParserConfig {
     pub fn string_looks_like_question(&self, weidu_output: &str) -> bool {
         let comparable_output = weidu_output.trim().to_ascii_lowercase();
+        if let Some(bell) = self.bell_character
+            && comparable_output.contains(bell)
+        {
+            return true;
+        }
         // installing|creating
         for progress_word in self.in_progress_words.iter() {
             if comparable_output.contains(progress_word) {
@@ -182,6 +189,7 @@ Example: C:\\Program Files (x86)\\BeamDog\\Games\\00806",
             "Please enter number of the kit to select (leave blank to proceed with the installation):",
             "Please enter a new title for the selected kit (leave blank to keep current):",
             r#"accept kit title "354" ([a]ccept, [r]etry, [c]ancel)?"#,
+            "There is no question, only bell\x07",
         ];
         for test in tests {
             assert_eq!(

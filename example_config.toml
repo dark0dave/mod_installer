@@ -45,6 +45,8 @@ finished = [
 ]
 eet_auto_fill = "Enter the full path to your BG:EE+SoD installation then press Enter."
 
+bell_character = "\u0007"
+
 [metadata]
 mod_installer_version = "12.1.0"
 

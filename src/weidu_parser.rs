@@ -30,7 +30,7 @@ pub(crate) fn parse_raw_output(
     let mut question = vec![];
     let mut grace_ticks: usize = 3;
     if let Err(err) = sender.send(State::InProgress) {
-        log::error!("Failed to send process start event, {err}");
+        log::warn!("Failed to send process start event, {err}");
         return;
     }
     let options = options.clone();
@@ -43,7 +43,7 @@ pub(crate) fn parse_raw_output(
                     if installer_state != State::InProgress
                         && let Err(err) = sender.send(installer_state)
                     {
-                        log::error!("Failed to send process error event. {err}");
+                        log::warn!("Failed to send process error event. {err}");
                         return;
                     }
                     buffer.push(string.clone());
@@ -114,7 +114,7 @@ pub(crate) fn parse_raw_output(
                 },
                 Err(TryRecvError::Disconnected) => {
                     if let Err(err) = sender.send(State::Completed) {
-                        log::error!("Failed to send process end event {err}");
+                        log::warn!("Failed to send process end event {err}");
                     }
                     return;
                 }

@@ -121,6 +121,36 @@ fn run(
     }
 }
 
+fn handle_result(
+    mut child: Child,
+    options: &Options,
+    result: Result<WeiduExitStatus, Box<dyn Error>>,
+    retry: i8,
+) -> Result<WeiduExitStatus, Box<dyn Error>> {
+    match child.try_wait() {
+        Ok(Some(exit)) if !exit.success() && exit.code() != Some(3) => {
+            InstallationResult::Err(format!("Weidu command failed with exit status: {exit}").into())
+        }
+        Ok(Some(exit)) => {
+            log::debug!("Weidu exit status: {exit}");
+            result
+        }
+        Ok(None) if retry < 3 => {
+            log::debug!("Weidu not finished, sleeping then retrying, retry attempt number {retry}");
+            sleep(options.tick);
+            handle_result(child, options, result, retry + 1)
+        }
+        Ok(None) => {
+            log::warn!("Weidu not finished, exiting anyway");
+            result
+        }
+        Err(err) => {
+            log::error!("Failed to close weidu process: {err}");
+            InstallationResult::Err(err.into())
+        }
+    }
+}
+
 pub(crate) fn handle_io(
     mut child: Child,
     parser_config: Arc<ParserConfig>,
@@ -161,25 +191,7 @@ pub(crate) fn handle_io(
         wait_count,
         bg1_game_directory,
     );
-    match child.try_wait() {
-        Ok(Some(exit)) => {
-            log::debug!("Weidu exit status: {exit}");
-            if !exit.success() && exit.code() != Some(3) {
-                return InstallationResult::Err(
-                    format!("Weidu command failed with exit status: {exit}").into(),
-                );
-            }
-        }
-        Ok(None) => {
-            log::warn!("Weidu not finished, sleeping then exiting");
-            sleep(options.tick * 3);
-        }
-        Err(err) => {
-            log::error!("Failed to close weidu process: {err}");
-            return InstallationResult::Err(err.into());
-        }
-    }
-    result
+    handle_result(child, options, result, 0)
 }
 
 fn generate_args(

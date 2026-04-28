@@ -32,7 +32,7 @@ fn main() -> ExitCode {
     let status = match config.args.command {
         CommandType::Normal(command) => normal_install(&command, config.parser.clone()),
         CommandType::Eet(command) => eet_install(&command, config.parser.clone()),
-        CommandType::Scan(Scan::Langauges(command)) => scan_langauges(&command),
+        CommandType::Scan(Scan::Languages(command)) => scan_langauges(&command),
         CommandType::Scan(Scan::Components(command)) => scan_components(&command),
     };
 

@@ -1,0 +1,64 @@
+amends "package://github.com/jdx/hk/releases/download/v1.43.0/hk@1.43.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.43.0/hk@1.43.0#/Builtins.pkl"
+
+local message = new Mapping<String, Step> {
+  ["check-conventional-commit"] = Builtins.check_conventional_commit
+}
+
+local builtins = new Mapping<String, Step> {
+  ["check-merge-conflict"] = Builtins.check_merge_conflict
+  ["check-case-conflict"] = Builtins.check_case_conflict
+  ["pkl-format"] = Builtins.pkl_format
+  ["detect-private-key"] = Builtins.detect_private_key
+  ["yamlfmt"] = Builtins.yamlfmt
+}
+
+local local_hooks = new Mapping<String, Step> {
+  ["fmt"] {
+    glob = "**/*.rs"
+    check = "cargo fmt --all"
+    fix = "cargo fmt --all"
+  }
+  ["cargo-check"] {
+    glob = "**/*.rs"
+    check = "cargo check"
+    fix = "cargo fix --allow-dirty --allow-staged"
+  }
+  ["cargo-test"] {
+    glob = "**/*.rs"
+    check = "cargo test --workspace"
+  }
+  ["clippy"] {
+    glob = "**/*.rs"
+    check = "cargo clippy --workspace -- -D warnings"
+    fix = "cargo clippy --fix --"
+  }
+  ["version-check"] {
+    check = "scripts/check-version.sh"
+  }
+  ["git-check"] {
+    check = "scripts/check-git.sh"
+  }
+  ["codespell"] {
+    glob = List("**/*.rs", "readme.md")
+    exclude = List("target/**", "fixtures/**", "hk.pkl")
+    check = "codespell -c {{files}}"
+    fix = "codespell -cw {{files}}"
+  }
+}
+
+hooks {
+  ["commit-msg"] {
+    steps {
+      ...message
+    }
+  }
+  ["pre-commit"] {
+    fix = true
+    stash = "git"
+    steps {
+      ...builtins
+      ...local_hooks
+    }
+  }
+}

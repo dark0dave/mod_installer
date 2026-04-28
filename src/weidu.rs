@@ -86,7 +86,7 @@ fn run(
                             && !eet_check_completed
                             && question.contains(eet_auto_fill) =>
                     {
-                        log::info!("🚨🚨🚨DECTECTED EET INSTALL, AUTO FILL ENABLED🚨🚨🚨");
+                        log::info!("🚨🚨🚨DETECTED EET INSTALL, AUTO FILL ENABLED🚨🚨🚨");
                         let pre_eet_directory = &format!(
                             "{}\n",
                             bg1_game_directory

@@ -109,7 +109,7 @@ pub struct Eet {
 #[clap(short_flag = 's')]
 pub enum Scan {
     #[command()]
-    Langauges(ScanLangauges),
+    Languages(ScanLangauges),
     #[command()]
     Components(ScanComponents),
 }

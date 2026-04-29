@@ -2,7 +2,7 @@ use std::error::Error;
 
 use config::{log_options::LogOptions, weidu_log_options::WeiduLogOptions};
 
-use crate::weidu_install_block::WeiduInstallBlock;
+use crate::weidu::install_block::WeiduInstallBlock;
 
 // This should mirror the weidu component
 // https://github.com/WeiDUorg/weidu/blob/devel/src/tp.ml#L98

@@ -13,6 +13,12 @@ local builtins = new Mapping<String, Step> {
 }
 
 local local_hooks = new Mapping<String, Step> {
+  ["codespell"] {
+    glob = List("**/*.rs", "readme.md")
+    exclude = List("target/**", "fixtures/**", "hk.pkl")
+    check = "codespell -c {{files}}"
+    fix = "codespell -cw {{files}}"
+  }
   ["cargo-fmt"] {
     glob = "**/*.rs"
     check = "cargo fmt --all"
@@ -33,12 +39,6 @@ local local_hooks = new Mapping<String, Step> {
   }
   ["git-check"] {
     check = "scripts/check-git.sh"
-  }
-  ["codespell"] {
-    glob = List("**/*.rs", "readme.md")
-    exclude = List("target/**", "fixtures/**", "hk.pkl")
-    check = "codespell -c {{files}}"
-    fix = "codespell -cw {{files}}"
   }
 }
 

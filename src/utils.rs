@@ -14,7 +14,7 @@ use tempfile::tempfile;
 use url::{Host, Url};
 use walkdir::WalkDir;
 
-use crate::weidu_component::WeiduComponent;
+use crate::weidu::component::WeiduComponent;
 
 pub fn delete_folder(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
     if path.as_ref().exists() {

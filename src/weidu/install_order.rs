@@ -1,6 +1,6 @@
 use std::{error::Error, slice::Iter};
 
-use crate::{weidu_batched_components::WeiduBatchedComponents, weidu_component::WeiduComponent};
+use crate::{weidu::batched_components::WeiduBatchedComponents, weidu::component::WeiduComponent};
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct WeiduBatchedInstallOrder(Vec<WeiduBatchedComponents>);

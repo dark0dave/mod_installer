@@ -1,3 +1,4 @@
+use std::ffi::{OsStr, OsString};
 use std::io::{BufReader, Read};
 use std::{error::Error, process::Command, process::Stdio};
 
@@ -8,35 +9,35 @@ use crate::scan_langauges::scan_for_langauges;
 use crate::utils::find_all_mods;
 
 fn generate_args_for_list_components_with_game_dir(
-    mod_path: &str,
+    mod_path: &OsStr,
     lang: &str,
-    game_dir: &str,
-) -> Vec<String> {
+    game_dir: &OsStr,
+) -> Vec<OsString> {
     vec![
-        "--game".to_string(),
-        game_dir.to_string(),
-        "--list-components".to_string(),
-        mod_path.to_string(),
-        lang.to_string(),
-        "--no-exit-pause".to_string(),
+        "--game".into(),
+        game_dir.into(),
+        "--list-components".into(),
+        mod_path.into(),
+        lang.into(),
+        "--no-exit-pause".into(),
     ]
 }
 
 pub(crate) fn scan_components(command: &ScanComponents) -> Result<(), Box<dyn Error>> {
-    let mods = find_all_mods(&command.options.mod_directories, command.options.depth);
-    log::trace!("{:?}", mods);
+    let mod_paths = find_all_mods(&command.options.mod_directories, command.options.depth);
+    log::trace!("{:?}", mod_paths);
 
-    for weidu_mod in mods {
+    for mod_path in mod_paths {
         let mod_langs = scan_for_langauges(
-            weidu_mod.to_str().unwrap_or_default(),
+            mod_path.as_os_str(),
             &command.options.weidu_binary,
             &command.filter_by_selected_language,
         )?;
         for mod_lang in mod_langs {
             let weidu_args = generate_args_for_list_components_with_game_dir(
-                weidu_mod.to_str().unwrap_or_default(),
+                mod_path.as_os_str(),
                 &mod_lang,
-                command.game_directory.to_str().unwrap_or_default(),
+                command.game_directory.as_os_str(),
             );
             log::debug!("{:?}", weidu_args);
             let mut run = Command::new(command.options.weidu_binary.clone());

@@ -37,9 +37,10 @@
                 buildInputs = [
                     openssl
                 ];
-                env.RUSTC_VERSION = overrides.toolchain.channel;
-                env.RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
                 env.HK_PKL_BACKEND = "pklr";
+                env.OCAMLRUNPARAM = "s=16M,o=500,O=1000000";
+                env.RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+                env.RUSTC_VERSION = overrides.toolchain.channel;
             };
         });
       packages = forEachSystem (system: {

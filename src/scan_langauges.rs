@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::ffi::{OsStr, OsString};
 use std::io::{BufReader, Read};
 use std::path::Path;
 use std::{error::Error, process::ChildStdout, process::Command, process::Stdio};
@@ -7,21 +8,21 @@ use config::args::ScanLangauges;
 
 use crate::utils::find_all_mods;
 
-fn generate_args_for_list_lang(mod_path: &str) -> Vec<String> {
+fn generate_args_for_list_lang(mod_path: &OsStr) -> Vec<OsString> {
     vec![
-        "--nogame".to_string(),
-        "--list-languages".to_string(),
-        mod_path.to_string(),
-        "--no-exit-pause".to_string(),
+        "--nogame".into(),
+        "--list-languages".into(),
+        mod_path.to_os_string(),
+        "--no-exit-pause".into(),
     ]
 }
 
 pub(crate) fn scan_for_langauges(
-    weidu_mod: &str,
+    mod_path: &OsStr,
     weidu_binary: &Path,
     filter_by_selected_language: &str,
 ) -> Result<HashSet<String>, Box<dyn Error>> {
-    let weidu_args_langs = generate_args_for_list_lang(weidu_mod);
+    let weidu_args_langs = generate_args_for_list_lang(mod_path);
     let mut run = Command::new(weidu_binary);
     let mut output = run
         .args(weidu_args_langs)
@@ -68,7 +69,7 @@ pub(crate) fn scan_langauges(command: &ScanLangauges) -> Result<(), Box<dyn Erro
 
     for weidu_mod in mods {
         let langs = scan_for_langauges(
-            weidu_mod.to_str().unwrap_or_default(),
+            weidu_mod.as_os_str(),
             &command.options.weidu_binary,
             &command.filter_by_selected_language,
         );

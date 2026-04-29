@@ -158,7 +158,7 @@ Options:
 You can optionally supply a language to scan for, please note this is a fuzzy match. Something something I am doing my best here.
 
 ```sh
-mod_installer(.exe) -s -m "." -g "." -f english
+mod_installer(.exe) scan components -g "." -m "." -f english
 ```
 Example output:
 ```sh

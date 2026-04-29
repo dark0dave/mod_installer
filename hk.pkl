@@ -1,5 +1,5 @@
-amends "package://github.com/jdx/hk/releases/download/v1.43.0/hk@1.43.0#/Config.pkl"
-import "package://github.com/jdx/hk/releases/download/v1.43.0/hk@1.43.0#/Builtins.pkl"
+amends "package://github.com/jdx/hk/releases/download/v1.44.2/hk@1.44.2#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.44.2/hk@1.44.2#/Builtins.pkl"
 
 local message = new Mapping<String, Step> {
   ["check-conventional-commit"] = Builtins.check_conventional_commit
@@ -8,13 +8,12 @@ local message = new Mapping<String, Step> {
 local builtins = new Mapping<String, Step> {
   ["check-merge-conflict"] = Builtins.check_merge_conflict
   ["check-case-conflict"] = Builtins.check_case_conflict
-  ["pkl-format"] = Builtins.pkl_format
   ["detect-private-key"] = Builtins.detect_private_key
   ["yamlfmt"] = Builtins.yamlfmt
 }
 
 local local_hooks = new Mapping<String, Step> {
-  ["fmt"] {
+  ["cargo-fmt"] {
     glob = "**/*.rs"
     check = "cargo fmt --all"
     fix = "cargo fmt --all"
@@ -24,11 +23,7 @@ local local_hooks = new Mapping<String, Step> {
     check = "cargo check"
     fix = "cargo fix --allow-dirty --allow-staged"
   }
-  ["cargo-test"] {
-    glob = "**/*.rs"
-    check = "cargo test --workspace"
-  }
-  ["clippy"] {
+  ["cargo-clippy"] {
     glob = "**/*.rs"
     check = "cargo clippy --workspace -- -D warnings"
     fix = "cargo clippy --fix --"

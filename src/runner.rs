@@ -10,17 +10,13 @@ use std::{
     },
 };
 
-use config::{
-    args::Options, log_options::LogOptions, parser_config::ParserConfig, state::State,
-    weidu_log_options::WeiduLogOptions,
-};
+use config::{args::Options, parser_config::ParserConfig, state::State};
 
 use crate::{
-    component::Component,
     internal_log::InternalLog,
+    parser::parse_raw_output,
     raw_reciever::create_raw_reciever,
     utils::{get_user_input, sleep},
-    weidu_parser::parse_raw_output,
 };
 
 #[cfg(windows)]
@@ -194,45 +190,13 @@ pub(crate) fn handle_io(
     handle_result(child, options, result, 0)
 }
 
-fn generate_args(
-    weidu_mod: &Component,
-    weidu_log_mode: Vec<LogOptions>,
-    language: &str,
-    generic_weidu_args: &[String],
-) -> Vec<String> {
-    let mod_name = &weidu_mod.name;
-    let mod_tp_file = &weidu_mod.tp_file;
-    let component_name =
-        format!("{mod_name}{}{mod_tp_file}", std::path::MAIN_SEPARATOR).to_lowercase();
-    let mut args = vec![
-        component_name.clone(),
-        "--force-install".to_string(),
-        weidu_mod.component.to_string(),
-        "--use-lang".to_string(),
-        language.to_string(),
-        "--language".to_string(),
-        weidu_mod.lang.to_string(),
-        "--no-exit-pause".to_string(),
-    ];
-    let component_log = format!("{}-{}.log", mod_name, weidu_mod.component).to_lowercase();
-    args.extend(WeiduLogOptions::new(weidu_log_mode).to_args(&component_log));
-    args.extend_from_slice(generic_weidu_args);
-    args
-}
-
-pub(crate) fn install(
+pub(crate) fn spawn(
     game_directory: &Path,
     parser_config: Arc<ParserConfig>,
-    weidu_mod: &Component,
     options: &Options,
+    weidu_args: &[String],
     bg1_game_directory: Option<&PathBuf>,
 ) -> InstallationResult {
-    let weidu_args = generate_args(
-        weidu_mod,
-        options.weidu_log_mode.clone(),
-        &options.language,
-        &options.generic_weidu_args,
-    );
     log::trace!("{:?}", weidu_args);
     let mut command = Command::new(options.weidu_binary.clone());
     let weidu_process = command.current_dir(game_directory).args(weidu_args);

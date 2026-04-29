@@ -67,7 +67,7 @@ pub(crate) fn scan_langauges(command: &ScanLangauges) -> Result<(), Box<dyn Erro
     let mods = find_all_mods(&command.options.mod_directories, command.options.depth);
     log::trace!("{:?}", mods);
 
-    for weidu_mod in mods {
+    for (_, weidu_mod) in mods {
         let langs = scan_for_langauges(
             weidu_mod.as_os_str(),
             &command.options.weidu_binary,

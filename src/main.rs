@@ -6,21 +6,17 @@ use config::{
 };
 use env_logger::Env;
 use installers::{eet_install, normal_install};
-use scan_components::scan_components;
-use scan_langauges::scan_langauges;
+use scan::components::scan_components;
+use scan::languages::scan_langauges;
 
 mod installers;
 mod internal_log;
 mod parser;
 mod raw_reciever;
 mod runner;
-mod scan_components;
-mod scan_langauges;
+mod scan;
 mod utils;
-mod weidu_batched_components;
-mod weidu_batched_install_order;
-mod weidu_component;
-mod weidu_install_block;
+mod weidu;
 
 const PARSER_CONFIG_LOCATION: &str = "parser";
 

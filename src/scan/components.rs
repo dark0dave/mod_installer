@@ -4,9 +4,9 @@ use std::{error::Error, process::Command, process::Stdio};
 
 use config::args::ScanComponents;
 
-use crate::scan_langauges::scan_for_langauges;
+use crate::scan::languages::scan_for_langauges;
 use crate::utils::find_all_mods;
-use crate::weidu_component::WeiduComponent;
+use crate::weidu::component::WeiduComponent;
 
 fn generate_args_for_list_components_with_game_dir(
     mod_path: &OsStr,

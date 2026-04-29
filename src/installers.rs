@@ -9,9 +9,9 @@ use config::parser_config::ParserConfig;
 use crate::runner::{self, WeiduExitStatus};
 use crate::utils::{copy_folder, find_all_mods, mod_folder_present_in_game_directory};
 use crate::utils::{delete_folder, get_last_installed, search_or_download};
-use crate::weidu_batched_components::WeiduBatchedComponents;
-use crate::weidu_batched_install_order::WeiduBatchedInstallOrder;
-use crate::weidu_install_block::WeiduInstallBlock;
+use crate::weidu::batched_components::WeiduBatchedComponents;
+use crate::weidu::install_block::WeiduInstallBlock;
+use crate::weidu::install_order::WeiduBatchedInstallOrder;
 
 pub(crate) fn normal_install(
     command: &Normal,

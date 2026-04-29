@@ -28,10 +28,11 @@ pub const WEIDU_FILE_NAME: &str = "weidu.exe";
 // https://docs.rs/clap/latest/clap/_derive/index.html#arg-attributes
 #[derive(Parser, Debug, PartialEq)]
 #[command(
+    name = CARGO_PKG_NAME,
     version,
     propagate_version = true,
     styles = styles(),
-    about = format!("{}\n{}", LONG, std::env::var("CARGO_PKG_DESCRIPTION").unwrap_or_default())
+    about = format!("{}\n{}", LONG, env!("CARGO_PKG_DESCRIPTION"))
 )]
 pub struct Args {
     /// Install Type
@@ -336,7 +337,7 @@ fn find_weidu_bin_on_path() -> OsStr {
 }
 
 fn current_work_dir() -> Vec<PathBuf> {
-    vec![std::env::current_dir().unwrap()]
+    vec![std::env::current_dir().unwrap_or_default()]
 }
 
 fn working_dir() -> OsStr {
@@ -512,7 +513,10 @@ mod tests {
                         LogOptions::AutoLog,
                         LogOptions::LogAppend,
                         LogOptions::LogExternal,
-                        LogOptions::Log(log_file_path.into()),
+                        #[cfg(not(target_os = "windows"))]
+                        LogOptions::Log(log_file.path().canonicalize()?),
+                        #[cfg(windows)]
+                        LogOptions::Log(log_file.path()),
                     ],
                     strict_matching: false,
                     download: true,

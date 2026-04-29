@@ -14,8 +14,8 @@
           pkgs = import nixpkgs { inherit system; };
           overrides = (builtins.fromTOML (builtins.readFile ./rust-toolchain.toml));
           remote = builtins.fetchTarball {
-            url = "https://github.com/jdx/hk/archive/refs/tags/v1.43.0.tar.gz";
-            sha256 = "0m7xjcsc7rv8pr3pyq5dx1j00bl51ik30ci51i4s11n0b7fqiix8";
+            url = "https://github.com/jdx/hk/archive/refs/tags/v1.44.2.tar.gz";
+            sha256 = "0a045ixfkj79f9nkiw598vraifv1dj744c6wjxbfaz478xli37rw";
           };
           hk = pkgs.callPackage (remote + "/default.nix") { };
         in {
@@ -39,6 +39,7 @@
                 ];
                 env.RUSTC_VERSION = overrides.toolchain.channel;
                 env.RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
+                env.HK_PKL_BACKEND = "pklr";
             };
         });
       packages = forEachSystem (system: {

@@ -1,8 +1,9 @@
 use config::args::Options;
 use core::time;
 use std::{
-    collections::HashSet,
+    collections::HashMap,
     error::Error,
+    ffi::OsString,
     fs::{self, File},
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
@@ -13,7 +14,7 @@ use tempfile::tempfile;
 use url::{Host, Url};
 use walkdir::WalkDir;
 
-use crate::{component::Component, log_file::LogFile};
+use crate::weidu_component::WeiduComponent;
 
 pub fn delete_folder(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
     if path.as_ref().exists() {
@@ -71,7 +72,7 @@ pub fn mod_folder_present_in_game_directory(game_directory: &Path, mod_name: &st
 
 pub fn search_mod_folders(
     folder_directories: &[PathBuf],
-    weidu_mod: &Component,
+    weidu_mod: &WeiduComponent,
     depth: usize,
 ) -> Result<PathBuf, Box<dyn Error>> {
     folder_directories
@@ -80,7 +81,11 @@ pub fn search_mod_folders(
         .ok_or(format!("Could not find {weidu_mod:#?} mod folder ").into())
 }
 
-fn find_mod_folder(mod_component: &Component, mod_dir: &Path, depth: usize) -> Option<PathBuf> {
+fn find_mod_folder(
+    mod_component: &WeiduComponent,
+    mod_dir: &Path,
+    depth: usize,
+) -> Option<PathBuf> {
     WalkDir::new(mod_dir)
         .follow_links(true)
         .max_depth(depth)
@@ -122,7 +127,7 @@ fn find_similar_parrents(path: PathBuf, tp2_files: Vec<PathBuf>) -> Vec<PathBuf>
     out
 }
 
-pub(crate) fn find_all_mods(mod_dirs: &[PathBuf], depth: usize) -> HashSet<PathBuf> {
+pub(crate) fn find_all_mods(mod_dirs: &[PathBuf], depth: usize) -> HashMap<OsString, PathBuf> {
     let tp2_files: Vec<PathBuf> = mod_dirs
         .iter()
         .flat_map(|mod_dir| {
@@ -144,50 +149,21 @@ pub(crate) fn find_all_mods(mod_dirs: &[PathBuf], depth: usize) -> HashSet<PathB
                 })
         })
         .collect();
-    let mut out = HashSet::new();
+    let mut out = HashMap::new();
     for tp2_file in tp2_files.iter() {
         if find_similar_parrents(tp2_file.clone(), tp2_files.clone()).is_empty() {
-            out.insert(tp2_file.to_path_buf());
+            out.insert(
+                tp2_file.file_name().unwrap_or_default().to_os_string(),
+                tp2_file.to_path_buf(),
+            );
         }
     }
     out
 }
 
-pub(crate) fn find_mods(
-    log_file: &Path,
-    skip_installed: bool,
-    game_directory: &Path,
-    strict_matching: bool,
-) -> Result<LogFile, Box<dyn Error>> {
-    let mut mods = LogFile::try_from(log_file.to_path_buf())?;
-    let number_of_mods_found = mods.len();
-    let mods_to_be_installed = if skip_installed {
-        let existing_weidu_log_file_path = game_directory.join("weidu").with_extension("log");
-        if let Ok(installed_mods) = LogFile::try_from(existing_weidu_log_file_path) {
-            for installed_mod in &installed_mods {
-                if strict_matching {
-                    mods.retain(|mod_to_install| installed_mod.strict_matching(mod_to_install));
-                } else {
-                    mods.retain(|mod_to_install| installed_mod != mod_to_install);
-                }
-            }
-        }
-        mods
-    } else {
-        mods
-    };
-
-    log::info!(
-        "Number of mods found: {}, Number of mods to be installed: {}",
-        number_of_mods_found,
-        mods_to_be_installed.len()
-    );
-    Ok(mods_to_be_installed)
-}
-
 pub fn search_or_download(
     options: &Options,
-    weidu_mod: &Component,
+    weidu_mod: &WeiduComponent,
 ) -> Result<PathBuf, Box<dyn Error>> {
     if let Ok(found_mod) = search_mod_folders(&options.mod_directories, weidu_mod, options.depth) {
         return Ok(found_mod);
@@ -200,7 +176,7 @@ pub fn search_or_download(
     }
 }
 
-pub fn try_download_mod(weidu_mod: &Component, tick: u64) -> Result<PathBuf, Box<dyn Error>> {
+pub fn try_download_mod(weidu_mod: &WeiduComponent, tick: u64) -> Result<PathBuf, Box<dyn Error>> {
     log::info!("Please provide mod url, or exit");
     let user_input = get_user_input(tick)?;
     let url = Url::parse(&user_input)?;
@@ -218,11 +194,11 @@ pub fn try_download_mod(weidu_mod: &Component, tick: u64) -> Result<PathBuf, Box
     }
 }
 
-pub fn get_last_installed(game_dir: &Path) -> Result<Component, Box<dyn Error>> {
+pub fn get_last_installed(game_dir: &Path) -> Result<WeiduComponent, Box<dyn Error>> {
     let file = File::open(game_dir.join("weidu.log"))?;
     let reader = BufReader::new(file);
     let last_line = reader.lines().last().ok_or("")??;
-    Component::try_from(last_line)
+    WeiduComponent::try_from(last_line)
 }
 
 pub fn sleep(millis: u64) {
@@ -255,7 +231,7 @@ mod tests {
 
     #[test]
     fn finds_mod_folder() -> Result<(), Box<dyn Error>> {
-        let mod_component = Component {
+        let mod_component = WeiduComponent {
             tp_file: "TEST.TP2".to_string(),
             name: "test_mod_name_1".to_string(),
             lang: "0".to_string(),
@@ -269,26 +245,6 @@ mod tests {
         let expected =
             Path::new(&format!("fixtures/mods/mod_a/{}", mod_component.name)).to_path_buf();
         assert_eq!(mod_folder, Some(expected));
-        Ok(())
-    }
-
-    #[test]
-    fn test_find_mods() -> Result<(), Box<dyn Error>> {
-        let log_file = PathBuf::from("./fixtures/test.log");
-        let game_directory = PathBuf::from("./fixtures");
-        let result = find_mods(&log_file, false, &game_directory, false)?;
-        let expected = LogFile::try_from(log_file)?;
-        assert_eq!(expected, result);
-        Ok(())
-    }
-
-    #[test]
-    fn test_find_mods_skip_installed() -> Result<(), Box<dyn Error>> {
-        let log_file = PathBuf::from("./fixtures/test.log");
-        let game_directory = PathBuf::from("./fixtures");
-        let result = find_mods(&log_file, true, &game_directory, false)?;
-        let expected = LogFile::try_from(PathBuf::from("./fixtures/expected.log"))?;
-        assert_eq!(expected, result);
         Ok(())
     }
 

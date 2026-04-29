@@ -6,19 +6,21 @@ use config::{
 };
 use env_logger::Env;
 use installers::{eet_install, normal_install};
-use scan::scan_components;
+use scan_components::scan_components;
 use scan_langauges::scan_langauges;
 
-mod component;
 mod installers;
 mod internal_log;
-mod log_file;
+mod parser;
 mod raw_reciever;
-mod scan;
+mod runner;
+mod scan_components;
 mod scan_langauges;
 mod utils;
-mod weidu;
-mod weidu_parser;
+mod weidu_batched_components;
+mod weidu_batched_install_order;
+mod weidu_component;
+mod weidu_install_block;
 
 const PARSER_CONFIG_LOCATION: &str = "parser";
 
@@ -37,10 +39,10 @@ fn main() -> ExitCode {
     };
 
     match status {
-        Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
             log::error!("{err}");
             ExitCode::FAILURE
         }
+        _ => ExitCode::SUCCESS,
     }
 }

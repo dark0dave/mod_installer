@@ -4,9 +4,9 @@ use std::{error::Error, process::Command, process::Stdio};
 
 use config::args::ScanComponents;
 
-use crate::component::Component;
 use crate::scan_langauges::scan_for_langauges;
 use crate::utils::find_all_mods;
+use crate::weidu_component::WeiduComponent;
 
 fn generate_args_for_list_components_with_game_dir(
     mod_path: &OsStr,
@@ -27,7 +27,7 @@ pub(crate) fn scan_components(command: &ScanComponents) -> Result<(), Box<dyn Er
     let mod_paths = find_all_mods(&command.options.mod_directories, command.options.depth);
     log::trace!("{:?}", mod_paths);
 
-    for mod_path in mod_paths {
+    for (_, mod_path) in mod_paths {
         let mod_langs = scan_for_langauges(
             mod_path.as_os_str(),
             &command.options.weidu_binary,
@@ -58,7 +58,7 @@ pub(crate) fn scan_components(command: &ScanComponents) -> Result<(), Box<dyn Er
                 weidu_output
                     .split("\n")
                     .filter(|x| (*x).starts_with("~"))
-                    .flat_map(|comp| Component::try_from(comp.to_string()))
+                    .flat_map(|comp| WeiduComponent::try_from(comp.to_string()))
                     .for_each(|comp| println!("{:?}", comp))
             }
         }

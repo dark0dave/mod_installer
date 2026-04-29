@@ -1,9 +1,13 @@
 use std::error::Error;
 
+use config::{log_options::LogOptions, weidu_log_options::WeiduLogOptions};
+
+use crate::weidu_install_block::WeiduInstallBlock;
+
 // This should mirror the weidu component
 // https://github.com/WeiDUorg/weidu/blob/devel/src/tp.ml#L98
-#[derive(Debug, PartialOrd, Clone)]
-pub(crate) struct Component {
+#[derive(Debug, PartialOrd, Clone, Default)]
+pub(crate) struct WeiduComponent {
     pub(crate) tp_file: String,
     pub(crate) name: String,
     pub(crate) lang: String,
@@ -13,7 +17,7 @@ pub(crate) struct Component {
     pub(crate) version: String,
 }
 
-impl PartialEq for Component {
+impl PartialEq for WeiduComponent {
     fn eq(&self, other: &Self) -> bool {
         self.tp_file == other.tp_file
             && self.name.to_lowercase() == other.name.to_lowercase()
@@ -22,16 +26,20 @@ impl PartialEq for Component {
     }
 }
 
-impl Component {
+impl WeiduComponent {
     pub(crate) fn strict_matching(&self, other: &Self) -> bool {
         self.eq(other)
             && self.component_name == other.component_name
             && self.sub_component == other.sub_component
             && self.version == other.version
     }
+
+    pub(crate) fn full_component_name(&self) -> String {
+        format!("{}{}{}", self.name, std::path::MAIN_SEPARATOR, self.tp_file).to_lowercase()
+    }
 }
 
-impl TryFrom<String> for Component {
+impl TryFrom<String> for WeiduComponent {
     type Error = Box<dyn Error>;
 
     fn try_from(line: String) -> Result<Self, Self::Error> {
@@ -125,6 +133,32 @@ impl TryFrom<String> for Component {
     }
 }
 
+impl WeiduInstallBlock for WeiduComponent {
+    fn generate_weidu_args(
+        &self,
+        weidu_log_mode: Vec<LogOptions>,
+        language: &str,
+        generic_weidu_args: &[String],
+    ) -> Vec<String> {
+        let mut args = vec![
+            self.full_component_name(),
+            "--force-install".to_string(),
+            self.component.to_string(),
+            "--use-lang".to_string(),
+            language.to_string(),
+            "--language".to_string(),
+            self.lang.to_string(),
+            "--no-exit-pause".to_string(),
+        ];
+        args.extend(WeiduLogOptions::new(weidu_log_mode).to_args(&self.log_file_name()));
+        args.extend_from_slice(generic_weidu_args);
+        args
+    }
+    fn log_file_name(&self) -> String {
+        format!("{}-{}.log", self.name, self.component).to_lowercase()
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -134,8 +168,8 @@ mod tests {
     #[test]
     fn test_parse_windows() -> Result<(), Box<dyn Error>> {
         let mod_string = r"~TOBEX\TOBEX.TP2~ #0 #100 // TobEx - Core: v28";
-        let mod_component = Component::try_from(mod_string.to_string())?;
-        let expected = Component {
+        let mod_component = WeiduComponent::try_from(mod_string.to_string())?;
+        let expected = WeiduComponent {
             tp_file: "TOBEX.TP2".to_string(),
             name: "tobex".to_string(),
             lang: "0".to_string(),
@@ -150,7 +184,7 @@ mod tests {
 
     #[test]
     fn test_strict_match() -> Result<(), Box<dyn Error>> {
-        let non_strict_match_1 = Component {
+        let non_strict_match_1 = WeiduComponent {
             tp_file: "TOBEX.TP2".to_string(),
             name: "tobex".to_string(),
             lang: "0".to_string(),
@@ -160,7 +194,7 @@ mod tests {
             version: "v28".to_string(),
         };
 
-        let non_strict_match_2 = Component {
+        let non_strict_match_2 = WeiduComponent {
             tp_file: "TOBEX.TP2".to_string(),
             name: "tobex".to_string(),
             lang: "0".to_string(),

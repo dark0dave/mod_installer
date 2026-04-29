@@ -303,6 +303,17 @@ pub struct Options {
     /// Generic weidu args
     #[clap(short = 'k', long, use_value_delimiter = true, value_delimiter = ',')]
     pub generic_weidu_args: Vec<String>,
+
+    /// Batch mode
+    #[clap(
+        env,
+        long,
+        num_args=0..=1,
+        action = clap::ArgAction::SetTrue,
+        default_value_t = false,
+        value_parser = BoolishValueParser::new(),
+    )]
+    pub batch_mode: bool,
 }
 
 pub fn path_must_exist(arg: &str) -> Result<PathBuf, std::io::Error> {
@@ -401,6 +412,7 @@ mod tests {
                         casefold: false,
                         never_abort: false,
                         generic_weidu_args: vec![],
+                        batch_mode: false,
                     },
                 }),
             };
@@ -462,6 +474,7 @@ mod tests {
                     casefold: false,
                     never_abort: false,
                     generic_weidu_args: vec![],
+                    batch_mode: false,
                 },
                 new_pre_eet_dir: None,
                 new_eet_dir: Some("test".into()),
@@ -527,6 +540,7 @@ mod tests {
                     casefold: false,
                     never_abort: false,
                     generic_weidu_args: vec![],
+                    batch_mode: false,
                 },
             }),
         };

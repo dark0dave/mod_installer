@@ -7,8 +7,7 @@ use std::{
     thread,
 };
 
-use config::{args::Options, parser_config::ParserConfig, state::State};
-
+use crate::config::{args::Options, parser_config::ParserConfig, state::State};
 use crate::utils::sleep;
 
 #[derive(Debug)]

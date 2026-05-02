@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::{meta::Metadata, state::State};
+use crate::{config::meta::Metadata, config::state::State};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ParserConfig {

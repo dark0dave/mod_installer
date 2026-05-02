@@ -2,8 +2,7 @@ use std::ffi::{OsStr, OsString};
 use std::io::{BufReader, Read};
 use std::{error::Error, process::Command, process::Stdio};
 
-use config::args::ScanComponents;
-
+use crate::config::args::ScanComponents;
 use crate::scan::languages::scan_for_langauges;
 use crate::utils::find_all_mods;
 use crate::weidu::component::WeiduComponent;

@@ -1,4 +1,4 @@
-use config::args::Options;
+use crate::config::args::Options;
 use core::time;
 use std::{
     collections::HashMap,

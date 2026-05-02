@@ -1163,7 +1163,7 @@ dependencies = [
 
 [[package]]
 name = "mod_installer"
-version = "14.6.0"
+version = "15.0.0"
 dependencies = [
  "anstyle",
  "clap",

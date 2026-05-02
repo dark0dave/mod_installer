@@ -1,14 +1,14 @@
 use crate::config::args::Options;
 use core::time;
 use std::{
-    collections::HashMap,
-    error::Error,
-    ffi::OsString,
-    fs::{self, File},
-    io::{BufRead, BufReader},
-    path::{Path, PathBuf},
-    process::Command,
-    thread,
+  collections::HashMap,
+  error::Error,
+  ffi::OsString,
+  fs::{self, File},
+  io::{BufRead, BufReader},
+  path::{Path, PathBuf},
+  process::Command,
+  thread,
 };
 use tempfile::tempfile;
 use url::{Host, Url};
@@ -17,253 +17,252 @@ use walkdir::WalkDir;
 use crate::weidu::component::WeiduComponent;
 
 pub fn delete_folder(path: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
-    if path.as_ref().exists() {
-        log::debug!("Found {:#?} removing", path.as_ref());
-        fs::remove_dir_all(path)?;
-    }
-    Ok(())
+  if path.as_ref().exists() {
+    log::debug!("Found {:#?} removing", path.as_ref());
+    fs::remove_dir_all(path)?;
+  }
+  Ok(())
 }
 
 pub fn copy_folder(
-    src: impl AsRef<Path>,
-    dst: impl AsRef<Path>,
-    casefold: bool,
+  src: impl AsRef<Path>,
+  dst: impl AsRef<Path>,
+  casefold: bool,
 ) -> Result<(), Box<dyn Error>> {
-    copy_folder_at_depth(src, dst, 0, casefold)
+  copy_folder_at_depth(src, dst, 0, casefold)
 }
 
 fn copy_folder_at_depth(
-    src: impl AsRef<Path>,
-    dst: impl AsRef<Path>,
-    depth: u64,
-    casefold: bool,
+  src: impl AsRef<Path>,
+  dst: impl AsRef<Path>,
+  depth: u64,
+  casefold: bool,
 ) -> Result<(), Box<dyn Error>> {
-    let destination = dst.as_ref();
-    if !destination.exists() {
-        fs::create_dir(destination)?;
-        #[cfg(target_os = "linux")]
-        if depth == 0 && casefold {
-            Command::new("chattr")
-                .arg("+F")
-                .arg(destination.to_str().unwrap_or_default())
-                .output()?;
-        }
+  let destination = dst.as_ref();
+  if !destination.exists() {
+    fs::create_dir(destination)?;
+    #[cfg(target_os = "linux")]
+    if depth == 0 && casefold {
+      Command::new("chattr")
+        .arg("+F")
+        .arg(destination.to_str().unwrap_or_default())
+        .output()?;
     }
-    for entry in fs::read_dir(src.as_ref().canonicalize()?)? {
-        let entry = entry?;
-        let full_path = entry.path().canonicalize()?;
-        if entry.file_type()?.is_dir() {
-            copy_folder_at_depth(
-                full_path,
-                destination.join(entry.file_name()),
-                depth + 1,
-                false,
-            )?;
-        } else {
-            fs::copy(full_path, destination.join(entry.file_name()))?;
-        }
+  }
+  for entry in fs::read_dir(src.as_ref().canonicalize()?)? {
+    let entry = entry?;
+    let full_path = entry.path().canonicalize()?;
+    if entry.file_type()?.is_dir() {
+      copy_folder_at_depth(
+        full_path,
+        destination.join(entry.file_name()),
+        depth + 1,
+        false,
+      )?;
+    } else {
+      fs::copy(full_path, destination.join(entry.file_name()))?;
     }
-    Ok(())
+  }
+  Ok(())
 }
 
 pub fn mod_folder_present_in_game_directory(game_directory: &Path, mod_name: &str) -> bool {
-    game_directory.join(mod_name).is_dir()
+  game_directory.join(mod_name).is_dir()
 }
 
 pub fn search_mod_folders(
-    folder_directories: &[PathBuf],
-    weidu_mod: &WeiduComponent,
-    depth: usize,
+  folder_directories: &[PathBuf],
+  weidu_mod: &WeiduComponent,
+  depth: usize,
 ) -> Result<PathBuf, Box<dyn Error>> {
-    folder_directories
-        .iter()
-        .find_map(|mod_folder| find_mod_folder(weidu_mod, mod_folder, depth))
-        .ok_or(format!("Could not find {weidu_mod:#?} mod folder ").into())
+  folder_directories
+    .iter()
+    .find_map(|mod_folder| find_mod_folder(weidu_mod, mod_folder, depth))
+    .ok_or(format!("Could not find {weidu_mod:#?} mod folder ").into())
 }
 
 fn find_mod_folder(
-    mod_component: &WeiduComponent,
-    mod_dir: &Path,
-    depth: usize,
+  mod_component: &WeiduComponent,
+  mod_dir: &Path,
+  depth: usize,
 ) -> Option<PathBuf> {
-    WalkDir::new(mod_dir)
-        .follow_links(true)
-        .max_depth(depth)
-        .into_iter()
-        .find_map(|entry| match entry {
-            Ok(entry)
-                if entry
-                    .file_name()
-                    .eq_ignore_ascii_case(&mod_component.tp_file) =>
-            {
-                if let Some(parent) = entry.path().parent()
-                    && parent
-                        .file_name()
-                        .unwrap_or_default()
-                        .eq_ignore_ascii_case(&mod_component.name)
-                {
-                    return Some(parent.to_path_buf());
-                }
-                None
-            }
-            _ => None,
-        })
+  WalkDir::new(mod_dir)
+    .follow_links(true)
+    .max_depth(depth)
+    .into_iter()
+    .find_map(|entry| match entry {
+      Ok(entry)
+        if entry
+          .file_name()
+          .eq_ignore_ascii_case(&mod_component.tp_file) =>
+      {
+        if let Some(parent) = entry.path().parent()
+          && parent
+            .file_name()
+            .unwrap_or_default()
+            .eq_ignore_ascii_case(&mod_component.name)
+        {
+          return Some(parent.to_path_buf());
+        }
+        None
+      },
+      _ => None,
+    })
 }
 
 fn find_similar_parrents(path: PathBuf, tp2_files: Vec<PathBuf>) -> Vec<PathBuf> {
-    let mut out = vec![];
-    let mut possible_parrent = path.parent();
-    while let Some(parent) = possible_parrent {
-        for tp2_file in tp2_files.iter() {
-            if tp2_file.to_path_buf() == path {
-                continue;
-            }
-            if tp2_file.parent() == Some(parent) {
-                out.push(tp2_file.to_path_buf());
-            }
-        }
-        possible_parrent = parent.parent();
+  let mut out = vec![];
+  let mut possible_parrent = path.parent();
+  while let Some(parent) = possible_parrent {
+    for tp2_file in tp2_files.iter() {
+      if tp2_file.to_path_buf() == path {
+        continue;
+      }
+      if tp2_file.parent() == Some(parent) {
+        out.push(tp2_file.to_path_buf());
+      }
     }
-    out
+    possible_parrent = parent.parent();
+  }
+  out
 }
 
 pub(crate) fn find_all_mods(mod_dirs: &[PathBuf], depth: usize) -> HashMap<OsString, PathBuf> {
-    let tp2_files: Vec<PathBuf> = mod_dirs
-        .iter()
-        .flat_map(|mod_dir| {
-            WalkDir::new(mod_dir)
-                .follow_links(true)
-                .max_depth(depth)
-                .into_iter()
-                .flatten()
-                .flat_map(move |entry| {
-                    if entry
-                        .file_name()
-                        .to_str()
-                        .unwrap_or_default()
-                        .ends_with(".tp2")
-                    {
-                        return Some(entry.path().to_path_buf());
-                    }
-                    None
-                })
+  let tp2_files: Vec<PathBuf> = mod_dirs
+    .iter()
+    .flat_map(|mod_dir| {
+      WalkDir::new(mod_dir)
+        .follow_links(true)
+        .max_depth(depth)
+        .into_iter()
+        .flatten()
+        .flat_map(move |entry| {
+          if entry
+            .file_name()
+            .to_str()
+            .unwrap_or_default()
+            .ends_with(".tp2")
+          {
+            return Some(entry.path().to_path_buf());
+          }
+          None
         })
-        .collect();
-    let mut out = HashMap::new();
-    for tp2_file in tp2_files.iter() {
-        if find_similar_parrents(tp2_file.clone(), tp2_files.clone()).is_empty() {
-            out.insert(
-                tp2_file.file_name().unwrap_or_default().to_os_string(),
-                tp2_file.to_path_buf(),
-            );
-        }
+    })
+    .collect();
+  let mut out = HashMap::new();
+  for tp2_file in tp2_files.iter() {
+    if find_similar_parrents(tp2_file.clone(), tp2_files.clone()).is_empty() {
+      out.insert(
+        tp2_file.file_name().unwrap_or_default().to_os_string(),
+        tp2_file.to_path_buf(),
+      );
     }
-    out
+  }
+  out
 }
 
 pub fn search_or_download(
-    options: &Options,
-    weidu_mod: &WeiduComponent,
+  options: &Options,
+  weidu_mod: &WeiduComponent,
 ) -> Result<PathBuf, Box<dyn Error>> {
-    if let Ok(found_mod) = search_mod_folders(&options.mod_directories, weidu_mod, options.depth) {
-        return Ok(found_mod);
-    }
-    log::info!("Missing mod: {weidu_mod:#?}");
-    if options.download {
-        try_download_mod(weidu_mod, options.tick)
-    } else {
-        Err("Failed to find mod".into())
-    }
+  if let Ok(found_mod) = search_mod_folders(&options.mod_directories, weidu_mod, options.depth) {
+    return Ok(found_mod);
+  }
+  log::info!("Missing mod: {weidu_mod:#?}");
+  if options.download {
+    try_download_mod(weidu_mod, options.tick)
+  } else {
+    Err("Failed to find mod".into())
+  }
 }
 
 pub fn try_download_mod(weidu_mod: &WeiduComponent, tick: u64) -> Result<PathBuf, Box<dyn Error>> {
-    log::info!("Please provide mod url, or exit");
-    let user_input = get_user_input(tick)?;
-    let url = Url::parse(&user_input)?;
-    if url.host() == Some(Host::Domain("github.com")) {
-        let mut zip_path = tempfile()?;
-        log::info!("Downloading: {url}");
-        reqwest::blocking::get(url.as_str())?.copy_to(&mut zip_path)?;
-        let mut zip = zip::ZipArchive::new(zip_path)?;
-        let dest = tempfile::tempdir()?.path().to_path_buf();
-        zip.extract(dest.clone())?;
-        search_mod_folders(&[dest], weidu_mod, 4)
-    } else {
-        log::error!("Only github is supported");
-        Err("Failed to find mod".into())
-    }
+  log::info!("Please provide mod url, or exit");
+  let user_input = get_user_input(tick)?;
+  let url = Url::parse(&user_input)?;
+  if url.host() == Some(Host::Domain("github.com")) {
+    let mut zip_path = tempfile()?;
+    log::info!("Downloading: {url}");
+    reqwest::blocking::get(url.as_str())?.copy_to(&mut zip_path)?;
+    let mut zip = zip::ZipArchive::new(zip_path)?;
+    let dest = tempfile::tempdir()?.path().to_path_buf();
+    zip.extract(dest.clone())?;
+    search_mod_folders(&[dest], weidu_mod, 4)
+  } else {
+    log::error!("Only github is supported");
+    Err("Failed to find mod".into())
+  }
 }
 
 pub fn get_last_installed(game_dir: &Path) -> Result<WeiduComponent, Box<dyn Error>> {
-    let file = File::open(game_dir.join("weidu.log"))?;
-    let reader = BufReader::new(file);
-    let last_line = reader.lines().last().ok_or("")??;
-    WeiduComponent::try_from(last_line)
+  let file = File::open(game_dir.join("weidu.log"))?;
+  let reader = BufReader::new(file);
+  let last_line = reader.lines().last().ok_or("")??;
+  WeiduComponent::try_from(last_line)
 }
 
 pub fn sleep(millis: u64) {
-    let duration = time::Duration::from_millis(millis);
-    thread::sleep(duration);
+  let duration = time::Duration::from_millis(millis);
+  thread::sleep(duration);
 }
 
 pub fn get_user_input(tick: u64) -> Result<String, Box<dyn Error>> {
-    let stdin = std::io::stdin();
-    let mut input = String::new();
-    loop {
-        input.clear();
-        match stdin.read_line(&mut input) {
-            Err(err) => return Err(err.into()),
-            Ok(0) => {
-                // No stdin available yet (EOF); wait and retry.
-                sleep(tick);
-            }
-            Ok(_) => break,
-        }
+  let stdin = std::io::stdin();
+  let mut input = String::new();
+  loop {
+    input.clear();
+    match stdin.read_line(&mut input) {
+      Err(err) => return Err(err.into()),
+      Ok(0) => {
+        // No stdin available yet (EOF); wait and retry.
+        sleep(tick);
+      },
+      Ok(_) => break,
     }
-    Ok(input.to_string())
+  }
+  Ok(input.to_string())
 }
 
 #[cfg(test)]
 mod tests {
 
-    use super::*;
-    use pretty_assertions::assert_eq;
+  use super::*;
+  use pretty_assertions::assert_eq;
 
-    #[test]
-    fn finds_mod_folder() -> Result<(), Box<dyn Error>> {
-        let mod_component = WeiduComponent {
-            tp_file: "TEST.TP2".to_string(),
-            name: "test_mod_name_1".to_string(),
-            lang: "0".to_string(),
-            component: "0".to_string(),
-            component_name: "".to_string(),
-            sub_component: "".to_string(),
-            version: "".to_string(),
-        };
-        let mod_folder = find_mod_folder(&mod_component, Path::new("fixtures/mods"), 3);
+  #[test]
+  fn finds_mod_folder() -> Result<(), Box<dyn Error>> {
+    let mod_component = WeiduComponent {
+      tp_file: "TEST.TP2".to_string(),
+      name: "test_mod_name_1".to_string(),
+      lang: "0".to_string(),
+      component: "0".to_string(),
+      component_name: "".to_string(),
+      sub_component: "".to_string(),
+      version: "".to_string(),
+    };
+    let mod_folder = find_mod_folder(&mod_component, Path::new("fixtures/mods"), 3);
 
-        let expected =
-            Path::new(&format!("fixtures/mods/mod_a/{}", mod_component.name)).to_path_buf();
-        assert_eq!(mod_folder, Some(expected));
-        Ok(())
+    let expected = Path::new(&format!("fixtures/mods/mod_a/{}", mod_component.name)).to_path_buf();
+    assert_eq!(mod_folder, Some(expected));
+    Ok(())
+  }
+
+  #[test]
+  fn test_find_similar_parents() -> Result<(), Box<dyn Error>> {
+    let tp2s: Vec<PathBuf> = vec![
+      Path::new("/Steam/steamapps/common/bg2/questpack/setup-questpack.tp2").into(),
+      Path::new("/Steam/steamapps/common/bg2/questpack/simwork/goldreq.tp2").into(),
+      Path::new("/Steam/steamapps/common/bg2/chickens/chicken.tp2").into(),
+    ];
+    let similars: Vec<Vec<PathBuf>> = vec![
+      vec![],
+      vec![Path::new("/Steam/steamapps/common/bg2/questpack/setup-questpack.tp2").into()],
+      vec![],
+    ];
+    for (i, tp2) in tp2s.iter().enumerate() {
+      let similar = find_similar_parrents(tp2.to_path_buf(), tp2s.clone());
+      assert_eq!(similar, similars[i]);
     }
-
-    #[test]
-    fn test_find_similar_parents() -> Result<(), Box<dyn Error>> {
-        let tp2s: Vec<PathBuf> = vec![
-            Path::new("/Steam/steamapps/common/bg2/questpack/setup-questpack.tp2").into(),
-            Path::new("/Steam/steamapps/common/bg2/questpack/simwork/goldreq.tp2").into(),
-            Path::new("/Steam/steamapps/common/bg2/chickens/chicken.tp2").into(),
-        ];
-        let similars: Vec<Vec<PathBuf>> = vec![
-            vec![],
-            vec![Path::new("/Steam/steamapps/common/bg2/questpack/setup-questpack.tp2").into()],
-            vec![],
-        ];
-        for (i, tp2) in tp2s.iter().enumerate() {
-            let similar = find_similar_parrents(tp2.to_path_buf(), tp2s.clone());
-            assert_eq!(similar, similars[i]);
-        }
-        Ok(())
-    }
+    Ok(())
+  }
 }

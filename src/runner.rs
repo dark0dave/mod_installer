@@ -1,21 +1,21 @@
 use std::{
-    error::Error,
-    io::Write,
-    path::{Path, PathBuf},
-    process::{Child, ChildStdin, Command, Stdio},
-    sync::{
-        Arc,
-        atomic::AtomicUsize,
-        mpsc::{self, Receiver, TryRecvError},
-    },
+  error::Error,
+  io::Write,
+  path::{Path, PathBuf},
+  process::{Child, ChildStdin, Command, Stdio},
+  sync::{
+    Arc,
+    atomic::AtomicUsize,
+    mpsc::{self, Receiver, TryRecvError},
+  },
 };
 
 use crate::{
-    config::{args::Options, parser_config::ParserConfig, state::State},
-    internal_log::InternalLog,
-    parser::parse_raw_output,
-    raw_reciever::create_raw_reciever,
-    utils::{get_user_input, sleep},
+  config::{args::Options, parser_config::ParserConfig, state::State},
+  internal_log::InternalLog,
+  parser::parse_raw_output,
+  raw_reciever::create_raw_reciever,
+  utils::{get_user_input, sleep},
 };
 
 #[cfg(windows)]
@@ -24,198 +24,196 @@ pub(crate) const LINE_ENDING: &str = "\r\n";
 pub(crate) const LINE_ENDING: &str = "\n";
 
 pub(crate) enum WeiduExitStatus {
-    Success,
-    Warnings(String),
+  Success,
+  Warnings(String),
 }
 
 pub(crate) type InstallationResult = Result<WeiduExitStatus, Box<dyn Error>>;
 
 fn run(
-    options: &Options,
-    mut weidu_stdin: ChildStdin,
-    log: InternalLog,
-    eet_auto_fill: &str,
-    parsed_output_receiver: Receiver<State>,
-    wait_count: Arc<AtomicUsize>,
-    bg1_game_directory: Option<&PathBuf>,
+  options: &Options,
+  mut weidu_stdin: ChildStdin,
+  log: InternalLog,
+  eet_auto_fill: &str,
+  parsed_output_receiver: Receiver<State>,
+  wait_count: Arc<AtomicUsize>,
+  bg1_game_directory: Option<&PathBuf>,
 ) -> Result<WeiduExitStatus, Box<dyn Error + 'static>> {
-    let mut eet_check_completed = false;
-    loop {
-        match parsed_output_receiver.try_recv() {
-            Ok(state) => {
-                log::debug!("Current installer state is {state:?}");
-                match state {
-                    State::Completed => {
-                        log::debug!("Weidu process completed");
-                        return Ok(WeiduExitStatus::Success);
-                    }
-                    State::CompletedWithWarnings => {
-                        log::warn!("Weidu process seem to have completed with warnings");
-                        let weidu_log = log.read();
-                        log::warn!("Dumping log: {weidu_log}");
-                        return Ok(WeiduExitStatus::Warnings(
-                            "Weidu process exited with warnings".to_string(),
-                        ));
-                    }
-                    State::CompletedWithErrors { error_details } => {
-                        log::error!("Weidu process seem to have completed with errors");
-                        let weidu_log = log.read();
-                        log::error!("Dumping log: {weidu_log}");
-                        return Err(error_details.into());
-                    }
-                    State::TimedOut => {
-                        let max_time = options.timeout;
-                        log::error!(
-                            "Weidu process seem to have been running for {max_time} seconds, exiting"
-                        );
-                        let weidu_log = log.read();
-                        log::error!("Dumping log: {weidu_log}");
-                        return Err("Timed out".into());
-                    }
-                    State::InProgress => {
-                        log::debug!("In progress...");
-                    }
-                    #[cfg(target_os = "linux")]
-                    State::RequiresInput { question }
-                        if bg1_game_directory.is_some()
-                            && !eet_check_completed
-                            && question.contains(eet_auto_fill) =>
-                    {
-                        log::info!("🚨🚨🚨DETECTED EET INSTALL, AUTO FILL ENABLED🚨🚨🚨");
-                        let pre_eet_directory = &format!(
-                            "{}\n",
-                            bg1_game_directory
-                                .unwrap()
-                                .as_os_str()
-                                .to_str()
-                                .unwrap_or_default()
-                        );
-                        log::info!("Sending {}", pre_eet_directory);
-                        weidu_stdin.write_all(pre_eet_directory.as_bytes())?;
-                        eet_check_completed = true;
-                        log::debug!("Input sent");
-                    }
-                    State::RequiresInput { question } => {
-                        log::info!("User Input required");
-                        log::info!("Question is");
-                        log::info!("{question}\n");
-                        let user_input = get_user_input(options.tick)?;
-                        log::debug!("Read user input {user_input}, sending it to process ");
-                        weidu_stdin.write_all(user_input.as_bytes())?;
-                        log::debug!("Input sent");
-                    }
-                }
-            }
-            Err(TryRecvError::Empty) => {
-                wait_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                log::trace!("Receiver is sleeping");
-                sleep(options.tick);
-            }
-            Err(TryRecvError::Disconnected) => return Ok(WeiduExitStatus::Success),
+  let mut eet_check_completed = false;
+  loop {
+    match parsed_output_receiver.try_recv() {
+      Ok(state) => {
+        log::debug!("Current installer state is {state:?}");
+        match state {
+          State::Completed => {
+            log::debug!("Weidu process completed");
+            return Ok(WeiduExitStatus::Success);
+          },
+          State::CompletedWithWarnings => {
+            log::warn!("Weidu process seem to have completed with warnings");
+            let weidu_log = log.read();
+            log::warn!("Dumping log: {weidu_log}");
+            return Ok(WeiduExitStatus::Warnings(
+              "Weidu process exited with warnings".to_string(),
+            ));
+          },
+          State::CompletedWithErrors { error_details } => {
+            log::error!("Weidu process seem to have completed with errors");
+            let weidu_log = log.read();
+            log::error!("Dumping log: {weidu_log}");
+            return Err(error_details.into());
+          },
+          State::TimedOut => {
+            let max_time = options.timeout;
+            log::error!("Weidu process seem to have been running for {max_time} seconds, exiting");
+            let weidu_log = log.read();
+            log::error!("Dumping log: {weidu_log}");
+            return Err("Timed out".into());
+          },
+          State::InProgress => {
+            log::debug!("In progress...");
+          },
+          #[cfg(target_os = "linux")]
+          State::RequiresInput { question }
+            if bg1_game_directory.is_some()
+              && !eet_check_completed
+              && question.contains(eet_auto_fill) =>
+          {
+            log::info!("🚨🚨🚨DETECTED EET INSTALL, AUTO FILL ENABLED🚨🚨🚨");
+            let pre_eet_directory = &format!(
+              "{}\n",
+              bg1_game_directory
+                .unwrap()
+                .as_os_str()
+                .to_str()
+                .unwrap_or_default()
+            );
+            log::info!("Sending {}", pre_eet_directory);
+            weidu_stdin.write_all(pre_eet_directory.as_bytes())?;
+            eet_check_completed = true;
+            log::debug!("Input sent");
+          },
+          State::RequiresInput { question } => {
+            log::info!("User Input required");
+            log::info!("Question is");
+            log::info!("{question}\n");
+            let user_input = get_user_input(options.tick)?;
+            log::debug!("Read user input {user_input}, sending it to process ");
+            weidu_stdin.write_all(user_input.as_bytes())?;
+            log::debug!("Input sent");
+          },
         }
+      },
+      Err(TryRecvError::Empty) => {
+        wait_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        log::trace!("Receiver is sleeping");
+        sleep(options.tick);
+      },
+      Err(TryRecvError::Disconnected) => return Ok(WeiduExitStatus::Success),
     }
+  }
 }
 
 fn handle_result(
-    mut child: Child,
-    options: &Options,
-    result: Result<WeiduExitStatus, Box<dyn Error>>,
-    retry: i8,
+  mut child: Child,
+  options: &Options,
+  result: Result<WeiduExitStatus, Box<dyn Error>>,
+  retry: i8,
 ) -> Result<WeiduExitStatus, Box<dyn Error>> {
-    match child.try_wait() {
-        Ok(Some(exit)) if !exit.success() && exit.code() != Some(3) => {
-            InstallationResult::Err(format!("Weidu command failed with exit status: {exit}").into())
-        }
-        Ok(Some(exit)) => {
-            log::debug!("Weidu exit status: {exit}");
-            result
-        }
-        Ok(None) if retry < 3 => {
-            log::debug!("Weidu not finished, sleeping then retrying, retry attempt number {retry}");
-            sleep(options.tick);
-            handle_result(child, options, result, retry + 1)
-        }
-        Ok(None) => {
-            log::warn!("Weidu not finished, exiting anyway");
-            result
-        }
-        Err(err) => {
-            log::error!("Failed to close weidu process: {err}");
-            InstallationResult::Err(err.into())
-        }
-    }
+  match child.try_wait() {
+    Ok(Some(exit)) if !exit.success() && exit.code() != Some(3) => {
+      InstallationResult::Err(format!("Weidu command failed with exit status: {exit}").into())
+    },
+    Ok(Some(exit)) => {
+      log::debug!("Weidu exit status: {exit}");
+      result
+    },
+    Ok(None) if retry < 3 => {
+      log::debug!("Weidu not finished, sleeping then retrying, retry attempt number {retry}");
+      sleep(options.tick);
+      handle_result(child, options, result, retry + 1)
+    },
+    Ok(None) => {
+      log::warn!("Weidu not finished, exiting anyway");
+      result
+    },
+    Err(err) => {
+      log::error!("Failed to close weidu process: {err}");
+      InstallationResult::Err(err.into())
+    },
+  }
 }
 
 pub(crate) fn handle_io(
-    mut child: Child,
-    parser_config: Arc<ParserConfig>,
-    options: &Options,
-    bg1_game_directory: Option<&PathBuf>,
+  mut child: Child,
+  parser_config: Arc<ParserConfig>,
+  options: &Options,
+  bg1_game_directory: Option<&PathBuf>,
 ) -> InstallationResult {
-    let weidu_stdin = child
-        .stdin
-        .take()
-        .ok_or("Failed to get weidu standard in")?;
-    let weidu_stdout = child
-        .stdout
-        .take()
-        .ok_or("Failed to get weidu standard out")?;
-    let weidu_stderr = child
-        .stderr
-        .take()
-        .ok_or("Failed to get weidu standard error")?;
-    let log = InternalLog::new();
-    let raw_output_receiver = create_raw_reciever(weidu_stdout, weidu_stderr, log.clone());
-    let (sender, parsed_output_receiver) = mpsc::channel::<State>();
+  let weidu_stdin = child
+    .stdin
+    .take()
+    .ok_or("Failed to get weidu standard in")?;
+  let weidu_stdout = child
+    .stdout
+    .take()
+    .ok_or("Failed to get weidu standard out")?;
+  let weidu_stderr = child
+    .stderr
+    .take()
+    .ok_or("Failed to get weidu standard error")?;
+  let log = InternalLog::new();
+  let raw_output_receiver = create_raw_reciever(weidu_stdout, weidu_stderr, log.clone());
+  let (sender, parsed_output_receiver) = mpsc::channel::<State>();
 
-    let wait_count = Arc::new(AtomicUsize::new(0));
-    parse_raw_output(
-        options,
-        sender,
-        raw_output_receiver,
-        parser_config.clone(),
-        wait_count.clone(),
-    );
+  let wait_count = Arc::new(AtomicUsize::new(0));
+  parse_raw_output(
+    options,
+    sender,
+    raw_output_receiver,
+    parser_config.clone(),
+    wait_count.clone(),
+  );
 
-    let result = run(
-        options,
-        weidu_stdin,
-        log,
-        &parser_config.eet_auto_fill,
-        parsed_output_receiver,
-        wait_count,
-        bg1_game_directory,
-    );
-    handle_result(child, options, result, 0)
+  let result = run(
+    options,
+    weidu_stdin,
+    log,
+    &parser_config.eet_auto_fill,
+    parsed_output_receiver,
+    wait_count,
+    bg1_game_directory,
+  );
+  handle_result(child, options, result, 0)
 }
 
 pub(crate) fn spawn(
-    game_directory: &Path,
-    parser_config: Arc<ParserConfig>,
-    options: &Options,
-    weidu_args: &[String],
-    bg1_game_directory: Option<&PathBuf>,
+  game_directory: &Path,
+  parser_config: Arc<ParserConfig>,
+  options: &Options,
+  weidu_args: &[String],
+  bg1_game_directory: Option<&PathBuf>,
 ) -> InstallationResult {
-    log::trace!("{:?}", weidu_args);
-    let mut command = Command::new(options.weidu_binary.clone());
-    let weidu_process = command.current_dir(game_directory).args(weidu_args);
-    log::debug!(
-        "cmd: {:?} {:?}",
-        weidu_process.get_program(),
-        weidu_process
-            .get_args()
-            .fold("".to_string(), |a, b| format!(
-                "{} {:?}",
-                a,
-                b.to_os_string()
-            ))
-    );
+  log::trace!("{:?}", weidu_args);
+  let mut command = Command::new(options.weidu_binary.clone());
+  let weidu_process = command.current_dir(game_directory).args(weidu_args);
+  log::debug!(
+    "cmd: {:?} {:?}",
+    weidu_process.get_program(),
+    weidu_process
+      .get_args()
+      .fold("".to_string(), |a, b| format!(
+        "{} {:?}",
+        a,
+        b.to_os_string()
+      ))
+  );
 
-    let child = weidu_process
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
+  let child = weidu_process
+    .stdin(Stdio::piped())
+    .stdout(Stdio::piped())
+    .stderr(Stdio::piped())
+    .spawn()?;
 
-    handle_io(child, parser_config, options, bg1_game_directory)
+  handle_io(child, parser_config, options, bg1_game_directory)
 }

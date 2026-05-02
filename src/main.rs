@@ -1,8 +1,8 @@
 use std::process::ExitCode;
 
 use config::{
-    Config,
-    args::{CommandType, Scan},
+  Config,
+  args::{CommandType, Scan},
 };
 use env_logger::Env;
 use installers::{eet_install, normal_install};
@@ -24,32 +24,32 @@ mod weidu;
 const PARSER_CONFIG_LOCATION: &str = "parser";
 
 fn main() -> ExitCode {
-    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+  env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
 
-    let config = Config::new(PARSER_CONFIG_LOCATION);
+  let config = Config::new(PARSER_CONFIG_LOCATION);
 
-    log::debug!("{:?}", config.args);
+  log::debug!("{:?}", config.args);
 
-    let status = match config.args.command {
-        CommandType::Normal(command) => normal_install(
-            &command,
-            config.parser.clone(),
-            &mut find_all_mods(&command.options.mod_directories, command.options.depth),
-        ),
-        CommandType::Eet(command) => eet_install(
-            &command,
-            config.parser.clone(),
-            &mut find_all_mods(&command.options.mod_directories, command.options.depth),
-        ),
-        CommandType::Scan(Scan::Languages(command)) => scan_langauges(&command),
-        CommandType::Scan(Scan::Components(command)) => scan_components(&command),
-    };
+  let status = match config.args.command {
+    CommandType::Normal(command) => normal_install(
+      &command,
+      config.parser.clone(),
+      &mut find_all_mods(&command.options.mod_directories, command.options.depth),
+    ),
+    CommandType::Eet(command) => eet_install(
+      &command,
+      config.parser.clone(),
+      &mut find_all_mods(&command.options.mod_directories, command.options.depth),
+    ),
+    CommandType::Scan(Scan::Languages(command)) => scan_langauges(&command),
+    CommandType::Scan(Scan::Components(command)) => scan_components(&command),
+  };
 
-    match status {
-        Err(err) => {
-            log::error!("{err}");
-            ExitCode::FAILURE
-        }
-        _ => ExitCode::SUCCESS,
-    }
+  match status {
+    Err(err) => {
+      log::error!("{err}");
+      ExitCode::FAILURE
+    },
+    _ => ExitCode::SUCCESS,
+  }
 }

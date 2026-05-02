@@ -4,8 +4,7 @@ use std::io::{BufReader, Read};
 use std::path::Path;
 use std::{error::Error, process::ChildStdout, process::Command, process::Stdio};
 
-use config::args::ScanLangauges;
-
+use crate::config::args::ScanLangauges;
 use crate::utils::find_all_mods;
 
 fn generate_args_for_list_lang(mod_path: &OsStr) -> Vec<OsString> {

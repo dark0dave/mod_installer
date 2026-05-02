@@ -3,11 +3,10 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 use std::{error::Error, path::Path, sync::Arc};
 
-use config::args::{Eet, Normal, Options};
-use config::parser_config::ParserConfig;
-
+use crate::config::args::{Eet, Normal, Options};
+use crate::config::parser_config::ParserConfig;
 use crate::runner::{self, WeiduExitStatus};
-use crate::utils::{copy_folder, find_all_mods, mod_folder_present_in_game_directory};
+use crate::utils::{copy_folder, mod_folder_present_in_game_directory};
 use crate::utils::{delete_folder, get_last_installed, search_or_download};
 use crate::weidu::batched_components::WeiduBatchedComponents;
 use crate::weidu::install_block::WeiduInstallBlock;
@@ -16,10 +15,9 @@ use crate::weidu::install_order::WeiduBatchedInstallOrder;
 pub(crate) fn normal_install(
     command: &Normal,
     parser_config: Arc<ParserConfig>,
+    mod_folder_cache: &mut HashMap<OsString, PathBuf>,
 ) -> Result<(), Box<dyn Error>> {
     log::info!("Beginning normal install process");
-    let mut mod_folder_cache: HashMap<OsString, PathBuf> =
-        find_all_mods(&command.options.mod_directories, command.options.depth);
     let game_directory = if let Some(new_directory) = &command.generate_directory {
         copy_folder(
             &command.game_directory,
@@ -37,17 +35,16 @@ pub(crate) fn normal_install(
         &command.options,
         parser_config.clone(),
         None,
-        &mut mod_folder_cache,
+        mod_folder_cache,
     )
 }
 
 pub(crate) fn eet_install(
     command: &Eet,
     parser_config: Arc<ParserConfig>,
+    mod_folder_cache: &mut HashMap<OsString, PathBuf>,
 ) -> Result<(), Box<dyn Error>> {
     log::info!("Beginning pre eet install process");
-    let mut mod_folder_cache: HashMap<OsString, PathBuf> =
-        find_all_mods(&command.options.mod_directories, command.options.depth);
     let pre_eet_game_directory = if let Some(new_directory) = &command.new_pre_eet_dir {
         copy_folder(
             &command.bg1_game_directory,
@@ -65,7 +62,7 @@ pub(crate) fn eet_install(
         &command.options,
         parser_config.clone(),
         None,
-        &mut mod_folder_cache,
+        mod_folder_cache,
     )?;
 
     log::info!("Beginning eet install process");
@@ -84,8 +81,8 @@ pub(crate) fn eet_install(
         &game_directory,
         &command.options,
         parser_config.clone(),
-        Some(&pre_eet_game_directory),
-        &mut mod_folder_cache,
+        Some(&pre_eet_game_directory.to_path_buf()),
+        mod_folder_cache,
     )
 }
 

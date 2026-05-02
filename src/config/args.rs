@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use clap::Subcommand;
 use clap::{Parser, builder::BoolishValueParser, builder::OsStr};
 
-use crate::log_options::LogOptions;
+use crate::config::log_options::LogOptions;
 
 use super::colors::styles;
 
@@ -365,10 +365,7 @@ mod tests {
     #[test]
     fn test_bool_flags() -> Result<(), Box<dyn Error>> {
         let workspace_root: PathBuf = std::env::current_dir()?;
-        let fake_game_dir: PathBuf = workspace_root
-            .parent()
-            .ok_or("Could not get workspace root")?
-            .join("fixtures");
+        let fake_game_dir: PathBuf = workspace_root.join("fixtures");
         let fake_weidu_bin = fake_game_dir.clone().join("weidu");
         let fake_log_file = fake_game_dir.clone().join("weidu.log");
         let fake_mod_dirs = fake_game_dir.clone().join("mods");
@@ -437,10 +434,7 @@ mod tests {
     #[test]
     fn test_eet_flags() -> Result<(), Box<dyn Error>> {
         let workspace_root: PathBuf = std::env::current_dir()?;
-        let fake_game_dir: PathBuf = workspace_root
-            .parent()
-            .ok_or("Could not get workspace root")?
-            .join("fixtures");
+        let fake_game_dir: PathBuf = workspace_root.join("fixtures");
         let fake_weidu_bin = fake_game_dir.clone().join("weidu");
         let fake_log_file = fake_game_dir.clone().join("weidu.log");
         let new_dir = PathBuf::new().join("test");
@@ -500,10 +494,7 @@ mod tests {
     #[test]
     fn test_log_flags() -> Result<(), Box<dyn Error>> {
         let workspace_root: PathBuf = std::env::current_dir()?;
-        let fake_game_dir: PathBuf = workspace_root
-            .parent()
-            .ok_or("Could not get workspace root")?
-            .join("fixtures");
+        let fake_game_dir: PathBuf = workspace_root.join("fixtures");
         let fake_weidu_bin = fake_game_dir.clone().join("weidu");
         let fake_log_file = fake_game_dir.clone().join("weidu.log");
         let fake_mod_dirs = fake_game_dir.clone().join("mods");

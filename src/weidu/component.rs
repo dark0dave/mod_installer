@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use config::{log_options::LogOptions, weidu_log_options::WeiduLogOptions};
+use crate::config::{log_options::LogOptions, weidu_log_options::WeiduLogOptions};
 
 use crate::weidu::install_block::WeiduInstallBlock;
 

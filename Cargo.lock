@@ -270,21 +270,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "config"
-version = "14.6.0"
-dependencies = [
- "anstyle",
- "clap",
- "confy",
- "env_logger",
- "log",
- "pretty_assertions",
- "serde",
- "serde_derive",
- "tempfile",
-]
-
-[[package]]
 name = "confy"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1182,7 +1167,6 @@ version = "14.6.0"
 dependencies = [
  "anstyle",
  "clap",
- "config",
  "confy",
  "env_logger",
  "log",

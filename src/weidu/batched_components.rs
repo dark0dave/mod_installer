@@ -6,10 +6,11 @@ use std::{
     slice::Iter,
 };
 
-use config::{log_options::LogOptions, weidu_log_options::WeiduLogOptions};
-
 use crate::{
-    runner::LINE_ENDING, weidu::component::WeiduComponent, weidu::install_block::WeiduInstallBlock,
+    config::{log_options::LogOptions, weidu_log_options::WeiduLogOptions},
+    runner::LINE_ENDING,
+    weidu::component::WeiduComponent,
+    weidu::install_block::WeiduInstallBlock,
 };
 
 #[derive(Debug, PartialEq, PartialOrd)]

@@ -1,6 +1,6 @@
 use std::{error::Error, path::PathBuf};
 
-use crate::args::path_must_exist;
+use crate::config::args::path_must_exist;
 
 pub const PATH_PROVIDED_ERROR: &str = "Path provided, does not exist: ";
 

@@ -1,4 +1,4 @@
-use crate::log_options::LogOptions;
+use crate::config::log_options::LogOptions;
 
 pub struct WeiduLogOptions(Vec<LogOptions>);
 

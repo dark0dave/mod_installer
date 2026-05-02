@@ -10,9 +10,8 @@ use std::{
     },
 };
 
-use config::{args::Options, parser_config::ParserConfig, state::State};
-
 use crate::{
+    config::{args::Options, parser_config::ParserConfig, state::State},
     internal_log::InternalLog,
     parser::parse_raw_output,
     raw_reciever::create_raw_reciever,

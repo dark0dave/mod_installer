@@ -49,26 +49,35 @@ mod tests {
         let weidu_log_file = WeiduBatchedComponents::try_from(weidu_fixture_path)?;
         let result = WeiduBatchedInstallOrder::batch(weidu_log_file)?;
         let expected = WeiduBatchedInstallOrder(vec![
-            vec![
-                WeiduComponent {
-                    tp_file: "TEST.TP2".into(),
-                    name: "TEST_MOD_NAME_1".into(),
-                    lang: "0".into(),
-                    component: "0".into(),
-                    component_name: "test mod one".into(),
-                    sub_component: "".into(),
-                    version: "".into(),
-                },
-                WeiduComponent {
-                    tp_file: "TEST.TP2".into(),
-                    name: "TEST_MOD_NAME_1".into(),
-                    lang: "0".into(),
-                    component: "1".into(),
-                    component_name: "test mod two".into(),
-                    sub_component: "".into(),
-                    version: "".into(),
-                },
-            ]
+            vec![WeiduComponent {
+                tp_file: "TEST.TP2".into(),
+                name: "TEST_MOD_NAME_1".into(),
+                lang: "0".into(),
+                component: "0".into(),
+                component_name: "test mod one".into(),
+                sub_component: "".into(),
+                version: "".into(),
+            }]
+            .into(),
+            vec![WeiduComponent {
+                tp_file: "Portraits.TP2".into(),
+                name: "TEST_MOD_NAME_5".into(),
+                lang: "0".into(),
+                component: "8".into(),
+                component_name: "Add Baddies Portraits".into(),
+                sub_component: "".into(),
+                version: "".into(),
+            }]
+            .into(),
+            vec![WeiduComponent {
+                tp_file: "TEST.TP2".into(),
+                name: "TEST_MOD_NAME_1".into(),
+                lang: "0".into(),
+                component: "1".into(),
+                component_name: "test mod two".into(),
+                sub_component: "".into(),
+                version: "".into(),
+            }]
             .into(),
             vec![
                 WeiduComponent {
@@ -115,7 +124,7 @@ mod tests {
                     tp_file: "Portraits.TP2".into(),
                     name: "TEST_MOD_NAME_5".into(),
                     lang: "0".into(),
-                    component: "3346".into(),
+                    component: "3".into(),
                     component_name: "Add Baddies Portraits".into(),
                     sub_component: "".into(),
                     version: "".into(),
@@ -124,7 +133,7 @@ mod tests {
                     tp_file: "Portraits.TP2".into(),
                     name: "TEST_MOD_NAME_5".into(),
                     lang: "0".into(),
-                    component: "3346".into(),
+                    component: "7".into(),
                     component_name: "Add GoodiwaPortraits".into(),
                     sub_component: "".into(),
                     version: "".into(),

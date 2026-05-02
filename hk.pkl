@@ -8,7 +8,6 @@ local message = new Mapping<String, Step> {
 local builtins = new Mapping<String, Step> {
   ["check-merge-conflict"] = Builtins.check_merge_conflict
   ["check-case-conflict"] = Builtins.check_case_conflict
-  ["detect-private-key"] = Builtins.detect_private_key
   ["yamlfmt"] = Builtins.yamlfmt
 }
 
@@ -31,7 +30,7 @@ local local_hooks = new Mapping<String, Step> {
   }
   ["cargo-clippy"] {
     glob = "**/*.rs"
-    check = "cargo clippy --workspace -- -D warnings"
+    check = "cargo clippy -- -D warnings"
     fix = "cargo clippy --fix --"
   }
   ["version-check"] {

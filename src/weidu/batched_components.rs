@@ -13,7 +13,7 @@ use crate::{
     weidu::install_block::WeiduInstallBlock,
 };
 
-#[derive(Debug, PartialEq, PartialOrd)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct WeiduBatchedComponents(Vec<WeiduComponent>);
 
 impl WeiduBatchedComponents {
@@ -42,7 +42,9 @@ impl WeiduBatchedComponents {
         Ok(())
     }
     pub(crate) fn push(&mut self, component: WeiduComponent) {
-        self.0.push(component);
+        if !self.0.contains(&component) {
+            self.0.push(component);
+        }
     }
     pub(crate) fn last(&self) -> Option<&WeiduComponent> {
         self.0.last()

@@ -6,7 +6,7 @@ use crate::weidu::install_block::WeiduInstallBlock;
 
 // This should mirror the weidu component
 // https://github.com/WeiDUorg/weidu/blob/devel/src/tp.ml#L98
-#[derive(Debug, PartialOrd, Clone, Default)]
+#[derive(Debug, PartialOrd, Ord, Eq, Clone, Default)]
 pub(crate) struct WeiduComponent {
     pub(crate) tp_file: String,
     pub(crate) name: String,

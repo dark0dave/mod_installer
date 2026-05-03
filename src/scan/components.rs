@@ -7,14 +7,12 @@ use crate::scan::languages::scan_for_langauges;
 use crate::utils::find_all_mods;
 use crate::weidu::component::WeiduComponent;
 
-fn generate_args_for_list_components_with_game_dir(
+fn generate_args_for_list_components_without_game_dir(
   mod_path: &OsStr,
   lang: &str,
-  game_dir: &OsStr,
 ) -> Vec<OsString> {
   vec![
-    "--game".into(),
-    game_dir.into(),
+    "--nogame".into(),
     "--list-components".into(),
     mod_path.into(),
     lang.into(),
@@ -24,29 +22,30 @@ fn generate_args_for_list_components_with_game_dir(
 
 pub(crate) fn scan_components(command: &ScanComponents) -> Result<(), Box<dyn Error>> {
   let mod_paths = find_all_mods(&command.options.mod_directories, command.options.depth);
-  log::trace!("{:?}", mod_paths);
 
   for (_, mod_path) in mod_paths {
+    let mod_root = mod_path
+      .parent()
+      .ok_or("tp2 file has no parent")?
+      .parent()
+      .ok_or("mod folder has no parent")?;
+    log::debug!("{:?}", mod_root);
     let mod_langs = scan_for_langauges(
-      mod_path.as_os_str(),
+      &mod_path,
       &command.options.weidu_binary,
       &command.filter_by_selected_language,
     )?;
     for mod_lang in mod_langs {
-      let weidu_args = generate_args_for_list_components_with_game_dir(
-        mod_path.as_os_str(),
-        &mod_lang,
-        command.game_directory.as_os_str(),
-      );
+      let weidu_args =
+        generate_args_for_list_components_without_game_dir(mod_path.as_os_str(), &mod_lang);
       log::debug!("{:?}", weidu_args);
       let mut run = Command::new(command.options.weidu_binary.clone());
       let output = run
-        .current_dir(&command.game_directory)
+        .current_dir(&mod_root.canonicalize()?)
         .args(weidu_args)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .current_dir(command.game_directory.clone())
         .spawn()?;
       if let Some(result) = output.stdout {
         let mut buffered_reader = BufReader::new(result);

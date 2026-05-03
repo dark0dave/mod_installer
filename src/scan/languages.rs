@@ -1,30 +1,37 @@
 use std::collections::HashSet;
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsString;
 use std::io::{BufReader, Read};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{error::Error, process::ChildStdout, process::Command, process::Stdio};
 
 use crate::config::args::ScanLangauges;
 use crate::utils::find_all_mods;
 
-fn generate_args_for_list_lang(mod_path: &OsStr) -> Vec<OsString> {
+fn generate_args_for_list_lang(mod_path: &Path) -> Vec<OsString> {
   vec![
     "--nogame".into(),
     "--list-languages".into(),
-    mod_path.to_os_string(),
+    mod_path.into(),
     "--no-exit-pause".into(),
   ]
 }
 
 pub(crate) fn scan_for_langauges(
-  mod_path: &OsStr,
-  weidu_binary: &Path,
+  mod_path: &Path,
+  weidu_binary: &PathBuf,
   filter_by_selected_language: &str,
 ) -> Result<HashSet<String>, Box<dyn Error>> {
   let weidu_args_langs = generate_args_for_list_lang(mod_path);
   let mut run = Command::new(weidu_binary);
+  let mod_root = mod_path
+    .parent()
+    .ok_or("tp2 file has no parent")?
+    .parent()
+    .ok_or("mod folder has no parent")?;
+  log::debug!("{:?}", mod_root);
   let mut output = run
     .args(weidu_args_langs)
+    .current_dir(mod_root)
     .stdin(Stdio::null())
     .stdout(Stdio::piped())
     .stderr(Stdio::piped())
@@ -70,7 +77,7 @@ pub(crate) fn scan_langauges(command: &ScanLangauges) -> Result<(), Box<dyn Erro
 
   for (_, weidu_mod) in mods {
     let langs = scan_for_langauges(
-      weidu_mod.as_os_str(),
+      &weidu_mod,
       &command.options.weidu_binary,
       &command.filter_by_selected_language,
     );

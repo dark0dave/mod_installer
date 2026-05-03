@@ -31,7 +31,7 @@ local local_hooks = new Mapping<String, Step> {
   ["cargo-clippy"] {
     glob = "**/*.rs"
     check = "cargo clippy -- -D warnings"
-    fix = "cargo clippy --fix --"
+    fix = "cargo clippy --fix --allow-dirty"
   }
   ["version-check"] {
     check = "scripts/check-version.sh"

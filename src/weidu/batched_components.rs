@@ -46,6 +46,9 @@ impl WeiduBatchedComponents {
       self.0.push(component);
     }
   }
+  pub(crate) fn first(&self) -> Option<&WeiduComponent> {
+    self.0.first()
+  }
   pub(crate) fn last(&self) -> Option<&WeiduComponent> {
     self.0.last()
   }

@@ -4,6 +4,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use clap::Subcommand;
+use clap::builder::ArgPredicate;
 use clap::{Parser, builder::BoolishValueParser, builder::OsStr};
 
 use crate::config::log_options::LogOptions;
@@ -213,8 +214,14 @@ pub struct Options {
     )]
   pub never_abort: bool,
 
-  /// Timeout time per mod in seconds, default is 1 hour
-  #[clap(env, long, short, default_value = "3600")]
+  /// Timeout time per mod in seconds, default is 1 hour or 3 hours if batch_mode
+  #[clap(
+    env,
+    short,
+    long,
+    default_value = "3600",
+    default_value_if("batch_mode", ArgPredicate::IsPresent, "10800")
+  )]
   pub timeout: usize,
 
   /// Weidu log setting "autolog,logapp,log-extern" is default
@@ -273,6 +280,7 @@ pub struct Options {
         num_args=0..=1,
         action = clap::ArgAction::SetFalse,
         default_value_t = true,
+        conflicts_with = "batch_mode",
         value_parser = BoolishValueParser::new(),
     )]
   pub check_last_installed: bool,
@@ -307,6 +315,7 @@ pub struct Options {
         num_args=0..=1,
         action = clap::ArgAction::SetTrue,
         default_value_t = false,
+        conflicts_with = "check_last_installed",
         value_parser = BoolishValueParser::new(),
     )]
   pub batch_mode: bool,

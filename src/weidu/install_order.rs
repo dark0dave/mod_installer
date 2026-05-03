@@ -7,7 +7,11 @@ pub(crate) struct WeiduBatchedInstallOrder(Vec<WeiduBatchedComponents>);
 
 impl WeiduBatchedInstallOrder {
   pub(crate) fn new(components: WeiduBatchedComponents) -> Self {
-    Self(vec![components])
+    let mut out: Vec<WeiduBatchedComponents> = vec![];
+    for component in components.into_iter() {
+      out.push(vec![component.clone()].into());
+    }
+    Self(out)
   }
   pub(crate) fn batch(components: WeiduBatchedComponents) -> Result<Self, Box<dyn Error>> {
     let mut out: Vec<WeiduBatchedComponents> = vec![];

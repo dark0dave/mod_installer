@@ -105,7 +105,7 @@ fn install(
     WeiduBatchedInstallOrder::new(components_to_be_installed)
   };
   for components in mods_to_be_installed.into_iter() {
-    let last_mod = if let Some(weidu_mod) = components.last() {
+    let first_mod = if let Some(weidu_mod) = components.first() {
       weidu_mod
     } else {
       continue;
@@ -114,7 +114,7 @@ fn install(
       if let Some(entry) = mod_folder_cache.get::<OsString>(&components.log_file_name().into()) {
         entry.to_path_buf()
       } else {
-        let entry = match search_or_download(options, last_mod) {
+        let entry = match search_or_download(options, first_mod) {
           Ok(value) => value,
           Err(err) if options.never_abort => {
             log::error!("{:?}", err);
@@ -123,26 +123,26 @@ fn install(
           },
           Err(err) => return Err(err),
         };
-        mod_folder_cache.insert(last_mod.tp_file.clone().into(), entry.clone());
+        mod_folder_cache.insert(first_mod.tp_file.clone().into(), entry.clone());
         entry
       };
 
     log::debug!("Found mod folder {mod_folder:?}, for component {components:?}");
 
     if options.overwrite {
-      delete_folder(game_directory.join(&last_mod.name))?;
+      delete_folder(game_directory.join(&first_mod.name))?;
     }
 
-    if !mod_folder_present_in_game_directory(game_directory, &last_mod.name) {
+    if !mod_folder_present_in_game_directory(game_directory, &first_mod.name) {
       log::info!(
         "Copying mod directory, from {:?} to, {:?}",
         mod_folder,
-        game_directory.join(&last_mod.name)
+        game_directory.join(&first_mod.name)
       );
-      copy_folder(mod_folder, game_directory.join(&last_mod.name), false)?;
+      copy_folder(mod_folder, game_directory.join(&first_mod.name), false)?;
     }
     log::info!("Installing mod {:?}", &components);
-    let bg1_game_directory = if last_mod
+    let bg1_game_directory = if first_mod
       .component_name
       .to_lowercase()
       .eq("eet core (resource importation)")
@@ -165,7 +165,7 @@ fn install(
     ) {
       Ok(WeiduExitStatus::Success) if options.check_last_installed && !options.never_abort => {
         if let Ok(last_installed) = get_last_installed(game_directory) {
-          if last_installed.ne(last_mod) {
+          if last_installed.ne(first_mod) {
             return Err(format!(
                             "Last installed {last_installed:?} does not match component installed: {components:?}"
                         )

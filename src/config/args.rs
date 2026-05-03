@@ -130,10 +130,6 @@ pub struct ScanLangauges {
 #[derive(Parser, Debug, PartialEq, Clone)]
 #[clap(short_flag = 'c')]
 pub struct ScanComponents {
-  /// Absolute Path to game directory
-  #[clap(env, short, long, value_parser = parse_absolute_path)]
-  pub game_directory: PathBuf,
-
   /// filter by selected language
   #[clap(short, long, required = false, default_value = "")]
   pub filter_by_selected_language: String,

@@ -1,6 +1,6 @@
 [package]
 name = "mod_installer"
-version = "15.0.0"
+version = "15.0.1"
 authors = [ "dark0dave" ]
 edition = "2024"
 documentation = "https://raw.githubusercontent.com/dark0dave/mod_installer/main/README.md"

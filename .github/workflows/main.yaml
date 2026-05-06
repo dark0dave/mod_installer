@@ -18,9 +18,9 @@ jobs:
       - name: cache
         uses: nix-community/cache-nix-action@v7
         with:
-          primary-key: nix-${{ runner.os }}-pre-${{ hashFiles('flake.nix', 'flake.lock') }}
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.nix', 'flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
-          gc-max-store-size-linux: 1G
+          gc-max-store-size-linux: 5G
       - name: pre-commit
         shell: 'nix develop -c bash -e {0}'
         run: hk run pre-commit --all -j 10
@@ -86,7 +86,7 @@ jobs:
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('flake.nix', 'flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
-          gc-max-store-size-linux: 1G
+          gc-max-store-size-linux: 5G
       - run: nix build
       - name: Archive release artifacts
         uses: actions/upload-artifact@main

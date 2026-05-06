@@ -6,8 +6,13 @@ local message = new Mapping<String, Step> {
 }
 
 local builtins = new Mapping<String, Step> {
-  ["check-merge-conflict"] = Builtins.check_merge_conflict
+  ["cargo-check"] = Builtins.cargo_check
+  ["cargo-clippy"] = Builtins.cargo_clippy
+  ["cargo-fmt"] = Builtins.cargo_fmt
   ["check-case-conflict"] = Builtins.check_case_conflict
+  ["check-merge-conflict"] = Builtins.check_merge_conflict
+  ["end-of-file-fixer"] = Builtins.newlines
+  ["trailing-whitespace"] = Builtins.trailing_whitespace
   ["yamlfmt"] = Builtins.yamlfmt
 }
 
@@ -18,26 +23,14 @@ local local_hooks = new Mapping<String, Step> {
     check = "codespell -c {{files}}"
     fix = "codespell -cw {{files}}"
   }
-  ["cargo-fmt"] {
-    glob = "**/*.rs"
-    check = "cargo fmt --all"
-    fix = "cargo fmt --all"
-  }
-  ["cargo-check"] {
-    glob = "**/*.rs"
-    check = "cargo check"
-    fix = "cargo fix --allow-dirty --allow-staged"
-  }
-  ["cargo-clippy"] {
-    glob = "**/*.rs"
-    check = "cargo clippy -- -D warnings"
-    fix = "cargo clippy --fix --allow-dirty"
-  }
   ["version-check"] {
     check = "scripts/check-version.sh"
   }
   ["git-check"] {
     check = "scripts/check-git.sh"
+  }
+  ["nix fmt"] {
+    fix = "nixfmt flake.nix"
   }
 }
 

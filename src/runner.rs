@@ -210,6 +210,7 @@ pub(crate) fn spawn(
   );
 
   let child = weidu_process
+    .env("OCAMLRUNPARAM", &options.ocamlrunparam)
     .stdin(Stdio::piped())
     .stdout(Stdio::piped())
     .stderr(Stdio::piped())

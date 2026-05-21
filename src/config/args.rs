@@ -319,6 +319,10 @@ pub struct Options {
         value_parser = BoolishValueParser::new(),
     )]
   pub batch_mode: bool,
+
+  /// Ocaml run parameters
+  #[clap(env = "OCAMLRUNPARAM", long, default_value = "s=16M,o=500,O=1000000")]
+  pub ocamlrunparam: String,
 }
 
 pub fn path_must_exist(arg: &str) -> Result<PathBuf, std::io::Error> {
@@ -415,6 +419,7 @@ mod tests {
             never_abort: false,
             generic_weidu_args: vec![],
             batch_mode: false,
+            ocamlrunparam: "s=16M,o=500,O=1000000".into(),
           },
         }),
       };
@@ -474,6 +479,7 @@ mod tests {
           never_abort: false,
           generic_weidu_args: vec![],
           batch_mode: false,
+          ocamlrunparam: "s=16M,o=500,O=1000000".into(),
         },
         new_pre_eet_dir: None,
         new_eet_dir: Some("test".into()),
@@ -537,6 +543,7 @@ mod tests {
           never_abort: false,
           generic_weidu_args: vec![],
           batch_mode: false,
+          ocamlrunparam: "s=16M,o=500,O=1000000".into(),
         },
       }),
     };

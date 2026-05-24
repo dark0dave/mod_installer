@@ -9,4 +9,9 @@
 ~TEST_MOD_NAME_4/TWEAKS.TP2~ #0 #3346 // test mod with both subcomponent information and version -> Casting speed only: v16
 ~TEST_MOD_NAME_5/Portraits.TP2~ #0 #3346 // Add Portraits
 ~TEST_MOD_NAME_5/Portraits.TP2~ #0 #3 // Add Baddies Portraits
-~TEST_MOD_NAME_5/Portraits.TP2~ #0 #7 // Add GoodiwaPortraits
+~TEST_MOD_NAME_5/Portraits.TP2~ #0 #4 // Add Good Portraits
+~TEST_MOD_NAME_5/Portraits.TP2~ #0 #5 // Add Bg1 Portraits
+~TEST_MOD_NAME_5/Portraits.TP2~ #0 #6 // Add bg2 Portraits
+~TEST_MOD_NAME_5/Portraits.TP2~ #0 #7 // Add bg3 Portraits
+~TEST_MOD_NAME_5/Portraits.TP2~ #0 #8 // Add iwd Portraits
+~TEST_MOD_NAME_5/Portraits.TP2~ #0 #9 // Add iwd2 Portraits

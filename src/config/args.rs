@@ -308,6 +308,17 @@ pub struct Options {
   #[clap(short = 'k', long, use_value_delimiter = true, value_delimiter = ',')]
   pub generic_weidu_args: Vec<String>,
 
+  /// Batch options
+  #[clap(flatten)]
+  pub batch: BatchOptions,
+
+  /// Ocaml run parameters
+  #[clap(env = "OCAMLRUNPARAM", long, default_value = "s=16M,o=500,O=1000000")]
+  pub ocamlrunparam: String,
+}
+
+#[derive(Parser, Debug, PartialEq, Clone, Default)]
+pub struct BatchOptions {
   /// Batch mode
   #[clap(
         env,
@@ -317,12 +328,24 @@ pub struct Options {
         default_value_t = false,
         conflicts_with = "check_last_installed",
         value_parser = BoolishValueParser::new(),
-    )]
+   )]
   pub batch_mode: bool,
 
-  /// Ocaml run parameters
-  #[clap(env = "OCAMLRUNPARAM", long, default_value = "s=16M,o=500,O=1000000")]
-  pub ocamlrunparam: String,
+  /// Batch size
+  #[clap(env, long, default_value_t = 5, required = false)]
+  pub batch_size: usize,
+
+  /// Batch skip
+  #[clap(
+    env,
+    long,
+    use_value_delimiter = true,
+    value_delimiter = ',',
+    default_value = "setup-stratagems.tp2",
+    ignore_case = true,
+    required = false
+  )]
+  pub batch_skip: Vec<String>,
 }
 
 pub fn path_must_exist(arg: &str) -> Result<PathBuf, std::io::Error> {
@@ -418,7 +441,11 @@ mod tests {
             casefold: false,
             never_abort: false,
             generic_weidu_args: vec![],
-            batch_mode: false,
+            batch: BatchOptions {
+              batch_mode: false,
+              batch_size: 5,
+              batch_skip: vec!["setup-stratagems.tp2".into()],
+            },
             ocamlrunparam: "s=16M,o=500,O=1000000".into(),
           },
         }),
@@ -478,7 +505,11 @@ mod tests {
           casefold: false,
           never_abort: false,
           generic_weidu_args: vec![],
-          batch_mode: false,
+          batch: BatchOptions {
+            batch_mode: false,
+            batch_size: 5,
+            batch_skip: vec!["setup-stratagems.tp2".into()],
+          },
           ocamlrunparam: "s=16M,o=500,O=1000000".into(),
         },
         new_pre_eet_dir: None,
@@ -542,7 +573,11 @@ mod tests {
           casefold: false,
           never_abort: false,
           generic_weidu_args: vec![],
-          batch_mode: false,
+          batch: BatchOptions {
+            batch_mode: false,
+            batch_size: 5,
+            batch_skip: vec!["setup-stratagems.tp2".into()],
+          },
           ocamlrunparam: "s=16M,o=500,O=1000000".into(),
         },
       }),

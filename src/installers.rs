@@ -99,11 +99,8 @@ fn install(
   if options.skip_installed {
     components_to_be_installed.remove_existing(options.strict_matching, game_directory)?;
   }
-  let mods_to_be_installed: WeiduBatchedInstallOrder = if options.batch_mode {
-    WeiduBatchedInstallOrder::batch(components_to_be_installed)?
-  } else {
-    WeiduBatchedInstallOrder::new(components_to_be_installed)
-  };
+  let mods_to_be_installed =
+    WeiduBatchedInstallOrder::new(components_to_be_installed, &options.batch)?;
   for components in mods_to_be_installed.into_iter() {
     let first_mod = if let Some(weidu_mod) = components.first() {
       weidu_mod

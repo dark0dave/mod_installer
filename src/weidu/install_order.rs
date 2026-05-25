@@ -1,24 +1,40 @@
 use std::{error::Error, slice::Iter};
 
-use crate::{weidu::batched_components::WeiduBatchedComponents, weidu::component::WeiduComponent};
+use crate::{
+  config::args::BatchOptions,
+  weidu::{batched_components::WeiduBatchedComponents, component::WeiduComponent},
+};
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct WeiduBatchedInstallOrder(Vec<WeiduBatchedComponents>);
 
 impl WeiduBatchedInstallOrder {
-  pub(crate) fn new(components: WeiduBatchedComponents) -> Self {
-    let mut out: Vec<WeiduBatchedComponents> = vec![];
-    for component in components.into_iter() {
-      out.push(vec![component.clone()].into());
+  pub(crate) fn new(
+    components: WeiduBatchedComponents,
+    batch_options: &BatchOptions,
+  ) -> Result<Self, Box<dyn Error>> {
+    match batch_options.batch_mode {
+      true => Self::batched(components, batch_options),
+      _ => Ok(Self::streamed(components)),
     }
-    Self(out)
   }
-  pub(crate) fn batch(components: WeiduBatchedComponents) -> Result<Self, Box<dyn Error>> {
+  fn batched(
+    components: WeiduBatchedComponents,
+    batch_options: &BatchOptions,
+  ) -> Result<Self, Box<dyn Error>> {
     let mut out: Vec<WeiduBatchedComponents> = vec![];
     for component in components.into_iter() {
       match out.last_mut() {
         Some(current)
-          if current.last().unwrap_or(&WeiduComponent::default()).tp_file == component.tp_file =>
+          if current
+            .last()
+            .unwrap_or(&WeiduComponent::default())
+            .full_component_name()
+            == component.full_component_name()
+            && current.len() <= batch_options.batch_size
+            && !batch_options
+              .batch_skip
+              .contains(&component.tp_file.to_lowercase()) =>
         {
           current.push(component.clone());
         },
@@ -26,6 +42,13 @@ impl WeiduBatchedInstallOrder {
       }
     }
     Ok(Self(out))
+  }
+  fn streamed(components: WeiduBatchedComponents) -> Self {
+    let mut out: Vec<WeiduBatchedComponents> = vec![];
+    for component in components.into_iter() {
+      out.push(vec![component.clone()].into());
+    }
+    Self(out)
   }
 }
 
@@ -50,7 +73,14 @@ mod tests {
   fn test_batching() -> Result<(), Box<dyn Error>> {
     let weidu_fixture_path = PathBuf::from("fixtures/test_batching.log");
     let weidu_log_file = WeiduBatchedComponents::try_from(weidu_fixture_path)?;
-    let result = WeiduBatchedInstallOrder::batch(weidu_log_file)?;
+    let result = WeiduBatchedInstallOrder::new(
+      weidu_log_file,
+      &BatchOptions {
+        batch_mode: true,
+        batch_size: 5,
+        batch_skip: vec!["setup-stratagems.tp2".into()],
+      },
+    )?;
     let expected = WeiduBatchedInstallOrder(vec![
       vec![WeiduComponent {
         tp_file: "TEST.TP2".into(),
@@ -82,26 +112,25 @@ mod tests {
         version: "".into(),
       }]
       .into(),
-      vec![
-        WeiduComponent {
-          tp_file: "END.TP2".into(),
-          name: "TEST_MOD_NAME_2".into(),
-          lang: "0".into(),
-          component: "0".into(),
-          component_name: "test mod with subcomponent information".into(),
-          sub_component: "Standard installation".into(),
-          version: "".into(),
-        },
-        WeiduComponent {
-          tp_file: "END.TP2".into(),
-          name: "TEST_MOD_NAME_3".into(),
-          lang: "0".into(),
-          component: "0".into(),
-          component_name: "test mod with version".into(),
-          sub_component: "".into(),
-          version: "1.02".into(),
-        },
-      ]
+      vec![WeiduComponent {
+        tp_file: "END.TP2".into(),
+        name: "TEST_MOD_NAME_2".into(),
+        lang: "0".into(),
+        component: "0".into(),
+        component_name: "test mod with subcomponent information".into(),
+        sub_component: "Standard installation".into(),
+        version: "".into(),
+      }]
+      .into(),
+      vec![WeiduComponent {
+        tp_file: "END.TP2".into(),
+        name: "TEST_MOD_NAME_3".into(),
+        lang: "0".into(),
+        component: "0".into(),
+        component_name: "test mod with version".into(),
+        sub_component: "".into(),
+        version: "1.02".into(),
+      }]
       .into(),
       vec![WeiduComponent {
         tp_file: "TWEAKS.TP2".into(),
@@ -136,8 +165,56 @@ mod tests {
           tp_file: "Portraits.TP2".into(),
           name: "TEST_MOD_NAME_5".into(),
           lang: "0".into(),
+          component: "4".into(),
+          component_name: "Add Good Portraits".into(),
+          sub_component: "".into(),
+          version: "".into(),
+        },
+        WeiduComponent {
+          tp_file: "Portraits.TP2".into(),
+          name: "TEST_MOD_NAME_5".into(),
+          lang: "0".into(),
+          component: "5".into(),
+          component_name: "Add Bg1 Portraits".into(),
+          sub_component: "".into(),
+          version: "".into(),
+        },
+        WeiduComponent {
+          tp_file: "Portraits.TP2".into(),
+          name: "TEST_MOD_NAME_5".into(),
+          lang: "0".into(),
+          component: "6".into(),
+          component_name: "Add bg2 Portraits".into(),
+          sub_component: "".into(),
+          version: "".into(),
+        },
+        WeiduComponent {
+          tp_file: "Portraits.TP2".into(),
+          name: "TEST_MOD_NAME_5".into(),
+          lang: "0".into(),
           component: "7".into(),
-          component_name: "Add GoodiwaPortraits".into(),
+          component_name: "Add bg3 Portraits".into(),
+          sub_component: "".into(),
+          version: "".into(),
+        },
+      ]
+      .into(),
+      vec![
+        WeiduComponent {
+          tp_file: "Portraits.TP2".into(),
+          name: "TEST_MOD_NAME_5".into(),
+          lang: "0".into(),
+          component: "8".into(),
+          component_name: "Add iwd Portraits".into(),
+          sub_component: "".into(),
+          version: "".into(),
+        },
+        WeiduComponent {
+          tp_file: "Portraits.TP2".into(),
+          name: "TEST_MOD_NAME_5".into(),
+          lang: "0".into(),
+          component: "9".into(),
+          component_name: "Add iwd2 Portraits".into(),
           sub_component: "".into(),
           version: "".into(),
         },

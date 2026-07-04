@@ -214,13 +214,13 @@ pub struct Options {
     )]
   pub never_abort: bool,
 
-  /// Timeout time per mod in seconds, default is 1 hour or 3 hours if batch_mode
+  /// Timeout time per mod in seconds, default is 3 hours or 9 if batch mode
   #[clap(
     env,
     short,
     long,
-    default_value = "3600",
-    default_value_if("batch_mode", ArgPredicate::IsPresent, "10800")
+    default_value = "10800",
+    default_value_if("batch_mode", ArgPredicate::IsPresent, "32400")
   )]
   pub timeout: usize,
 
@@ -313,6 +313,11 @@ pub struct Options {
   pub batch: BatchOptions,
 
   /// Ocaml run parameters
+  //  OCaml GC tuning — prevents 0xc0000005 segfaults on large installs:
+  //   s=16M  = 128MB minor heap (64x default ~2MB, reduces minor GC frequency)
+  //   o=500  = 500% space overhead (5x default, reduces major GC frequency)
+  //   O=1000000 = disable heap compaction (compaction relocates memory blocks,
+  //               can trigger stale-pointer crashes in WeiDU's unsafe-string code)
   #[clap(env = "OCAMLRUNPARAM", long, default_value = "s=16M,o=500,O=1000000")]
   pub ocamlrunparam: String,
 }
@@ -426,7 +431,7 @@ mod tests {
             depth: 5,
             skip_installed: expected_flag_value,
             abort_on_warnings: expected_flag_value,
-            timeout: 3600,
+            timeout: 10800,
             weidu_log_mode: vec![
               LogOptions::AutoLog,
               LogOptions::LogAppend,
@@ -490,7 +495,7 @@ mod tests {
           depth: 5,
           skip_installed: expected_flag_value,
           abort_on_warnings: !expected_flag_value,
-          timeout: 3600,
+          timeout: 10800,
           weidu_log_mode: vec![
             LogOptions::AutoLog,
             LogOptions::LogAppend,
@@ -554,7 +559,7 @@ mod tests {
           depth: 5,
           skip_installed: true,
           abort_on_warnings: false,
-          timeout: 3600,
+          timeout: 10800,
           weidu_log_mode: vec![
             LogOptions::AutoLog,
             LogOptions::LogAppend,

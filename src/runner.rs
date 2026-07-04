@@ -128,13 +128,16 @@ fn handle_result(
       log::debug!("Weidu exit status: {exit}");
       result
     },
-    Ok(None) if retry < 3 => {
+    Ok(None) if retry < 5 => {
       log::debug!("Weidu not finished, sleeping then retrying, retry attempt number {retry}");
       sleep(options.tick);
       handle_result(child, options, result, retry + 1)
     },
     Ok(None) => {
       log::warn!("Weidu not finished, exiting anyway");
+      if let Some(stdin) = child.stdin {
+        drop(stdin);
+      }
       result
     },
     Err(err) => {

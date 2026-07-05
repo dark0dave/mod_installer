@@ -121,9 +121,10 @@ impl ParserConfig {
 
   pub fn detect_weidu_finished_state(&self, weidu_output: &str) -> State {
     let comparable_output = weidu_output.trim().to_lowercase();
-    let failure = self.failed_with_error.iter().fold(false, |acc, fail_case| {
-      comparable_output.contains(fail_case) || acc
-    });
+    let failure = self
+      .failed_with_error
+      .iter()
+      .any(|fail_case| comparable_output.contains(fail_case));
     if failure {
       return State::CompletedWithErrors {
         error_details: comparable_output,
@@ -132,15 +133,14 @@ impl ParserConfig {
     let warning = self
       .completed_with_warnings
       .iter()
-      .fold(false, |acc, warn_case| {
-        comparable_output.contains(warn_case) || acc
-      });
+      .any(|warn_case| comparable_output.contains(warn_case));
     if warning {
       return State::CompletedWithWarnings;
     }
-    let finished = self.finished.iter().fold(false, |acc, success_case| {
-      comparable_output.contains(success_case) || acc
-    });
+    let finished = self
+      .finished
+      .iter()
+      .any(|success_case| comparable_output.contains(success_case));
     if finished {
       return State::Completed;
     }

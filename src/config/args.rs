@@ -1,30 +1,15 @@
-use std::env::{split_paths, var_os};
 use std::fmt::Debug;
 use std::fs;
 use std::path::PathBuf;
 
 use clap::Subcommand;
 use clap::builder::ArgPredicate;
-use clap::{Parser, builder::BoolishValueParser, builder::OsStr};
+use clap::{Parser, builder::BoolishValueParser};
 
-use crate::config::log_options::LogOptions;
+use crate::config::options::Options;
+use crate::config::{CARGO_PKG_NAME, LONG};
 
 use super::colors::styles;
-
-pub const CARGO_PKG_NAME: &str = "mod_installer";
-
-pub const LONG: &str = r"
-
-  /\/\   ___   __| | (_)_ __  ___| |_ __ _| | | ___ _ __
- /    \ / _ \ / _` | | | '_ \/ __| __/ _` | | |/ _ \ '__|
-/ /\/\ \ (_) | (_| | | | | | \__ \ || (_| | | |  __/ |
-\/    \/\___/ \__,_| |_|_| |_|___/\__\__,_|_|_|\___|_|
-";
-
-#[cfg(not(target_os = "windows"))]
-pub const WEIDU_FILE_NAME: &str = "weidu";
-#[cfg(target_os = "windows")]
-pub const WEIDU_FILE_NAME: &str = "weidu.exe";
 
 // https://docs.rs/clap/latest/clap/_derive/index.html#arg-attributes
 #[derive(Parser, Debug, PartialEq)]
@@ -41,18 +26,20 @@ pub struct Args {
   pub command: CommandType,
 }
 
-/// Type of Install, Normal or EET
+/// Type of Command
 #[derive(Subcommand, Debug, PartialEq, Clone)]
 pub enum CommandType {
   #[command()]
   Normal(Normal),
   #[command()]
   Eet(Eet),
-  #[command(subcommand)]
-  Scan(Scan),
+  #[command()]
+  Languages(ScanLangauges),
+  #[command()]
+  Components(ScanComponents),
 }
 
-/// Normal install for (BG1EE,BG2EE,IWDEE) (STABLE)
+/// Normal install for (BG1EE,BG2EE,IWDEE, EET)
 #[derive(Parser, Debug, PartialEq, Clone)]
 #[clap(short_flag = 'n')]
 pub struct Normal {
@@ -68,9 +55,13 @@ pub struct Normal {
   #[clap(env, long, short = 'n', required = false)]
   pub generate_directory: Option<PathBuf>,
 
-  /// CommonOptions
+  /// Common Options
   #[clap(flatten)]
   pub options: Options,
+
+  /// Install Options
+  #[clap(flatten)]
+  pub install_options: InstallOptions,
 }
 
 /// EET install for (eet) (BETA)
@@ -101,19 +92,13 @@ pub struct Eet {
   #[clap(env, short = 'n', long, value_parser = path_must_exist)]
   pub new_eet_dir: Option<PathBuf>,
 
-  /// CommonOptions
+  /// Common Options
   #[clap(flatten)]
   pub options: Options,
-}
 
-/// Scan for (BG1EE,BG2EE,IWDEE) (ALPHA)
-#[derive(Subcommand, Debug, PartialEq, Clone)]
-#[clap(short_flag = 's')]
-pub enum Scan {
-  #[command()]
-  Languages(ScanLangauges),
-  #[command()]
-  Components(ScanComponents),
+  /// Install Options
+  #[clap(flatten)]
+  pub install_options: InstallOptions,
 }
 
 #[derive(Parser, Debug, PartialEq, Clone)]
@@ -123,7 +108,7 @@ pub struct ScanLangauges {
   #[clap(short, long, required = false, default_value = "")]
   pub filter_by_selected_language: String,
 
-  /// CommonOptions
+  /// Common Options
   #[clap(flatten)]
   pub options: Options,
 }
@@ -135,46 +120,16 @@ pub struct ScanComponents {
   #[clap(short, long, required = false, default_value = "")]
   pub filter_by_selected_language: String,
 
-  /// CommonOptions
+  /// Common Options
   #[clap(flatten)]
   pub options: Options,
 }
 
 #[derive(Parser, Debug, PartialEq, Clone, Default)]
-pub struct Options {
-  /// Absolute Path to weidu binary
-  #[clap(
-        env,
-        short,
-        long,
-        value_parser = parse_absolute_path,
-        default_value_os_t = find_weidu_bin(),
-        default_missing_value = find_weidu_bin_on_path(),
-        required = false
-    )]
-  pub weidu_binary: PathBuf,
-
-  /// Path to mod directories
-  #[clap(
-        env,
-        short,
-        long,
-        value_parser = path_exists_full,
-        use_value_delimiter = true,
-        value_delimiter = ',',
-        default_values_os_t = current_work_dir(),
-        default_missing_value = working_dir(),
-        required = false
-    )]
-  pub mod_directories: Vec<PathBuf>,
-
+pub struct InstallOptions {
   /// Game Language
   #[clap(short, long, default_value = "en_US")]
   pub language: String,
-
-  /// Depth to walk folder structure
-  #[clap(env, long, short, default_value = "5")]
-  pub depth: usize,
 
   /// Compare against installed weidu log, note this is best effort
   #[clap(
@@ -223,19 +178,6 @@ pub struct Options {
     default_value_if("batch_mode", ArgPredicate::IsPresent, "32400")
   )]
   pub timeout: usize,
-
-  /// Weidu log setting "autolog,logapp,log-extern" is default
-  #[clap(
-        env,
-        long,
-        short='u',
-        use_value_delimiter = true,
-        value_delimiter = ',',
-        default_value = "autolog,logapp,log-extern",
-        value_parser = LogOptions::value_parser,
-        required = false
-    )]
-  pub weidu_log_mode: Vec<LogOptions>,
 
   /// Strict Version and Component/SubComponent matching
   #[clap(
@@ -311,15 +253,6 @@ pub struct Options {
   /// Batch options
   #[clap(flatten)]
   pub batch: BatchOptions,
-
-  /// Ocaml run parameters
-  //  OCaml GC tuning — prevents 0xc0000005 segfaults on large installs:
-  //   s=16M  = 128MB minor heap (64x default ~2MB, reduces minor GC frequency)
-  //   o=500  = 500% space overhead (5x default, reduces major GC frequency)
-  //   O=1000000 = disable heap compaction (compaction relocates memory blocks,
-  //               can trigger stale-pointer crashes in WeiDU's unsafe-string code)
-  #[clap(env = "OCAMLRUNPARAM", long, default_value = "s=16M,o=500,O=1000000")]
-  pub ocamlrunparam: String,
 }
 
 #[derive(Parser, Debug, PartialEq, Clone, Default)]
@@ -359,254 +292,11 @@ pub fn path_must_exist(arg: &str) -> Result<PathBuf, std::io::Error> {
   Ok(path)
 }
 
-fn path_exists_full(arg: &str) -> Result<PathBuf, std::io::Error> {
+pub(crate) fn path_exists_full(arg: &str) -> Result<PathBuf, std::io::Error> {
   fs::canonicalize(path_must_exist(arg)?)
 }
 
-fn parse_absolute_path(arg: &str) -> Result<PathBuf, String> {
+pub(crate) fn parse_absolute_path(arg: &str) -> Result<PathBuf, String> {
   let path = path_must_exist(arg).map_err(|err| err.to_string())?;
   fs::canonicalize(path).map_err(|err| err.to_string())
-}
-
-fn find_weidu_bin() -> PathBuf {
-  if let Some(paths) = var_os("PATH") {
-    for path in split_paths(&paths) {
-      let full_path = path.join(WEIDU_FILE_NAME);
-      if full_path.is_file() && !full_path.is_dir() {
-        return full_path;
-      }
-    }
-  }
-  PathBuf::new()
-}
-
-fn find_weidu_bin_on_path() -> OsStr {
-  OsStr::from(find_weidu_bin().into_os_string())
-}
-
-fn current_work_dir() -> Vec<PathBuf> {
-  vec![std::env::current_dir().unwrap_or_default()]
-}
-
-fn working_dir() -> OsStr {
-  OsStr::from(current_work_dir().first().unwrap().clone().into_os_string())
-}
-
-#[cfg(test)]
-mod tests {
-
-  use super::*;
-  use pretty_assertions::assert_eq;
-  use std::{error::Error, path::PathBuf};
-
-  #[test]
-  fn test_bool_flags() -> Result<(), Box<dyn Error>> {
-    let workspace_root: PathBuf = std::env::current_dir()?;
-    let fake_game_dir: PathBuf = workspace_root.join("fixtures");
-    let fake_weidu_bin = fake_game_dir.clone().join("weidu");
-    let fake_log_file = fake_game_dir.clone().join("weidu.log");
-    let fake_mod_dirs = fake_game_dir.clone().join("mods");
-    let tests = vec![
-      ("true", true),
-      ("t", true),
-      ("yes", true),
-      ("y", true),
-      ("1", true),
-      ("false", false),
-      ("f", false),
-      ("no", false),
-      ("n", false),
-      ("0", false),
-    ];
-    for (flag_value, expected_flag_value) in tests {
-      let expected = Args {
-        command: CommandType::Normal(Normal {
-          log_file: fake_log_file.clone(),
-          game_directory: fake_game_dir.clone(),
-          generate_directory: None,
-          options: Options {
-            weidu_binary: fake_weidu_bin.clone(),
-            mod_directories: vec![fake_mod_dirs.clone()],
-            language: "en_US".to_string(),
-            depth: 5,
-            skip_installed: expected_flag_value,
-            abort_on_warnings: expected_flag_value,
-            timeout: 10800,
-            weidu_log_mode: vec![
-              LogOptions::AutoLog,
-              LogOptions::LogAppend,
-              LogOptions::LogExternal,
-            ],
-            strict_matching: true,
-            download: true,
-            overwrite: false,
-            check_last_installed: true,
-            tick: 500,
-            lookback: 10,
-            casefold: false,
-            never_abort: false,
-            generic_weidu_args: vec![],
-            batch: BatchOptions {
-              batch_mode: false,
-              batch_size: 5,
-              batch_skip: vec!["setup-stratagems.tp2".into()],
-            },
-            ocamlrunparam: "s=16M,o=500,O=1000000".into(),
-          },
-        }),
-      };
-      let test_arg_string = format!(
-        "mod_installer -n -x -a {} -s {} -w {} -m {} -f {} -g {}",
-        flag_value,
-        flag_value,
-        fake_weidu_bin.to_str().unwrap_or_default(),
-        fake_mod_dirs.to_str().unwrap_or_default(),
-        fake_log_file.to_str().unwrap_or_default(),
-        fake_game_dir.to_str().unwrap_or_default(),
-      );
-      let result = Args::parse_from(test_arg_string.split(' '));
-      assert_eq!(
-        result, expected,
-        "Result {result:?} didn't match Expected {expected:?}",
-      );
-    }
-    Ok(())
-  }
-
-  #[test]
-  fn test_eet_flags() -> Result<(), Box<dyn Error>> {
-    let workspace_root: PathBuf = std::env::current_dir()?;
-    let fake_game_dir: PathBuf = workspace_root.join("fixtures");
-    let fake_weidu_bin = fake_game_dir.clone().join("weidu");
-    let fake_log_file = fake_game_dir.clone().join("weidu.log");
-    let new_dir = PathBuf::new().join("test");
-    let expected_flag_value = true;
-
-    let expected = Args {
-      command: CommandType::Eet(Eet {
-        bg1_game_directory: fake_game_dir.clone(),
-        bg1_log_file: fake_log_file.clone(),
-        bg2_game_directory: fake_game_dir.clone(),
-        bg2_log_file: fake_log_file.clone(),
-        options: Options {
-          weidu_binary: fake_weidu_bin.clone(),
-          mod_directories: vec![std::env::current_dir().unwrap()],
-          language: "en_US".to_string(),
-          depth: 5,
-          skip_installed: expected_flag_value,
-          abort_on_warnings: !expected_flag_value,
-          timeout: 10800,
-          weidu_log_mode: vec![
-            LogOptions::AutoLog,
-            LogOptions::LogAppend,
-            LogOptions::LogExternal,
-          ],
-          strict_matching: !expected_flag_value,
-          download: expected_flag_value,
-          overwrite: !expected_flag_value,
-          check_last_installed: expected_flag_value,
-          tick: 500,
-          lookback: 10,
-          casefold: false,
-          never_abort: false,
-          generic_weidu_args: vec![],
-          batch: BatchOptions {
-            batch_mode: false,
-            batch_size: 5,
-            batch_skip: vec!["setup-stratagems.tp2".into()],
-          },
-          ocamlrunparam: "s=16M,o=500,O=1000000".into(),
-        },
-        new_pre_eet_dir: None,
-        new_eet_dir: Some("test".into()),
-      }),
-    };
-    let test_arg_string = format!(
-      "mod_installer eet -w {} -1 {} -y {} -2 {} -z {} -n {}",
-      fake_weidu_bin.to_str().unwrap_or_default(),
-      fake_game_dir.to_str().unwrap_or_default(),
-      fake_log_file.to_str().unwrap_or_default(),
-      fake_game_dir.to_str().unwrap_or_default(),
-      fake_log_file.to_str().unwrap_or_default(),
-      new_dir.to_str().unwrap_or_default(),
-    );
-    let result = Args::parse_from(test_arg_string.split(' '));
-    assert_eq!(
-      result, expected,
-      "Result {result:?} didn't match Expected {expected:?}",
-    );
-
-    Ok(())
-  }
-  #[test]
-  fn test_log_flags() -> Result<(), Box<dyn Error>> {
-    let workspace_root: PathBuf = std::env::current_dir()?;
-    let fake_game_dir: PathBuf = workspace_root.join("fixtures");
-    let fake_weidu_bin = fake_game_dir.clone().join("weidu");
-    let fake_log_file = fake_game_dir.clone().join("weidu.log");
-    let fake_mod_dirs = fake_game_dir.clone().join("mods");
-    let log_file = tempfile::NamedTempFile::new()?;
-    let log_file_path = log_file.path().as_os_str().to_str().unwrap_or_default();
-    let expected = Args {
-      command: CommandType::Normal(Normal {
-        log_file: fake_log_file.clone(),
-        game_directory: fake_game_dir.clone(),
-        generate_directory: None,
-        options: Options {
-          weidu_binary: fake_weidu_bin.clone(),
-          mod_directories: vec![fake_mod_dirs.clone()],
-          language: "en_US".to_string(),
-          depth: 5,
-          skip_installed: true,
-          abort_on_warnings: false,
-          timeout: 10800,
-          weidu_log_mode: vec![
-            LogOptions::AutoLog,
-            LogOptions::LogAppend,
-            LogOptions::LogExternal,
-            #[cfg(not(target_os = "windows"))]
-            LogOptions::Log(log_file.path().canonicalize()?),
-            #[cfg(windows)]
-            LogOptions::Log(log_file.path()),
-          ],
-          strict_matching: false,
-          download: true,
-          overwrite: false,
-          check_last_installed: true,
-          tick: 500,
-          lookback: 10,
-          casefold: false,
-          never_abort: false,
-          generic_weidu_args: vec![],
-          batch: BatchOptions {
-            batch_mode: false,
-            batch_size: 5,
-            batch_skip: vec!["setup-stratagems.tp2".into()],
-          },
-          ocamlrunparam: "s=16M,o=500,O=1000000".into(),
-        },
-      }),
-    };
-    let log_arg = format!("autolog,logapp,log-extern,log {log_file_path}");
-    let test_arg_string = vec![
-      "mod_installer",
-      "-n",
-      "-w",
-      fake_weidu_bin.to_str().unwrap_or_default(),
-      "-m",
-      fake_mod_dirs.to_str().unwrap_or_default(),
-      "--log-file",
-      fake_log_file.to_str().unwrap_or_default(),
-      "--game-directory",
-      fake_game_dir.to_str().unwrap_or_default(),
-      "--weidu-log-mode",
-      &log_arg,
-    ];
-    let result = Args::parse_from(test_arg_string);
-    assert_eq!(
-      result, expected,
-      "Result {result:?} didn't match Expected {expected:?}",
-    );
-    Ok(())
-  }
 }

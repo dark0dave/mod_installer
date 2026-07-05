@@ -3,7 +3,8 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 use std::{error::Error, path::Path, sync::Arc};
 
-use crate::config::args::{Eet, Normal, Options};
+use crate::config::args::{Eet, InstallOptions, Normal};
+use crate::config::options::Options;
 use crate::config::parser_config::ParserConfig;
 use crate::runner::{self, WeiduExitStatus};
 use crate::utils::{copy_folder, mod_folder_present_in_game_directory};
@@ -22,7 +23,7 @@ pub(crate) fn normal_install(
     copy_folder(
       &command.game_directory,
       new_directory,
-      command.options.casefold,
+      command.install_options.casefold,
     )?;
     new_directory.clone()
   } else {
@@ -33,6 +34,7 @@ pub(crate) fn normal_install(
     &command.log_file,
     &game_directory,
     &command.options,
+    &command.install_options,
     parser_config.clone(),
     None,
     mod_folder_cache,
@@ -49,7 +51,7 @@ pub(crate) fn eet_install(
     copy_folder(
       &command.bg1_game_directory,
       new_directory,
-      command.options.casefold,
+      command.install_options.casefold,
     )?;
     new_directory.clone()
   } else {
@@ -60,6 +62,7 @@ pub(crate) fn eet_install(
     &command.bg1_log_file,
     &pre_eet_game_directory,
     &command.options,
+    &command.install_options,
     parser_config.clone(),
     None,
     mod_folder_cache,
@@ -70,7 +73,7 @@ pub(crate) fn eet_install(
     copy_folder(
       &command.bg2_game_directory,
       new_directory,
-      command.options.casefold,
+      command.install_options.casefold,
     )?;
     new_directory.clone()
   } else {
@@ -80,6 +83,7 @@ pub(crate) fn eet_install(
     &command.bg2_log_file,
     &game_directory,
     &command.options,
+    &command.install_options,
     parser_config.clone(),
     Some(&pre_eet_game_directory.to_path_buf()),
     mod_folder_cache,
@@ -90,17 +94,18 @@ fn install(
   log_file_path: &Path,
   game_directory: &Path,
   options: &Options,
+  install_options: &InstallOptions,
   parser_config: Arc<ParserConfig>,
   pre_eet_game_directory: Option<&PathBuf>,
   mod_folder_cache: &mut HashMap<OsString, PathBuf>,
 ) -> Result<(), Box<dyn Error>> {
   let mut components_to_be_installed: WeiduBatchedComponents =
     WeiduBatchedComponents::try_from(log_file_path.to_path_buf())?;
-  if options.skip_installed {
-    components_to_be_installed.remove_existing(options.strict_matching, game_directory)?;
+  if install_options.skip_installed {
+    components_to_be_installed.remove_existing(install_options.strict_matching, game_directory)?;
   }
   let mods_to_be_installed =
-    WeiduBatchedInstallOrder::new(components_to_be_installed, &options.batch)?;
+    WeiduBatchedInstallOrder::new(components_to_be_installed, &install_options.batch)?;
   for components in mods_to_be_installed.into_iter() {
     let first_mod = if let Some(weidu_mod) = components.first() {
       weidu_mod
@@ -111,9 +116,15 @@ fn install(
       if let Some(entry) = mod_folder_cache.get::<OsString>(&components.log_file_name().into()) {
         entry.to_path_buf()
       } else {
-        let entry = match search_or_download(options, first_mod) {
+        let entry = match search_or_download(
+          &options.mod_directories,
+          first_mod,
+          options.depth,
+          install_options.download,
+          install_options.tick,
+        ) {
           Ok(value) => value,
-          Err(err) if options.never_abort => {
+          Err(err) if install_options.never_abort => {
             log::error!("{:?}", err);
             log::info!("failed but never abort set, so continuing");
             continue;
@@ -126,7 +137,7 @@ fn install(
 
     log::debug!("Found mod folder {mod_folder:?}, for component {components:?}");
 
-    if options.overwrite {
+    if install_options.overwrite {
       delete_folder(game_directory.join(&first_mod.name))?;
     }
 
@@ -150,17 +161,20 @@ fn install(
     };
     let weidu_args = &components.generate_weidu_args(
       options.weidu_log_mode.clone(),
-      &options.language,
-      &options.generic_weidu_args,
+      &install_options.language,
+      &install_options.generic_weidu_args,
     );
     match runner::spawn(
       game_directory,
       parser_config.clone(),
       options,
+      install_options,
       weidu_args,
       bg1_game_directory,
     ) {
-      Ok(WeiduExitStatus::Success) if options.check_last_installed && !options.never_abort => {
+      Ok(WeiduExitStatus::Success)
+        if install_options.check_last_installed && !install_options.never_abort =>
+      {
         if let Ok(last_installed) = get_last_installed(game_directory) {
           if last_installed.ne(first_mod) {
             return Err(format!(
@@ -176,7 +190,7 @@ fn install(
       Ok(WeiduExitStatus::Success) => {
         log::info!("Installed mod {:?}", components);
       },
-      Ok(WeiduExitStatus::Warnings(msg)) if options.abort_on_warnings => {
+      Ok(WeiduExitStatus::Warnings(msg)) if install_options.abort_on_warnings => {
         return Err(
           format!("Installed mod {components:?} with warnings: \n{msg}\n, stopping").into(),
         );
@@ -184,7 +198,7 @@ fn install(
       Ok(WeiduExitStatus::Warnings(msg)) => {
         log::warn!("Installed mod {components:?} with warnings:  \n{msg}\n")
       },
-      Err(err) if options.never_abort => {
+      Err(err) if install_options.never_abort => {
         log::error!("{:?}", err);
         log::info!("failed but never abort set, so continuing");
       },

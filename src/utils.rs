@@ -1,4 +1,3 @@
-use crate::config::args::Options;
 use core::time;
 use std::{
   collections::HashMap,
@@ -162,15 +161,18 @@ pub(crate) fn find_all_mods(mod_dirs: &[PathBuf], depth: usize) -> HashMap<OsStr
 }
 
 pub fn search_or_download(
-  options: &Options,
+  folder_directories: &[PathBuf],
   weidu_mod: &WeiduComponent,
+  depth: usize,
+  download: bool,
+  tick: u64,
 ) -> Result<PathBuf, Box<dyn Error>> {
-  if let Ok(found_mod) = search_mod_folders(&options.mod_directories, weidu_mod, options.depth) {
+  if let Ok(found_mod) = search_mod_folders(folder_directories, weidu_mod, depth) {
     return Ok(found_mod);
   }
   log::info!("Missing mod: {weidu_mod:#?}");
-  if options.download {
-    try_download_mod(weidu_mod, options.tick)
+  if download {
+    try_download_mod(weidu_mod, tick)
   } else {
     Err("Failed to find mod".into())
   }

@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-  config::{args::Options, parser_config::ParserConfig, state::State},
+  config::{args::InstallOptions, options::Options, parser_config::ParserConfig, state::State},
   internal_log::InternalLog,
   parser::parse_raw_output,
   raw_reciever::create_raw_reciever,
@@ -31,7 +31,7 @@ pub(crate) enum WeiduExitStatus {
 pub(crate) type InstallationResult = Result<WeiduExitStatus, Box<dyn Error>>;
 
 fn run(
-  options: &Options,
+  options: &InstallOptions,
   mut weidu_stdin: ChildStdin,
   log: InternalLog,
   eet_auto_fill: &str,
@@ -116,7 +116,7 @@ fn run(
 
 fn handle_result(
   mut child: Child,
-  options: &Options,
+  options: &InstallOptions,
   result: Result<WeiduExitStatus, Box<dyn Error>>,
   retry: i8,
 ) -> Result<WeiduExitStatus, Box<dyn Error>> {
@@ -150,7 +150,7 @@ fn handle_result(
 pub(crate) fn handle_io(
   mut child: Child,
   parser_config: Arc<ParserConfig>,
-  options: &Options,
+  options: &InstallOptions,
   bg1_game_directory: Option<&PathBuf>,
 ) -> InstallationResult {
   let weidu_stdin = child
@@ -194,6 +194,7 @@ pub(crate) fn spawn(
   game_directory: &Path,
   parser_config: Arc<ParserConfig>,
   options: &Options,
+  installer_options: &InstallOptions,
   weidu_args: &[String],
   bg1_game_directory: Option<&PathBuf>,
 ) -> InstallationResult {
@@ -219,5 +220,5 @@ pub(crate) fn spawn(
     .stderr(Stdio::piped())
     .spawn()?;
 
-  handle_io(child, parser_config, options, bg1_game_directory)
+  handle_io(child, parser_config, installer_options, bg1_game_directory)
 }

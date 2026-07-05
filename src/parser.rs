@@ -7,7 +7,7 @@ use std::{
   thread,
 };
 
-use crate::config::{args::Options, parser_config::ParserConfig, state::State};
+use crate::config::{args::InstallOptions, parser_config::ParserConfig, state::State};
 use crate::utils::sleep;
 
 #[derive(Debug)]
@@ -18,7 +18,7 @@ enum ParserState {
 }
 
 pub(crate) fn parse_raw_output(
-  options: &Options,
+  options: &InstallOptions,
   sender: Sender<State>,
   receiver: Receiver<String>,
   parser_config: Arc<ParserConfig>,

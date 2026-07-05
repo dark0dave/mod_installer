@@ -2,7 +2,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable-small";
     hk = {
-      url = "github:jdx/hk/v1.44.2";
+      url = "github:jdx/hk/v1.49.0";
     };
   };
   outputs =

@@ -1,9 +1,6 @@
 use std::process::ExitCode;
 
-use config::{
-  Config,
-  args::{CommandType, Scan},
-};
+use config::{Config, args::CommandType};
 use env_logger::Env;
 use installers::{eet_install, normal_install};
 use scan::components::scan_components;
@@ -41,8 +38,8 @@ fn main() -> ExitCode {
       config.parser.clone(),
       &mut find_all_mods(&command.options.mod_directories, command.options.depth),
     ),
-    CommandType::Scan(Scan::Languages(command)) => scan_langauges(&command),
-    CommandType::Scan(Scan::Components(command)) => scan_components(&command),
+    CommandType::Languages(command) => scan_langauges(&command),
+    CommandType::Components(command) => scan_components(&command),
   };
 
   match status {

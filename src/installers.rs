@@ -149,7 +149,7 @@ fn install(
       );
       copy_folder(mod_folder, game_directory.join(&first_mod.name), false)?;
     }
-    log::info!("Installing mod {:?}", &components);
+    log::info!("Installing mod {:?}", components);
     let bg1_game_directory = if first_mod
       .component_name
       .to_lowercase()
@@ -182,7 +182,7 @@ fn install(
                         )
                         .into());
           }
-          log::info!("Installed mod {:?}", &last_installed);
+          log::info!("Installed mod {:?}", last_installed);
         } else {
           log::warn!("Could not open weidu log, to validate if last component was installed");
         }

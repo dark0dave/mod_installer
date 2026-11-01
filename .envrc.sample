@@ -1,2 +1,3 @@
 set -a
 use flake
+OCAMLRUNPARAM="s=16M,o=500,O=1000000"

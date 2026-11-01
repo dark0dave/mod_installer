@@ -1,5 +1,5 @@
-amends "package://github.com/jdx/hk/releases/download/v1.49.0/hk@1.49.0#/Config.pkl"
-import "package://github.com/jdx/hk/releases/download/v1.49.0/hk@1.49.0#/Builtins.pkl"
+amends "package://github.com/jdx/hk/releases/download/v2.8.1/hk@2.8.1#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.8.1/hk@2.8.1#/Builtins.pkl"
 
 local message = new Mapping<String, Step> {
   ["check-conventional-commit"] = Builtins.check_conventional_commit
@@ -11,17 +11,20 @@ local builtins = new Mapping<String, Step> {
   ["cargo-fmt"] = Builtins.cargo_fmt
   ["check-case-conflict"] = Builtins.check_case_conflict
   ["check-merge-conflict"] = Builtins.check_merge_conflict
-  ["end-of-file-fixer"] = Builtins.newlines
   ["trailing-whitespace"] = Builtins.trailing_whitespace
   ["yamlfmt"] = Builtins.yamlfmt
+  ["nix-fmt"] = Builtins.nix_fmt
 }
 
 local local_hooks = new Mapping<String, Step> {
   ["codespell"] {
     glob = List("**/*.rs", "readme.md")
-    exclude = List("target/**", "fixtures/**", "hk.pkl")
+    exclude = List("target/**", "models/fixtures/**", "hk.pkl")
     check = "codespell -c {{files}}"
     fix = "codespell -cw {{files}}"
+  }
+  ["end-of-file-fixer"] = (Builtins.newlines) {
+    exclude = List("target/**", "models/fixtures/**", "docs/")
   }
   ["version-check"] {
     check = "scripts/check-version.sh"
@@ -29,8 +32,8 @@ local local_hooks = new Mapping<String, Step> {
   ["git-check"] {
     check = "scripts/check-git.sh"
   }
-  ["nix fmt"] {
-    fix = "nixfmt flake.nix"
+  ["cargo shear"] {
+    fix = "cargo shear --fix"
   }
 }
 

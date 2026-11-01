@@ -173,7 +173,9 @@ fn install(
       bg1_game_directory,
     ) {
       Ok(WeiduExitStatus::Success)
-        if install_options.check_last_installed && !install_options.never_abort =>
+        if install_options.check_last_installed
+          && !install_options.batch.batch_mode
+          && !install_options.never_abort =>
       {
         if let Ok(last_installed) = get_last_installed(game_directory) {
           if last_installed.ne(first_mod) {

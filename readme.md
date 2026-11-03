@@ -71,7 +71,7 @@ With cargo:
 cargo run -- normal --log-file dark0dave_weidu.log --game-directory ~/.steam/steam/steamapps/common/Baldur\'s\ Gate\ Enhanced\ Edition/ --mod-directories ~/Downloads/my_mods/
 ```
 
-## BETA: EET Install
+## STABLE: EET Install
 
 This automation exists purely to help install EET, as you end up juggling two directories and weidu mod lists.
 
@@ -135,6 +135,45 @@ Users can then input the required github zip url, and the mod_installer will dow
 
 - Only github is supported (more to come I promise!)
 - No version check is performed, ie it downloads what ever is passed and that must be a zip file
+
+## ALPHA: Batch feature
+
+What often happens if you have many components from a single mod author looking at you Camdawg, is that the always block is triggered over and over again, ie foreach component. Which reduces install time speed.
+
+I don't know how weidu works what is an always block? An always block is trigger at the start when a component is installed.
+
+from the weidu docs: https://weidu.org/WeiDU/README-WeiDU.html
+```
+or 	ALWAYS TP2 Action list END 	This flag specified a TP2 Action that is executed just before any normal TP2 Action in the file is installed.
+```
+
+this of course slows down stuff as weidu has to run this block multiple times.
+
+Solution is too use the batch mode in weidu. Weidu code is bad lets just face it. So was hesitant to use this feature. But after extensive testing, it seems this does operate correctly as shocking as that is.
+
+Here are the provided flags to enable it:
+
+```sh
+mod_installer(.exe) --batch-mode=true
+```
+
+Further controls such as what to skip and batch size are available. Again through the help command:
+
+```sh
+mod_installer(.exe) -n --help
+```
+
+Flags for control:
+```sh
+      --batch-mode [<BATCH_MODE>]
+          Batch mode [env: BATCH_MODE=] [default: false] [possible values: true, false]
+      --batch-size <BATCH_SIZE>
+          Batch size [env: BATCH_SIZE=] [default: 5]
+      --batch-skip <BATCH_SKIP>
+          Batch skip [env: BATCH_SKIP=] [default: setup-stratagems.tp2]
+```
+
+By default batches of 5 are used. Increasing this is lead to more crashes. Up to you how this fucking works. Be my guest.
 
 ## ALPHA: Scan feature
 

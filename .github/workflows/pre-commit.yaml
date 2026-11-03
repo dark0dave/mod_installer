@@ -1,0 +1,32 @@
+name: precommit
+on:
+  pull_request:
+  merge_group:
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: nixbuild/nix-quick-install-action@master
+      - name: cache
+        uses: nix-community/cache-nix-action/restore@main
+        with:
+          backend: actions
+          nix: true
+          primary-key: ${{ runner.os }}-${{ hashFiles('flake.nix', 'flake.lock') }}
+          restore-prefixes-first-match: ${{ runner.os }}-
+          save: true
+      - name: pre-commit
+        shell: 'nix develop -c bash -e {0}'
+        run: hk run pre-commit --all -j 10
+      - uses: nix-community/cache-nix-action/save@v7
+        with:
+          backend: actions
+          gc-max-store-size-linux: 5G
+          nix: true
+          primary-key: ${{ runner.os }}-${{ hashFiles('flake.nix', 'flake.lock') }}
+          purge: false
+          save: true

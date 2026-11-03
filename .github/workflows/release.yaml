@@ -1,0 +1,52 @@
+name: release
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        required: true
+        type: string
+permissions:
+  contents: write
+  actions: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/download-artifact@main
+        with:
+          name: mod_installer-x86_64-apple-darwin
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@main
+        with:
+          name: mod_installer-aarch64-apple-darwin
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@main
+        with:
+          name: mod_installer-x86_64-unknown-linux-musl
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@main
+        with:
+          name: mod_installer-x86_64-unknown-linux-gnu
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@main
+        with:
+          name: mod_installer-aarch64-unknown-linux-gnu
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+      - uses: actions/download-artifact@main
+        with:
+          name: mod_installer-x86_64-pc-windows-msvc.exe
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@main
+        with:
+          generateReleaseNotes: true
+          prerelease: ${{ startsWith(steps.get_tag.outputs.git_tag, 'nightly') }}
+          artifacts: "mod_installer-x86_64-apple-darwin,mod_installer-aarch64-apple-darwin,mod_installer-x86_64-unknown-linux-musl,mod_installer-x86_64-unknown-linux-gnu,mod_installer-aarch64-unknown-linux-gnu,mod_installer-x86_64-pc-windows-msvc.exe"

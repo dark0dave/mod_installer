@@ -1,0 +1,30 @@
+name: nightly
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+jobs:
+  create-tag:
+    name: Create tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+          set-safe-directory: true
+      - name: Setup SSH Keys and known_hosts
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.GH_SSH_KEY }}"
+      - name: Create tag
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          tag=$(git describe --tags --match 'v[0-9].[0-9].[0-9]')
+          git tag "nightly-${tag}"
+          git remote set-url origin git@github.com:dark0dave/mod_installer.git
+          git push origin "refs/tags/nightly-${tag}" || true
